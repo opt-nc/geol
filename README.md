@@ -13,6 +13,8 @@ Its ambitions are to :
 
 # 📑 Resources
 
+
+- [endoflife API](https://endoflife.date/docs/api/v1/)
 - [⌛ Manage EoLs like a boss with endoflife.date 🛑](https://dev.to/adriens/manage-eols-like-a-boss-with-endoflifedate-2ikf)
 - [🍃 How Long Your Phone Will Be Supported by the Manufacturer 📅](https://dev.to/adriens/how-long-your-phone-will-be-supported-by-the-manufacturer-3elf)
 - [♾️ Efficient stack management with eol on GitHub 🧑‍🤝‍🧑](https://dev.to/optnc/efficient-stack-management-with-eol-on-github-24g8)
