@@ -1,0 +1,125 @@
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
+
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+    # you may remove this if you don't need go generate
+    - go generate ./...
+
+builds:
+  - main: main.go
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    binary: mobitag
+    ldflags:
+      - "-X 'github.com/opt-nc/mobitag/cmd.Version={{.Version}}'"
+      - "-X 'github.com/opt-nc/mobitag/cmd.Commit={{.Commit}}'"
+      - "-X 'github.com/opt-nc/mobitag/cmd.Date={{.Date}}'"
+
+archives:
+  - # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      mobitag_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+      - goos: linux
+        formats: [tar.gz]
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  footer: >-
+
+    ---
+
+    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
+
+checksum:
+  name_template: 'checksums.txt'
+
+sboms:
+  - id: mobitag-source
+    artifacts: archive
+
+brews:
+  -
+    # Name of the recipe
+    name: mobitag
+
+    # Your app's description.
+    description: "mobitag-cli, le chemin le plus court entre le terminal et le sms."
+
+    # Homepage is the link to the project page of the formula.
+    homepage: https://github.com/opt-nc/mobitag-cli
+
+    # Repository to push the generated files to.
+    repository:
+      owner: opt-nc
+      name: homebrew-tap
+      # branch: brew-releases/{{ .Version }}
+      token: "{{ .Env.PUBLIC_HOMEBREW_TAP_TOKEN }}"
+      # pull_request:
+      #   enabled: true
+      #   base:
+      #     owner: opt-nc
+      #     name: mobitag-cli
+      #     branch: main
+
+    # NOTE: make sure the url_template, the token and given repo (github or
+    # gitlab) owner and name are from the same kind.
+    # We will probably unify this in the next major version like it is
+    # done with scoop.
+
+    # URL which is determined by the given Token (github, gitlab or gitea).
+    #
+    # Default depends on the client.
+    # Templates: allowed
+    url_template: "https://github.com/opt-nc/mobitag-cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+
+    # Allows you to set a custom download strategy. Note that you'll need
+    # to implement the strategy and add it to your tap repository.
+    # Example: https://docs.brew.sh/Formula-Cookbook#specifying-the-download-strategy-explicitly
+    download_strategy: CurlDownloadStrategy
+
+    # Git author used to commit to the repository.
+    commit_author:
+      name: goreleaserbot
+      email: goreleaserbot@opt.nc
+
+    # The project name and current git tag are used in the format string.
+    #
+    # Templates: allowed
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    
+    # Directory inside the repository to put the formula.
+    directory: Formula
+
+    # The formula license.
+    license: GPL-3.0
+    
+    skip_upload: auto
