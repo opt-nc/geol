@@ -43,7 +43,11 @@ to quickly create a Cobra application.`,
 			cmd.PrintErrln("Error during HTTP request:", err)
 			return
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				cmd.PrintErrln("Error closing response body:", err)
+			}
+		}()
 		if resp.StatusCode != 200 {
 			cmd.PrintErrln("Unexpected HTTP status:", resp.Status)
 			return
@@ -76,7 +80,7 @@ to quickly create a Cobra application.`,
 			products.Products[p.Name] = aliases
 		}
 
-		// Save to file
+		// Marshal the data to JSON
 		data, err := json.MarshalIndent(products, "", "  ")
 		if err != nil {
 			cmd.PrintErrln("Error serializing JSON:", err)
@@ -90,6 +94,7 @@ to quickly create a Cobra application.`,
 				return
 			}
 		}
+		// Save to file
 		if err := os.WriteFile(productsPath, data, 0644); err != nil {
 			cmd.PrintErrln("Error writing file:", err)
 			return
