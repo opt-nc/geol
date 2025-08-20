@@ -16,6 +16,8 @@ var statusCmd = &cobra.Command{
 	Long: `Displays the status of the local products cache file stored in the user's config directory.
 
 This command prints the last update date and the number of products currently cached in geol/products.json. It helps verify if the cache is present and up to date.`,
+	Example: `geol cache status
+geol c s`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Get the cache file path using shared function
 		productsPath, err := getProductsPath()
@@ -27,7 +29,7 @@ This command prints the last update date and the number of products currently ca
 		// Check if the file exists
 		info, err := os.Stat(productsPath)
 		if err != nil {
-			cmd.PrintErrln("Cache file not found:", productsPath)
+			cmd.PrintErrln("Cache file not found:", productsPath, "- try running `geol cache refresh`")
 			return
 		}
 
@@ -53,9 +55,6 @@ This command prints the last update date and the number of products currently ca
 		if err != nil {
 			cmd.PrintErrln("Error reading cache file:", err)
 			return
-		}
-		type ProductsFile struct {
-			Products map[string][]string `json:"products"`
 		}
 		var products ProductsFile
 		if err := json.Unmarshal(data, &products); err != nil {

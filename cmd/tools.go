@@ -12,6 +12,9 @@ type Product struct {
 	Name    string   `json:"name"`
 	Aliases []string `json:"aliases"`
 }
+type ProductsFile struct {
+	Products map[string][]string `json:"products"`
+}
 
 var ApiUrl = "https://endoflife.date/api/v1/"
 
