@@ -1,15 +1,15 @@
 # ❔ About
 
-`eol` is a Go based alternative to the famous [`hugovk/norwegianblue`](https://github.com/hugovk/norwegianblue) python
+`geol` is a Go based alternative to the famous [`hugovk/norwegianblue`](https://github.com/hugovk/norwegianblue) python
 based `cli`.
 
 Its ambitions are to : 
 
-1. Deliver a at least UX` as good as `hugovk/norwegianblue` aka. `eol` does,
+1. Deliver a at least UX as good as `hugovk/norwegianblue` aka. `geol` does,
 2. First class terminal based UX
 3. Make delivery easier and safer
 4. Enhance with new custom awaited features
-5. Create innoative ways to manager EOLs for more security, for all
+5. Create innovative ways to manager EOLs for more security, for all
 
 # 📑 Resources
 

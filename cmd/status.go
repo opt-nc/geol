@@ -1,10 +1,8 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -19,13 +17,12 @@ var statusCmd = &cobra.Command{
 
 This command prints the last update date and the number of products currently cached in geol/products.json. It helps verify if the cache is present and up to date.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Define the cache file path
-		configDir, err := os.UserConfigDir()
+		// Get the cache file path using shared function
+		productsPath, err := getProductsPath()
 		if err != nil {
-			cmd.PrintErrln("Error retrieving config directory:", err)
+			cmd.PrintErrln("Error retrieving products path:", err)
 			return
 		}
-		productsPath := configDir + "/geol/products.json"
 
 		// Check if the file exists
 		info, err := os.Stat(productsPath)
@@ -34,8 +31,22 @@ This command prints the last update date and the number of products currently ca
 			return
 		}
 
-		// Print the last update date
-		cmd.Printf("Cache last update: %s\n", info.ModTime().Format("2006-01-02 15:04:05"))
+		// Print the last update date with system timezone
+		modTime := info.ModTime()
+		zone, offset := modTime.Zone()
+		tz := zone
+		if offset != 0 {
+			// Format offset as "+02:00" or "-07:00"
+			sign := "+"
+			if offset < 0 {
+				sign = "-"
+				offset = -offset
+			}
+			hours := offset / 3600
+			minutes := (offset % 3600) / 60
+			tz = fmt.Sprintf("%s%02d:%02d", sign, hours, minutes)
+		}
+		cmd.Printf("Last cache update: %s %s\n", modTime.Format("2006-01-02 15:04:05"), tz)
 
 		// Read and parse the file to count the keys
 		data, err := os.ReadFile(productsPath)

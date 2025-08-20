@@ -1,15 +1,19 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
 	"encoding/json"
-	"net/http"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 )
+
+func createDirectoryIfNotExists(path string) error {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return os.MkdirAll(path, 0755)
+	}
+	return nil
+}
 
 // refreshCmd represents the refresh command
 var refreshCmd = &cobra.Command{
@@ -20,23 +24,21 @@ var refreshCmd = &cobra.Command{
 
 This command is useful for keeping the local product list in sync with the upstream source for further use by the application. The resulting file is stored in the config directory under geol/products.json.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		configDir, err := os.UserConfigDir()
+		start := time.Now()
+		productsPath, err := getProductsPath()
 		if err != nil {
-			cmd.PrintErrln("Error retrieving config directory:", err)
+			cmd.PrintErrln("Error retrieving products path:", err)
 			return
 		}
-		productsPath := configDir + "/geol/products.json"
 
-		// Create the directory if it doesn't exist
-		if _, err := os.Stat(configDir + "/geol"); os.IsNotExist(err) {
-			if err := os.MkdirAll(configDir+"/geol", 0755); err != nil {
-				cmd.PrintErrln("Error creating directory:", err)
-				return
-			}
+		// Ensure the directory exists
+		if err := createDirectoryIfNotExists(productsPath); err != nil {
+			cmd.PrintErrln("Error ensuring directory exists:", err)
+			return
 		}
 
-		// HTTP GET request
-		resp, err := http.Get("https://endoflife.date/api/v1/products")
+		// HTTP GET request (extracted)
+		resp, err := getAPIResponse(ApiUrl + "products")
 		if err != nil {
 			cmd.PrintErrln("Error during HTTP request:", err)
 			return
@@ -46,16 +48,8 @@ This command is useful for keeping the local product list in sync with the upstr
 				cmd.PrintErrln("Error closing response body:", err)
 			}
 		}()
-		if resp.StatusCode != 200 {
-			cmd.PrintErrln("Unexpected HTTP status:", resp.Status)
-			return
-		}
 
-		// Define structures to parse the response
-		type Product struct {
-			Name    string   `json:"name"`
-			Aliases []string `json:"aliases"`
-		}
+		// Define structure to parse the response (Product is now imported from tools.go)
 		type ApiResponse struct {
 			Result []Product `json:"result"`
 		}
@@ -85,19 +79,19 @@ This command is useful for keeping the local product list in sync with the upstr
 			return
 		}
 
-		// Remove the file if it exists
-		if _, err := os.Stat(productsPath); err == nil {
-			if err := os.Remove(productsPath); err != nil {
-				cmd.PrintErrln("Error removing old file:", err)
-				return
-			}
+		// Remove the file if it exists (extracted)
+		if err := removeFileIfExists(productsPath); err != nil {
+			cmd.PrintErrln("Error removing old file:", err)
+			return
 		}
 		// Save to file
 		if err := os.WriteFile(productsPath, data, 0644); err != nil {
 			cmd.PrintErrln("Error writing file:", err)
 			return
 		}
-		cmd.Println("Products file updated from API.")
+		// Print the number of products written and elapsed time
+		elapsed := time.Since(start).Milliseconds()
+		cmd.Printf("Products file updated from API. \nNumber of products: %d \n(elapsed time: %d ms)\n", len(products.Products), elapsed)
 	},
 }
 
