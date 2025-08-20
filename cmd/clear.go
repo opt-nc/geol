@@ -11,14 +11,12 @@ import (
 
 // clearCmd represents the clear command
 var clearCmd = &cobra.Command{
-	Use:   "clear",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Use:     "clear",
+	Aliases: []string{"c"},
+	Short:   "Delete the locally cached products file.",
+	Long: `Removes the local products cache file from the user's config directory.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+This command is useful for clearing the cached list of products and their aliases previously downloaded from the endoflife.date API. The cache file is stored in the config directory under geol/products.json. If the file does not exist, a message is displayed.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		configDir, err := os.UserConfigDir()
 		if err != nil {

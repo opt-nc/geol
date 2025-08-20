@@ -12,14 +12,12 @@ import (
 
 // statusCmd represents the status command
 var statusCmd = &cobra.Command{
-	Use:   "status",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Use:     "status",
+	Aliases: []string{"s"},
+	Short:   "Show information about the local products cache file.",
+	Long: `Displays the status of the local products cache file stored in the user's config directory.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+This command prints the last update date and the number of products currently cached in geol/products.json. It helps verify if the cache is present and up to date.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Define the cache file path
 		configDir, err := os.UserConfigDir()
