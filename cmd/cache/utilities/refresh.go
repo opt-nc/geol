@@ -1,4 +1,4 @@
-package cmd
+package utilities
 
 import (
 	"encoding/json"
@@ -15,8 +15,8 @@ func createDirectoryIfNotExists(path string) error {
 	return nil
 }
 
-// refreshCmd represents the refresh command
-var refreshCmd = &cobra.Command{
+// RefreshCmd represents the refresh command
+var RefreshCmd = &cobra.Command{
 	Use:     "refresh",
 	Aliases: []string{"r"},
 	Short:   "Download the latest list of products and their aliases from the endoflife.date API and save it locally.",
@@ -33,12 +33,11 @@ geol c r`,
 }
 
 func init() {
-	cacheCmd.AddCommand(refreshCmd)
 }
 
 func fetchAndSaveProducts(cmd *cobra.Command) error {
 	start := time.Now()
-	productsPath, err := getProductsPath()
+	productsPath, err := GetProductsPath()
 	if err != nil {
 		cmd.PrintErrln("Error retrieving products path:", err)
 		return err

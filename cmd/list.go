@@ -5,6 +5,7 @@ import (
 	"os"
 	"sort"
 
+	"github.com/opt-nc/geol/cmd/cache/utilities"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +21,7 @@ This command reads the products cache (geol/products.json) and prints each produ
 geol cl`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// List the cached products
-		productsPath, err := getProductsPath()
+		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
 			cmd.PrintErrln("Error retrieving products path:", err)
 			return
@@ -33,7 +34,7 @@ geol cl`,
 			return
 		}
 
-		var products ProductsFile
+		var products utilities.ProductsFile
 		if err := json.Unmarshal(data, &products); err != nil {
 			cmd.PrintErrln("Error parsing JSON:", err)
 			return

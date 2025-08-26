@@ -1,4 +1,4 @@
-package cmd
+package utilities
 
 import (
 	"fmt"
@@ -43,8 +43,8 @@ func getAPIResponse(url string) (*http.Response, error) {
 	return resp, nil
 }
 
-// getProductsPath returns the path to the products.json file in the user's config directory.
-func getProductsPath() (string, error) {
+// GetProductsPath returns the path to the products.json file in the user's config directory.
+func GetProductsPath() (string, error) {
 	configDir, err := os.UserConfigDir()
 	if err != nil {
 		return "", err

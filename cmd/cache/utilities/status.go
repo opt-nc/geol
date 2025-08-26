@@ -1,4 +1,4 @@
-package cmd
+package utilities
 
 import (
 	"encoding/json"
@@ -8,8 +8,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// statusCmd represents the status command
-var statusCmd = &cobra.Command{
+// StatusCmd represents the status command
+var StatusCmd = &cobra.Command{
 	Use:     "status",
 	Aliases: []string{"s"},
 	Short:   "Show information about the local products cache file.",
@@ -20,7 +20,7 @@ This command prints the last update date and the number of products currently ca
 geol c s`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Get the cache file path using shared function
-		productsPath, err := getProductsPath()
+		productsPath, err := GetProductsPath()
 		if err != nil {
 			cmd.PrintErrln("Error retrieving products path:", err)
 			return
@@ -66,5 +66,4 @@ geol c s`,
 }
 
 func init() {
-	cacheCmd.AddCommand(statusCmd)
 }
