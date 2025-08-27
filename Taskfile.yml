@@ -1,0 +1,23 @@
+version: "3"
+
+tasks:
+    build:
+        desc: Build the app
+        cmds:
+        - GOFLAGS=-mod=mod go build -o bin/geol main.go
+
+    run: 
+        desc: Run the app
+        cmds:
+        - GOFLAGS=-mod=mod go run main.go
+
+    clean:
+        desc: Remove all retrieved *.png files
+        cmds:
+        - rm -rf bin/
+        - rm -rf dist/
+
+    release:
+        desc: Build all the binaries with goreleaser
+        cmds:
+        - goreleaser release --snapshot --clean

@@ -1,7 +1,4 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-*/
-package cmd
+package product
 
 import (
 	"bytes"
@@ -17,11 +14,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// productCmd represents the product command
-var productCmd = &cobra.Command{
-	Use:   "product",
-	Short: "Display the latest version of one or more products and the end of life date.",
-	Long:  "Display the latest version of one or more products and the end of life date.",
+// ProductCmd represents the product command
+var ProductCmd = &cobra.Command{
+	Use:     "product",
+	Aliases: []string{"p"},
+	Short:   "Display the latest version of one or more products and the end of life date.",
+	Long:    "Show the latest version, release date, and end-of-life information for one or more products. Results are presented in a clear, formatted table for easy comparison and reference.",
+	Example: `geol product <product_name_1> <product_name_2>
+geol product extended <product_name_1> <product_name_2>`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			fmt.Println("Veuillez spécifier au moins un produit.")
@@ -179,5 +179,5 @@ var productCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(productCmd)
+	ProductCmd.AddCommand(extendedCmd)
 }

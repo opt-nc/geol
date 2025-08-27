@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/opt-nc/geol/cmd/cache"
+	"github.com/opt-nc/geol/cmd/product"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -51,4 +52,6 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.AddCommand(cache.CacheCmd)
+	rootCmd.AddCommand(product.ProductCmd)
+
 }

@@ -23,16 +23,16 @@ builds:
       - linux
       - windows
       - darwin
-    binary: mobitag
+    binary: geol
     ldflags:
-      - "-X 'github.com/opt-nc/mobitag/cmd.Version={{.Version}}'"
-      - "-X 'github.com/opt-nc/mobitag/cmd.Commit={{.Commit}}'"
-      - "-X 'github.com/opt-nc/mobitag/cmd.Date={{.Date}}'"
+      - "-X 'github.com/opt-nc/geol/cmd.Version={{.Version}}'"
+      - "-X 'github.com/opt-nc/geol/cmd.Commit={{.Commit}}'"
+      - "-X 'github.com/opt-nc/geol/cmd.Date={{.Date}}'"
 
 archives:
   - # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
-      mobitag_
+      geol_
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "386" }}i386
@@ -63,48 +63,32 @@ checksum:
   name_template: 'checksums.txt'
 
 sboms:
-  - id: mobitag-source
+  - id: geol-source
     artifacts: archive
 
-brews:
-  -
-    # Name of the recipe
-    name: mobitag
+homebrew_casks:
+  - # Name of the recipe
+    name: geol
 
     # Your app's description.
-    description: "mobitag-cli, le chemin le plus court entre le terminal et le sms."
+    description: "geol, CLI to efficiently show end-of-life dates for a number of products"
 
     # Homepage is the link to the project page of the formula.
-    homepage: https://github.com/opt-nc/mobitag-cli
+    homepage: https://github.com/opt-nc/geol
 
     # Repository to push the generated files to.
     repository:
       owner: opt-nc
       name: homebrew-tap
-      # branch: brew-releases/{{ .Version }}
       token: "{{ .Env.PUBLIC_HOMEBREW_TAP_TOKEN }}"
-      # pull_request:
-      #   enabled: true
-      #   base:
-      #     owner: opt-nc
-      #     name: mobitag-cli
-      #     branch: main
 
-    # NOTE: make sure the url_template, the token and given repo (github or
-    # gitlab) owner and name are from the same kind.
-    # We will probably unify this in the next major version like it is
-    # done with scoop.
-
-    # URL which is determined by the given Token (github, gitlab or gitea).
+    # Completions for different shells
     #
-    # Default depends on the client.
-    # Templates: allowed
-    url_template: "https://github.com/opt-nc/mobitag-cli/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
-
-    # Allows you to set a custom download strategy. Note that you'll need
-    # to implement the strategy and add it to your tap repository.
-    # Example: https://docs.brew.sh/Formula-Cookbook#specifying-the-download-strategy-explicitly
-    download_strategy: CurlDownloadStrategy
+    # Templates: allowed.  
+    completions:
+      bash: completions/geol.bash
+      zsh: completions/geol.zsh
+      fish: completions/geol.fish
 
     # Git author used to commit to the repository.
     commit_author:
@@ -117,9 +101,24 @@ brews:
     commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
     
     # Directory inside the repository to put the formula.
-    directory: Formula
+    directory: Cask
 
     # The formula license.
-    license: GPL-3.0
-    
+    license: MIT
+
     skip_upload: auto
+
+    # This information will be used to build the URL section of your Cask.
+    #
+    # You can set the template, as well as additional parameters.
+    # These parameters can be used to provide extra headers, cookies, or other
+    # download requirements for your application.
+    # See https://docs.brew.sh/Cask-Cookbook#additional-url-parameters for more details.
+    #
+    # All fields are optional.
+    url:
+      template: "https://github.com/opt-nc/geol/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+      # Download strategy or format specification
+      # See official Cask Cookbook for allowed values.
+      # Templates: allowed.
+      using: ":homebrew_curl"
