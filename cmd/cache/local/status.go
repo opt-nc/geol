@@ -1,10 +1,11 @@
-package utilities
+package local
 
 import (
 	"encoding/json"
 	"fmt"
 	"os"
 
+	"github.com/opt-nc/geol/utilities"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +21,7 @@ This command prints the last update date and the number of products currently ca
 geol c s`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Get the cache file path using shared function
-		productsPath, err := GetProductsPath()
+		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
 			cmd.PrintErrln("Error retrieving products path:", err)
 			return
@@ -50,13 +51,15 @@ geol c s`,
 		}
 		cmd.Printf("Last cache update: %s %s\n", modTime.Format("2006-01-02 15:04:05"), tz)
 
+		utilities.CheckCacheTimeAndUpdate(cmd, modTime)
+
 		// Read and parse the file to count the keys
 		data, err := os.ReadFile(productsPath)
 		if err != nil {
 			cmd.PrintErrln("Error reading cache file:", err)
 			return
 		}
-		var products ProductsFile
+		var products utilities.ProductsFile
 		if err := json.Unmarshal(data, &products); err != nil {
 			cmd.PrintErrln("Error parsing JSON:", err)
 			return

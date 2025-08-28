@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/glamour"
-	"github.com/opt-nc/geol/cmd/cache/utilities"
+	"github.com/opt-nc/geol/utilities"
 	"github.com/spf13/cobra"
 )
 
@@ -34,11 +34,23 @@ geol product extended <product_name_1> <product_name_2>`,
 			fmt.Println("Erreur lors de la récupération du chemin du cache:", err)
 			return
 		}
+
+		// Check if the file exists
+		info, err := os.Stat(productsPath)
+		if err != nil {
+			cmd.PrintErrln("Cache file not found:", productsPath, "- try running `geol cache refresh`")
+			return
+		}
+
+		modTime := info.ModTime()
+		utilities.CheckCacheTimeAndUpdate(cmd, modTime)
+
 		cacheFile, err := os.Open(productsPath)
 		if err != nil {
 			fmt.Println("Erreur lors de l'ouverture du cache local:", err)
 			return
 		}
+
 		defer func() {
 			if err := cacheFile.Close(); err != nil {
 				fmt.Fprintf(os.Stderr, "Erreur lors de la fermeture du cache local: %v\n", err)

@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"github.com/opt-nc/geol/cmd/cache/utilities"
+	"github.com/opt-nc/geol/cmd/cache/local"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +19,7 @@ var CacheCmd = &cobra.Command{
 }
 
 func init() {
-	CacheCmd.AddCommand(utilities.StatusCmd)
-	CacheCmd.AddCommand(utilities.RefreshCmd)
-	CacheCmd.AddCommand(utilities.ClearCmd)
+	CacheCmd.AddCommand(local.StatusCmd)
+	CacheCmd.AddCommand(local.RefreshCmd)
+	CacheCmd.AddCommand(local.ClearCmd)
 }

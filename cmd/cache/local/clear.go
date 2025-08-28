@@ -1,6 +1,7 @@
-package utilities
+package local
 
 import (
+	"github.com/opt-nc/geol/utilities"
 	"github.com/spf13/cobra"
 )
 
@@ -15,12 +16,12 @@ This command is useful for clearing the cached list of products and their aliase
 	Example: `geol cache clear
 geol c c`,
 	Run: func(cmd *cobra.Command, args []string) {
-		productsPath, err := GetProductsPath()
+		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
 			cmd.PrintErrln("Error retrieving products path:", err)
 			return
 		}
-		if err := removeFileIfExists(productsPath); err != nil {
+		if err := utilities.RemoveFileIfExists(productsPath); err != nil {
 			cmd.PrintErrln("Error deleting cache file:", err)
 			return
 		}

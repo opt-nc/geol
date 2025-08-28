@@ -5,7 +5,7 @@ import (
 	"os"
 	"sort"
 
-	"github.com/opt-nc/geol/cmd/cache/utilities"
+	"github.com/opt-nc/geol/utilities"
 	"github.com/spf13/cobra"
 )
 
@@ -26,6 +26,15 @@ geol cl`,
 			cmd.PrintErrln("Error retrieving products path:", err)
 			return
 		}
+		// Check if the file exists
+		info, err := os.Stat(productsPath)
+		if err != nil {
+			cmd.PrintErrln("Cache file not found:", productsPath, "- try running `geol cache refresh`")
+			return
+		}
+
+		modTime := info.ModTime()
+		utilities.CheckCacheTimeAndUpdate(cmd, modTime)
 
 		// Read and parse the products file
 		data, err := os.ReadFile(productsPath)
