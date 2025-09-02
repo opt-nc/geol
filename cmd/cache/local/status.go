@@ -27,10 +27,9 @@ geol c s`,
 			return
 		}
 
-		// Check if the file exists
-		info, err := os.Stat(productsPath)
+		// Ensure cache exists, create if missing
+		info, err := utilities.EnsureCacheExists(cmd, productsPath)
 		if err != nil {
-			cmd.PrintErrln("Cache file not found:", productsPath, "- try running `geol cache refresh`")
 			return
 		}
 

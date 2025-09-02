@@ -26,10 +26,9 @@ geol cl`,
 			cmd.PrintErrln("Error retrieving products path:", err)
 			return
 		}
-		// Check if the file exists
-		info, err := os.Stat(productsPath)
+		// Ensure cache exists, create if missing
+		info, err := utilities.EnsureCacheExists(cmd, productsPath)
 		if err != nil {
-			cmd.PrintErrln("Cache file not found:", productsPath, "- try running `geol cache refresh`")
 			return
 		}
 
@@ -51,6 +50,7 @@ geol cl`,
 
 		// Print the list of products
 		cmd.Println("Cached products:")
+		cmd.Println("")
 		// Collect and sort product names
 		var names []string
 		for name := range products.Products {

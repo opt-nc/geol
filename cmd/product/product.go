@@ -19,26 +19,25 @@ var ProductCmd = &cobra.Command{
 	Use:     "product",
 	Aliases: []string{"p"},
 	Short:   "Display the latest version of one or more products and the end of life date.",
-	Long:    "Show the latest version, release date, and end-of-life information for one or more products. Results are presented in a clear, formatted table for easy comparison and reference.",
-	Example: `geol product <product_name_1> <product_name_2>
-geol product extended <product_name_1> <product_name_2>`,
+	Long:    "Show the latest version, release date, and end-of-life information for one or more products. Use the `extended` subcommand for more detailed output.",
+	Example: `geol product linux ubuntu
+geol product extended golang k8s`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			fmt.Println("Veuillez spécifier au moins un produit.")
+			fmt.Println("Please specify at least one product.")
 			return
 		}
 
-		// Charger le cache local
+		// Load the local cache
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
-			fmt.Println("Erreur lors de la récupération du chemin du cache:", err)
+			fmt.Println("Error retrieving cache path:", err)
 			return
 		}
 
-		// Check if the file exists
-		info, err := os.Stat(productsPath)
+		// Ensure cache exists, create if missing
+		info, err := utilities.EnsureCacheExists(cmd, productsPath)
 		if err != nil {
-			cmd.PrintErrln("Cache file not found:", productsPath, "- try running `geol cache refresh`")
 			return
 		}
 
@@ -47,13 +46,13 @@ geol product extended <product_name_1> <product_name_2>`,
 
 		cacheFile, err := os.Open(productsPath)
 		if err != nil {
-			fmt.Println("Erreur lors de l'ouverture du cache local:", err)
+			fmt.Println("Error opening local cache:", err)
 			return
 		}
 
 		defer func() {
 			if err := cacheFile.Close(); err != nil {
-				fmt.Fprintf(os.Stderr, "Erreur lors de la fermeture du cache local: %v\n", err)
+				fmt.Fprintf(os.Stderr, "Error closing local cache: %v\n", err)
 			}
 		}()
 
@@ -61,18 +60,17 @@ geol product extended <product_name_1> <product_name_2>`,
 			Products map[string][]string `json:"products"`
 		}
 		if err := json.NewDecoder(cacheFile).Decode(&cache); err != nil {
-			fmt.Println("Erreur lors du décodage du cache:", err)
+			fmt.Println("Error decoding cache:", err)
 			return
 		}
 
-		// Structure pour stocker les résultats
+		// Structure to store results
 		type ProductResult struct {
 			Name        string
 			EolLabel    string
 			ReleaseName string
 			ReleaseDate string
 			EolFrom     string
-			Link        string
 		}
 		var results []ProductResult
 
@@ -96,30 +94,30 @@ geol product extended <product_name_1> <product_name_2>`,
 				}
 			}
 			if !found {
-				continue // produit non trouvé dans le cache
+				continue // product not found in cache
 			}
 
-			// Requête API pour ce produit
+			// API request for this product
 			url := utilities.ApiUrl + "products/" + prod
 			resp, err := http.Get(url)
 			if err != nil {
-				fmt.Printf("Erreur lors de la requête pour %s: %v\n", prod, err)
+				fmt.Printf("Error requesting %s: %v\n", prod, err)
 				continue
 			}
 			body, err := io.ReadAll(resp.Body)
 			if cerr := resp.Body.Close(); cerr != nil {
-				fmt.Fprintf(os.Stderr, "Erreur lors de la fermeture du body HTTP pour %s: %v\n", prod, cerr)
+				fmt.Fprintf(os.Stderr, "Error closing HTTP body for %s: %v\n", prod, cerr)
 			}
 			if err != nil {
-				fmt.Printf("Erreur lecture réponse pour %s: %v\n", prod, err)
+				fmt.Printf("Error reading response for %s: %v\n", prod, err)
 				continue
 			}
 			if resp.StatusCode != 200 {
-				fmt.Printf("Produit %s introuvable sur l'API.\n", prod)
+				fmt.Printf("Product %s not found on the API.\n", prod)
 				continue
 			}
 
-			// Décodage JSON
+			// JSON decoding
 			var apiResp struct {
 				Result struct {
 					Name   string `json:"name"`
@@ -131,13 +129,10 @@ geol product extended <product_name_1> <product_name_2>`,
 						ReleaseDate string `json:"releaseDate"`
 						EolFrom     string `json:"eolFrom"`
 					} `json:"releases"`
-					Links struct {
-						HTML string `json:"html"`
-					} `json:"links"`
 				} `json:"result"`
 			}
 			if err := json.Unmarshal(body, &apiResp); err != nil {
-				fmt.Printf("Erreur décodage JSON pour %s: %v\n", prod, err)
+				fmt.Printf("Error decoding JSON for %s: %v\n", prod, err)
 				continue
 			}
 			var relName, relDate, relEol string
@@ -152,38 +147,36 @@ geol product extended <product_name_1> <product_name_2>`,
 				ReleaseName: relName,
 				ReleaseDate: relDate,
 				EolFrom:     relEol,
-				Link:        apiResp.Result.Links.HTML,
 			})
 		}
 
-		// Affichage tableau markdown avec glamour
+		// Display markdown table with glamour
 		if len(results) == 0 {
-			fmt.Println("Aucun produit trouvé dans le cache et l'API.")
+			fmt.Println("No product found in cache or API.")
 			return
 		}
 		var buf bytes.Buffer
-		// En-tête
-		buf.WriteString("| **Name** | **Version** | **Release Date** | **EOL From** | **Link** |\n")
-		buf.WriteString("|------|--------------|--------------|----------|------|\n")
+		// Header
+		buf.WriteString("| **Name** | **Version** | **Release Date** | **EOL From** |\n")
+		buf.WriteString("|------|--------------|--------------|----------|\n")
 		for _, r := range results {
 			name := strings.ReplaceAll(r.Name, "|", "\\|")
 			//eolLabel := strings.ReplaceAll(r.EolLabel, "|", "\\|")
 			relName := strings.ReplaceAll(r.ReleaseName, "|", "\\|")
 			relDate := strings.ReplaceAll(r.ReleaseDate, "|", "\\|")
 			relEol := strings.ReplaceAll(r.EolFrom, "|", "\\|")
-			link := strings.ReplaceAll(r.Link, "|", "\\|")
-			buf.WriteString(fmt.Sprintf("| %s | %s | %s | %s | %s |\n", name, relName, relDate, relEol, link))
+			buf.WriteString(fmt.Sprintf("| %s | %s | %s | %s |\n", name, relName, relDate, relEol))
 		}
 		// r, _ := glamour.NewTermRenderer(
-		// 	glamour.WithAutoStyle(),
-		// 	//glamour.WithWordWrap(120),
+		//      glamour.WithAutoStyle(),
+		//      //glamour.WithWordWrap(120),
 		// )
 
 		//out, err := glamour.Render(buf.String(), "dark")
 		//out, err := r.Render(buf.String())
 		out, err := glamour.RenderWithEnvironmentConfig(buf.String())
 		if err != nil {
-			fmt.Print(buf.String()) // fallback brut
+			fmt.Print(buf.String()) // raw fallback
 		} else {
 			fmt.Print(out)
 		}

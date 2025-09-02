@@ -11,6 +11,25 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// EnsureCacheExists checks if the cache file exists, creates it if missing, and returns its FileInfo or an error.
+func EnsureCacheExists(cmd *cobra.Command, productsPath string) (os.FileInfo, error) {
+	info, err := os.Stat(productsPath)
+	if err != nil {
+		cmd.PrintErrln("cache not found, creating the cache...")
+		if ferr := FetchAndSaveProducts(cmd); ferr != nil {
+			cmd.PrintErrln("Failed to create cache:", ferr)
+			return nil, ferr
+		}
+		// Try stat again after creating
+		info, err = os.Stat(productsPath)
+		if err != nil {
+			cmd.PrintErrln("Cache still not found after creation attempt:", productsPath)
+			return nil, err
+		}
+	}
+	return info, nil
+}
+
 // Product represents a product with its name and aliases from the API.
 type Product struct {
 	Name    string   `json:"name"`
@@ -62,7 +81,9 @@ func CheckCacheTimeAndUpdate(cmd *cobra.Command, modTime time.Time) {
 	// Check if the cache is older than 24 hours
 	if modTime.Before(time.Now().Add(-24 * time.Hour)) {
 		cmd.Printf("Warning: The cache is older than 24 hours. Updating the cache...\n")
-		FetchAndSaveProducts(cmd)
+		if err := FetchAndSaveProducts(cmd); err != nil {
+			cmd.PrintErrln("Error updating cache:", err)
+		}
 	}
 }
 
@@ -137,6 +158,6 @@ func FetchAndSaveProducts(cmd *cobra.Command) error {
 	}
 	// Print the number of products written and elapsed time
 	elapsed := time.Since(start).Milliseconds()
-	cmd.Printf("%d Products retrieved from endoflife.date. \n(elapsed time: %d ms)\n", len(products.Products), elapsed)
+	cmd.Printf("%d Products retrieved from endoflife.date \n(elapsed time: %d ms)\n", len(products.Products), elapsed)
 	return nil
 }

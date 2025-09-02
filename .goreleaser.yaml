@@ -104,7 +104,7 @@ homebrew_casks:
     directory: Cask
 
     # The formula license.
-    license: MIT
+    license: Apache-2.0
 
     skip_upload: auto
 
