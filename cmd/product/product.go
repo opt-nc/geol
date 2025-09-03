@@ -38,11 +38,11 @@ geol product extended golang k8s`,
 		// Ensure cache exists, create if missing
 		info, err := utilities.EnsureCacheExists(cmd, productsPath)
 		if err != nil {
+			fmt.Println("Error ensuring cache exists:", err)
 			return
 		}
 
-		modTime := info.ModTime()
-		utilities.CheckCacheTimeAndUpdate(cmd, modTime)
+		utilities.CheckCacheTimeAndUpdate(cmd, info.ModTime())
 
 		cacheFile, err := os.Open(productsPath)
 		if err != nil {
@@ -56,10 +56,8 @@ geol product extended golang k8s`,
 			}
 		}()
 
-		var cache struct {
-			Products map[string][]string `json:"products"`
-		}
-		if err := json.NewDecoder(cacheFile).Decode(&cache); err != nil {
+		var products utilities.ProductsFile
+		if err := json.NewDecoder(cacheFile).Decode(&products); err != nil {
 			fmt.Println("Error decoding cache:", err)
 			return
 		}
@@ -76,7 +74,7 @@ geol product extended golang k8s`,
 
 		for _, prod := range args {
 			found := false
-			for name, aliases := range cache.Products {
+			for name, aliases := range products.Products {
 				if strings.EqualFold(prod, name) {
 					found = true
 					prod = name

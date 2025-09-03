@@ -50,9 +50,9 @@ func RemoveFileIfExists(path string) error {
 	return nil
 }
 
-// getAPIResponse performs an HTTP GET request to the given URL and returns the response if status is 200.
+// GetAPIResponse performs an HTTP GET request to the given URL and returns the response if status is 200.
 // The caller is responsible for closing the response body.
-func getAPIResponse(url string) (*http.Response, error) {
+func GetAPIResponse(url string) (*http.Response, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("HTTP request error: %w", err)
@@ -109,7 +109,7 @@ func FetchAndSaveProducts(cmd *cobra.Command) error {
 	}
 
 	// HTTP GET request (extracted)
-	resp, err := getAPIResponse(ApiUrl + "products")
+	resp, err := GetAPIResponse(ApiUrl + "products")
 	if err != nil {
 		cmd.PrintErrln("Error during HTTP request:", err)
 		return err
