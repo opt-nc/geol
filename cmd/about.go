@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Variables injectées au build avec ldflags
+// Variables injected at build time with ldflags
 var (
 	Commit    = "none"
 	Date      = "unknown"
@@ -22,17 +22,17 @@ var (
 var aboutCmd = &cobra.Command{
 	Use:     "about",
 	Aliases: []string{"a"},
-	Short:   "Informations sur ce CLI",
-	Long:    `Ce cli d'innovation disruptive (périmètre fonctionnel, stack, Open Source) est la suite de tout un processus d'innovations et d'un contexte : il convient que l'utilisateur final puisse en prorendre connaissance...depuis le terminal.`,
+	Short:   "Information about this CLI",
+	Long:    `This disruptive innovation CLI (functional scope, stack, Open Source) is the result of a whole process of innovations and context: the end user should be able to learn about it...from the terminal.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Définition des couleurs avec les codes hexadécimaux de l'entreprise
+		// Define colors using the company's hexadecimal codes
 		titleColor := color.New(color.FgHiYellow).Add(color.BgBlue, color.Bold) // Yellow text on dark blue background
 		sloganColor := color.New(color.FgHiWhite, color.Italic)                 // #FFFFFF (white) in italic
 		sectionColor := color.New(color.FgHiYellow)                             // #FBBC09 (yellow)
-		labelColor := color.New(color.FgHiWhite)                                // #FFFFFF (white) pour les labels
-		valueColor := color.New(color.FgHiWhite)                                // #FFFFFF (white) pour les valeurs
+		labelColor := color.New(color.FgHiWhite)                                // #FFFFFF (white) for labels
+		valueColor := color.New(color.FgHiWhite)                                // #FFFFFF (white) for values
 
-		// Générer l'ASCII art en jaune sur fond bleu
+		// Generate ASCII art in yellow on blue background
 		myFigure := figure.NewFigure("geol", "starwars", true)
 		asciiArtLines := myFigure.Slicify()
 		maxLength := 0
@@ -48,12 +48,12 @@ var aboutCmd = &cobra.Command{
 			}
 		}
 
-		// Affichage du slogan en blanc et italique
+		// Display the slogan in white and italic
 		if _, err := sloganColor.Println("\"TODO\""); err != nil { //TODO
 			fmt.Printf("Error printing slogan: %v\n", err)
 		}
 
-		// Affichage des métadonnées injectées
+		// Display injected metadata
 		fmt.Println()
 		if _, err := sectionColor.Println("--- Build Info ---"); err != nil {
 			fmt.Printf("Error printing build info section: %v\n", err)

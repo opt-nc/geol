@@ -8,7 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/glamour"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/lipgloss/table"
 	"github.com/opt-nc/geol/utilities"
 	"github.com/spf13/cobra"
 )
@@ -24,6 +25,13 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		numberFlag, _ := cmd.Flags().GetInt("number")
+
+		if numberFlag < 0 {
+			fmt.Println("Le nombre de lignes doit être positif ou nul.")
+			return
+		}
+
 		if len(args) == 0 {
 			fmt.Println("Please specify at least one product.")
 			return
@@ -170,10 +178,19 @@ to quickly create a Cobra application.`,
 			return
 		}
 
-		var md strings.Builder
-		md.WriteString("# Products\n\n")
+		// Print as a title "# Products"
+		styledTitle := lipgloss.NewStyle().
+			Bold(true).Foreground(lipgloss.Color("#FFFF88")).
+			Background(lipgloss.Color("#5F5FFF")).
+			Render("# Products")
+		fmt.Println(styledTitle)
+
+		// Lipgloss table rendering with lipgloss/table
 		for _, prod := range allProducts {
-			md.WriteString(fmt.Sprintf("## %s\n\n", prod.Name))
+			styledTitle := lipgloss.NewStyle().
+				Bold(true).Foreground(lipgloss.Color("#00AFF8")).
+				Render("\n## " + prod.Name + "\n")
+			fmt.Println(styledTitle)
 
 			// Determine which columns have at least one value
 			showName, showReleaseDate, showLatestName, showLatestDate, showEoasFrom, showEolFrom := false, false, false, false, false, false
@@ -198,43 +215,47 @@ to quickly create a Cobra application.`,
 				}
 			}
 
-			// Build header and separator
-			var header []string
-			var separator []string
+			var columns []string
 			if showName {
-				header = append(header, "**Cycle**")
-				separator = append(separator, "------")
+				columns = append(columns, "Cycle")
 			}
 			if showReleaseDate {
-				header = append(header, "**Release**")
-				separator = append(separator, "--------------")
+				columns = append(columns, "Release")
 			}
 			if showLatestName {
-				header = append(header, "**Latest**")
-				separator = append(separator, "-------------")
+				columns = append(columns, "Latest")
 			}
 			if showLatestDate {
-				header = append(header, "**Latest Release**")
-				separator = append(separator, "-------------")
+				columns = append(columns, "Latest Release")
 			}
 			if showEoasFrom {
-				header = append(header, "**Support**")
-				separator = append(separator, "----------")
+				columns = append(columns, "Support")
 			}
 			if showEolFrom {
-				header = append(header, "**EOL**")
-				separator = append(separator, "---------")
+				columns = append(columns, "EOL")
 			}
 
-			if len(header) == 0 {
-				md.WriteString("_No release data available._\n\n")
+			if len(columns) == 0 {
+				fmt.Println(lipgloss.NewStyle().Italic(true).Foreground(lipgloss.Color("244")).Render("No release data available."))
 				continue
 			}
 
-			md.WriteString("| " + strings.Join(header, " | ") + " |\n")
-			md.WriteString("| " + strings.Join(separator, " | ") + " |\n")
-
-			for _, r := range prod.Releases {
+			// Create and display the table with lipgloss/table
+			t := table.New()
+			// Bold style for column headers
+			headerStyle := lipgloss.NewStyle().Bold(true)
+			styledHeaders := make([]string, len(columns))
+			for i, col := range columns {
+				styledHeaders[i] = headerStyle.Render(col)
+			}
+			t.Headers(styledHeaders...)
+			// Limit the number of displayed rows
+			displayCount := numberFlag
+			if displayCount == 0 || displayCount > len(prod.Releases) {
+				displayCount = len(prod.Releases)
+			}
+			for i := 0; i < displayCount; i++ {
+				r := prod.Releases[i]
 				var row []string
 				if showName {
 					row = append(row, r.Name)
@@ -254,19 +275,24 @@ to quickly create a Cobra application.`,
 				if showEolFrom {
 					row = append(row, r.EolFrom)
 				}
-				md.WriteString("| " + strings.Join(row, " | ") + " |\n")
+				t.Row(row...)
 			}
-			md.WriteString("\n")
-		}
-		out, err := glamour.RenderWithEnvironmentConfig(md.String())
-		if err != nil {
-			fmt.Print(md.String()) // raw fallback
-		} else {
-			fmt.Print(out)
+			t.Border(lipgloss.NormalBorder())
+			t.BorderTop(false)
+			t.BorderBottom(false)
+			t.BorderLeft(false)
+			t.BorderRight(false)
+			t.BorderStyle(lipgloss.NewStyle().BorderForeground(lipgloss.Color("63")))
+			t.StyleFunc(func(row, col int) lipgloss.Style {
+				padding := 1
+				return lipgloss.NewStyle().Foreground(lipgloss.Color("252")).Align(lipgloss.Center).Padding(0, padding)
+			})
+			fmt.Println(t.Render())
+			fmt.Println()
 		}
 	},
 }
 
 func init() {
-	//TODO
+	extendedCmd.Flags().IntP("number", "n", 10, "Number of rows to display (0 to display all)")
 }

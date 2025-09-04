@@ -11,9 +11,9 @@ var Version string = "dev"
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
 	Use:     "version",
-	Aliases: []string{"v"}, // L'alias pour la commande
-	Short:   "Affiche la version de l'application",
-	Long:    `Affiche la version de l'application`,
+	Aliases: []string{"v"}, // Alias for the command
+	Short:   "Display the application version",
+	Long:    `Display the application version`,
 
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println(Version)
