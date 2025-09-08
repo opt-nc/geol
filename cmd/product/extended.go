@@ -17,18 +17,13 @@ import (
 // extendedCmd represents the extended command
 var extendedCmd = &cobra.Command{
 	Use:   "extended",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "Display extended release information for specified products (latest 10 versions by default).",
+	Long:  `Retrieve and display detailed release data for one or more products, including cycle, release dates, support periods, and end-of-life information. By default, the latest 10 versions are shown for each product; use the --number flag to display the latest n versions instead. Results are formatted in a styled table for easy reading. Products must exist in the local cache or be available via the API.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		numberFlag, _ := cmd.Flags().GetInt("number")
 
 		if numberFlag < 0 {
-			fmt.Println("Le nombre de lignes doit être positif ou nul.")
+			fmt.Println("The number of rows must be zero or positive.")
 			return
 		}
 
@@ -277,9 +272,17 @@ to quickly create a Cobra application.`,
 				}
 				t.Row(row...)
 			}
-			t.Border(lipgloss.NormalBorder())
+			// If not all rows are shown, add a final row with '...'
+			if displayCount < len(prod.Releases) {
+				dotsRow := make([]string, len(columns))
+				for i := range dotsRow {
+					dotsRow[i] = "..."
+				}
+				t.Row(dotsRow...)
+			}
+			t.Border(lipgloss.RoundedBorder())
 			t.BorderTop(false)
-			t.BorderBottom(false)
+			t.BorderBottom(true)
 			t.BorderLeft(false)
 			t.BorderRight(false)
 			t.BorderStyle(lipgloss.NewStyle().BorderForeground(lipgloss.Color("63")))
@@ -287,12 +290,22 @@ to quickly create a Cobra application.`,
 				padding := 1
 				return lipgloss.NewStyle().Foreground(lipgloss.Color("252")).Align(lipgloss.Center).Padding(0, padding)
 			})
-			fmt.Println(t.Render())
-			fmt.Println()
+			renderedTable := t.Render()
+			fmt.Println(renderedTable)
+			// Always show a summary line below the table
+			tableLines := strings.Split(renderedTable, "\n")
+			maxLen := 0
+			for _, l := range tableLines {
+				if len(l) > maxLen {
+					maxLen = len(l)
+				}
+			}
+			summary := fmt.Sprintf("%d rows (%d shown)", len(prod.Releases), displayCount)
+			fmt.Printf("%s\n", summary)
 		}
 	},
 }
 
 func init() {
-	extendedCmd.Flags().IntP("number", "n", 10, "Number of rows to display (0 to display all)")
+	extendedCmd.Flags().IntP("number", "n", 10, "Number of latest versions to display (default: 10, 0 to show all)")
 }
