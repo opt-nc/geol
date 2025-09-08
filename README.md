@@ -33,3 +33,11 @@ To build it youself :
 ## 🙏 Acknowledgments
 
 - [endoflife.date](https://endoflife.date) for providing the API
+
+## 💡 More around `endoflife.date` ecosystem
+
+`endoflife` is an ever-growing ecosystem, below some resources to be aware of them : 
+
+- Official [`endoflife.date` Known users](https://github.com/endoflife-date/endoflife.date/wiki/Known-Users)
+- [`hugovk/norwegianblue`](https://github.com/hugovk/norwegianblue)
+- [`xeol`](https://github.com/xeol-io/xeol) _"A scanner for end-of-life (EOL) software and dependencies in container images, filesystems, and SBOMs"_
