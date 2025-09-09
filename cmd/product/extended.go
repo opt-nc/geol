@@ -71,6 +71,7 @@ var extendedCmd = &cobra.Command{
 				LatestDate  string
 				EoasFrom    string
 				EolFrom     string
+				LTS         bool
 			}
 		}
 		var allProducts []ProductReleases
@@ -129,6 +130,7 @@ var extendedCmd = &cobra.Command{
 						} `json:"latest"`
 						EoasFrom string `json:"eoasFrom"`
 						EolFrom  string `json:"eolFrom"`
+						IsLTS    bool   `json:"isLTS"`
 					} `json:"releases"`
 				}
 			}
@@ -144,6 +146,7 @@ var extendedCmd = &cobra.Command{
 				LatestDate  string
 				EoasFrom    string
 				EolFrom     string
+				LTS         bool
 			}
 			for _, r := range apiResp.Result.Releases {
 				releases = append(releases, struct {
@@ -153,6 +156,7 @@ var extendedCmd = &cobra.Command{
 					LatestDate  string
 					EoasFrom    string
 					EolFrom     string
+					LTS         bool
 				}{
 					Name:        r.Name,
 					ReleaseDate: r.ReleaseDate,
@@ -160,6 +164,7 @@ var extendedCmd = &cobra.Command{
 					LatestDate:  r.Latest.Date,
 					EoasFrom:    r.EoasFrom,
 					EolFrom:     r.EolFrom,
+					LTS:         r.IsLTS,
 				})
 			}
 			allProducts = append(allProducts, ProductReleases{
@@ -252,8 +257,25 @@ var extendedCmd = &cobra.Command{
 			for i := 0; i < displayCount; i++ {
 				r := prod.Releases[i]
 				var row []string
+				today := utilities.TodayDateString() // format: YYYY-MM-DD
+				// Helper to color a date string
+				colorDate := func(date string) string {
+					if date == "" {
+						return ""
+					}
+					styleRed := lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
+					styleGreen := lipgloss.NewStyle().Foreground(lipgloss.Color("46"))
+					if date <= today {
+						return styleRed.Render(date)
+					}
+					return styleGreen.Render(date)
+				}
 				if showName {
-					row = append(row, r.Name)
+					nameWithShield := r.Name
+					if r.LTS && r.EolFrom > today {
+						nameWithShield += " 🧰"
+					}
+					row = append(row, nameWithShield)
 				}
 				if showReleaseDate {
 					row = append(row, r.ReleaseDate)
@@ -265,10 +287,10 @@ var extendedCmd = &cobra.Command{
 					row = append(row, r.LatestDate)
 				}
 				if showEoasFrom {
-					row = append(row, r.EoasFrom)
+					row = append(row, colorDate(r.EoasFrom))
 				}
 				if showEolFrom {
-					row = append(row, r.EolFrom)
+					row = append(row, colorDate(r.EolFrom))
 				}
 				t.Row(row...)
 			}

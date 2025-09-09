@@ -11,6 +11,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// TodayDateString retourne la date du jour au format YYYY-MM-DD
+func TodayDateString() string {
+	return time.Now().Format("2006-01-02")
+}
+
 // EnsureCacheExists checks if the cache file exists, creates it if missing, and returns its FileInfo or an error.
 func EnsureCacheExists(cmd *cobra.Command, productsPath string) (os.FileInfo, error) {
 	info, err := os.Stat(productsPath)
