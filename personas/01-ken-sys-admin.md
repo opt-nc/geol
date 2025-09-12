@@ -1,4 +1,4 @@
-# Persona 1: Ken, the SysAdmin (System Administrator)
+# `sysadmin`: Ken, the SysAdmin (System Administrator)
 
 - **Role:** Manages the stability, performance, and security of the infrastructure.
 - **Keywords:** Pragmatic, efficiency, automation, reliability.
