@@ -2,7 +2,7 @@
 
 This directory contains the descriptions of the personas used for the design and development of the `geol` CLI.
 
-Personas are user archetypes that represent the different roles, goals, and frustrations of the people who will interact with our tool, directly or indirectly.
+Personas are user **archetypes that represent the different roles, goals, and frustrations of the people who will interact with our tool, directly or indirectly.**
 
 ## 🤔 Why use personas?
 
