@@ -28,10 +28,10 @@ Each file in this directory describes a specific persona.
 
 The names for our personas are a tribute to pioneers in the field of computer science and software engineering.
 
-- **🐧 Ken (Thompson):** Co-creator of Unix and the Go programming language, foundational for modern system administration.
-- **🚢 Grace (Hopper):** A pioneer of programming languages and inventor of the first compiler, her work on standards and validation reflects the CISO's role.
-- **🌉 Patrick (Debois):** Coined the term "DevOps" and was a key figure in the movement, embodying the bridge between development and operations.
-- **💡 Ada (Lovelace):** Widely regarded as the first computer programmer, representing the core development role.
-- **📊 Gordon (Moore):** Co-founder of Intel and author of Moore's Law, his name represents long-term strategic vision in technology.
-- **✍️ Edsger (Dijkstra):** A major figure in computer science who emphasized mathematical rigor and formal verification, reflecting the auditor's need for proof.
-- **🕊️ Richard (Stallman):** Founder of the GNU Project and a philosophical leader of the free and open-source software movement.
+- **🐧 [Ken (Thompson)](https://en.wikipedia.org/wiki/Ken_Thompson):** Co-creator of Unix and the Go programming language, foundational for modern system administration.
+- **🚢 [Grace (Hopper)](https://en.wikipedia.org/wiki/Grace_Hopper):** A pioneer of programming languages and inventor of the first compiler, her work on standards and validation reflects the CISO's role.
+- **🌉 [Patrick (Debois)](https://en.wikipedia.org/wiki/DevOps):** Coined the term "DevOps" and was a key figure in the movement, embodying the bridge between development and operations.
+- **💡 [Ada (Lovelace)](https://en.wikipedia.org/wiki/Ada_Lovelace):** Widely regarded as the first computer programmer, representing the core development role.
+- **📊 [Gordon (Moore)](https://en.wikipedia.org/wiki/Gordon_Moore):** Co-founder of Intel and author of Moore's Law, his name represents long-term strategic vision in technology.
+- **✍️ [Edsger (Dijkstra)](https://en.wikipedia.org/wiki/Edsger_W._Dijkstra):** A major figure in computer science who emphasized mathematical rigor and formal verification, reflecting the auditor's need for proof.
+- **🕊️ [Richard (Stallman)](https://en.wikipedia.org/wiki/Richard_Stallman):** Founder of the GNU Project and a philosophical leader of the free and open-source software movement.
