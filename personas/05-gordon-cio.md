@@ -1,4 +1,4 @@
-# Persona 5: Gordon, the CIO (Chief Information Officer)
+# `CIO`: Gordon, the CIO (Chief Information Officer)
 
 - **Role:** Responsible for the company's technology strategy.
 - **Keywords:** Strategy, budget, performance, business risk, value.
