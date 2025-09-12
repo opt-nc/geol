@@ -12,7 +12,7 @@ Personas are user **archetypes that represent the different roles, goals, and fr
 
 Each file in this directory describes a specific persona.
 
-## 📋 List of Personas
+## 📋 Personas
 
 - 🛠️ [1. Ken, the SysAdmin](./01-ken-sys-admin.md)
 - 🛡️ [2. Grace, the CISO](./02-grace-ciso.md)
