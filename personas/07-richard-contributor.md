@@ -1,4 +1,4 @@
-# Persona 7: Richard, the Open-Source Contributor
+# `Contributor`: Richard, the Open-Source Contributor
 
 - **Role:** An external developer or DevOps engineer who discovers and wants to use or improve `geol`.
 - **Keywords:** Community, open-source, documentation, contribution, autonomy.
