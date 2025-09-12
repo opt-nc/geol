@@ -1,4 +1,4 @@
-# Persona 2: Grace, the CISO (Chief Information Security Officer)
+#`CISO`: Grace, the CISO (Chief Information Security Officer)
 
 - **Role:** Responsible for risk management, compliance, and data protection.
 - **Keywords:** Risk, compliance, audit, traceability, control.
