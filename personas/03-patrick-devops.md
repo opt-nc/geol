@@ -1,4 +1,4 @@
-# Persona 3: Patrick, the DevOps Engineer
+# `DEVOPS`: Patrick, the DevOps Engineer
 
 - **Role:** At the crossroads of development and operations, he is the guardian of the software factory.
 - **Keywords:** CI/CD, automation, Infrastructure as Code, efficiency, speed.
