@@ -1,4 +1,4 @@
-# Persona 4: Ada, the Developer
+# `Developer`: Ada, the Developer
 
 - **Role:** Designs and develops product features.
 - **Keywords:** Creativity, speed, simplicity, feedback.
