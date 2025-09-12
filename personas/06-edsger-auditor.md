@@ -1,4 +1,4 @@
-# Persona 6: Edsger, the Auditor
+# `Auditor`: Edsger, the Auditor
 
 - **Role:** Verifies the company's compliance with internal or external standards and regulations.
 - **Keywords:** Proof, compliance, regulation, documentation, verification.
