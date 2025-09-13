@@ -1,23 +1,35 @@
 version: "3"
 
 tasks:
-    build:
-        desc: Build the app
-        cmds:
-        - GOFLAGS=-mod=mod go build -o bin/geol main.go
+  build:
+    desc: Build the app
+    cmds:
+      - GOFLAGS=-mod=mod go build -o bin/geol main.go
 
-    run: 
-        desc: Run the app
-        cmds:
-        - GOFLAGS=-mod=mod go run main.go
+  run:
+    desc: Run the app
+    cmds:
+      - GOFLAGS=-mod=mod go run main.go
 
-    clean:
-        desc: Remove all retrieved *.png files
-        cmds:
-        - rm -rf bin/
-        - rm -rf dist/
+  clean:
+    desc: Remove all retrieved *.png files
+    cmds:
+      - rm -rf bin/
+      - rm -rf dist/
 
-    release:
-        desc: Build all the binaries with goreleaser
-        cmds:
-        - goreleaser release --snapshot --clean
+  release:
+    desc: Build all the binaries with goreleaser
+    cmds:
+      - goreleaser release --snapshot --clean
+
+  cheatsheet:
+    desc: Génère la cheatsheet PDF avec version et commit dynamiques
+    cmds:
+      - |
+        VERSION=$(go run main.go version 2>/dev/null || echo dev)
+        COMMIT=$(git rev-parse --short HEAD)
+        sed -e "s/__GEOL_VERSION__/$VERSION/g" -e "s/__GEOL_COMMIT__/$COMMIT/g" cheatsheet_geol.tex > .cheatsheet_geol_tmp.tex
+        xelatex -jobname=cheatsheet_geol .cheatsheet_geol_tmp.tex
+        rm .cheatsheet_geol_tmp.tex
+        rm cheatsheet_geol.aux cheatsheet_geol.log cheatsheet_geol.out 
+        convert -density 300 cheatsheet_geol.pdf cheatsheet_geol.png
