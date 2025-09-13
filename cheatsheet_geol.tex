@@ -1,0 +1,115 @@
+% geol CLI commands cheatsheet
+% Version: __GEOL_VERSION__ | Commit: __GEOL_COMMIT__
+\documentclass[a4paper,10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{geometry}
+\usepackage{multicol}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\geometry{margin=1.5cm, landscape}
+\setlength{\columnsep}{1cm}
+\usepackage{hyperref}
+% Pictograms
+\usepackage{fontawesome5}
+% Color definitions
+\definecolor{geolblue}{HTML}{2563EB}
+\definecolor{geolgreen}{HTML}{059669}
+\definecolor{geolgray}{HTML}{F3F4F6}
+\definecolor{geoldark}{HTML}{1E293B}
+\definecolor{geolorange}{HTML}{F59E42}
+% Title style
+\usepackage{sectsty}
+\sectionfont{\color{geolblue}}
+% Command style
+\newcommand{\cmd}[1]{\textcolor{geolgreen}{\texttt{#1}}}
+% Box style
+\newtcolorbox{geolbox}{colback=geolgray!80!white, colframe=geolblue, boxrule=0.8pt, arc=3pt, left=4pt, right=4pt, top=2pt, bottom=2pt}
+% Compact itemize for geolbox
+\newenvironment{geolitemize}{%
+  \begin{itemize}\setlength{\itemsep}{0.1em}\setlength{\parskip}{0pt}\setlength{\topsep}{0pt}
+}{\end{itemize}}
+% Title styled as a terminal command
+\usepackage{tikz}
+\newtcolorbox{terminaltitle}{colback=black!95!white, colframe=geolgreen, boxrule=1pt, arc=3pt, left=6pt, right=6pt, top=4pt, bottom=4pt}
+\renewcommand{\maketitle}{%
+  \begin{center}
+    \begin{terminaltitle}
+      \centering
+      {\textcolor{geolgreen}{\texttt{geol}}} \\
+      {\color{white}\href{https://github.com/opt-nc/geol}{opt-nc/geol}} \\
+  {\color{white}\small Version: __GEOL_VERSION__ \quad Commit: __GEOL_COMMIT__}\\
+  {\color{white}\small Efficiently show end-of-life dates for a number of products in your terminal}
+    \end{terminaltitle}
+  \end{center}
+}
+\author{\href{https://github.com/opt-nc/geol}{opt-nc/geol}}
+\date{Version: __GEOL_VERSION__ \quad Commit: __GEOL_COMMIT__}
+
+
+\pagestyle{empty}
+\begin{document}
+
+
+
+\maketitle
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\footnotetext[1]{Document automatically generated with \texttt{XeLaTeX}.}
+
+
+% (presentation moved to the title)
+
+
+
+\begin{multicols}{2}
+
+\section*{\faDownload\ Installation}
+
+\begin{geolbox}
+\begin{geolitemize}
+  \item \cmd{brew install opt-nc/geol}
+  \item \cmd{go install github.com/opt-nc/geol@latest}
+  \item \cmd{git clone ...} then \cmd{go build -o geol}
+\end{geolitemize}
+\end{geolbox}
+
+
+\section*{\faTerminal\ Main commands}
+
+\begin{geolbox}
+\begin{geolitemize}
+  \item \cmd{geol list}: List available products
+  \item \cmd{geol about}: Show information about the tool
+  \item \cmd{geol version}: Show the tool version
+\end{geolitemize}
+\end{geolbox}
+
+\section*{\faDatabase\ Cache}
+\begin{geolbox}
+\begin{geolitemize}
+  \item \cmd{geol cache status}: Show local cache status
+  \item \cmd{geol cache clear}: Clear the local cache
+  \item \cmd{geol cache refresh}: Refresh the local cache
+\end{geolitemize}
+\end{geolbox}
+
+\section*{\faLightbulb[regular]\ Tips}
+\begin{geolbox}
+\begin{geolitemize}
+  \item Use the \cmd{--help} option on each command for more information.
+  \item Completions are available for bash, zsh, fish in the \cmd{completions/} folder.
+\end{geolitemize}
+\end{geolbox}
+
+\section*{\faListUl\ Examples}
+\begin{geolbox}
+\begin{geolitemize}
+  \item \cmd{geol list}
+  \item \cmd{geol cache refresh}
+  \item \cmd{geol about}
+\end{geolitemize}
+\end{geolbox}
+
+\end{multicols}
+\end{document}
