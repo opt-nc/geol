@@ -23,13 +23,12 @@ tasks:
       - goreleaser release --snapshot --clean
 
   cheatsheet:
-    desc: Génère la cheatsheet PDF avec version et commit dynamiques
+    desc: Build the PDF cheatsheet (imports version and commit)
     cmds:
       - |
         VERSION=$(go run main.go version 2>/dev/null || echo dev)
         COMMIT=$(git rev-parse --short HEAD)
         sed -e "s/__GEOL_VERSION__/$VERSION/g" -e "s/__GEOL_COMMIT__/$COMMIT/g" cheatsheet_geol.tex > .cheatsheet_geol_tmp.tex
         xelatex -jobname=cheatsheet_geol .cheatsheet_geol_tmp.tex
-        rm .cheatsheet_geol_tmp.tex
-        rm cheatsheet_geol.aux cheatsheet_geol.log cheatsheet_geol.out 
+        rm cheatsheet_geol.aux cheatsheet_geol.log cheatsheet_geol.out .cheatsheet_geol_tmp.tex
         convert -density 300 cheatsheet_geol.pdf cheatsheet_geol.png
