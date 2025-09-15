@@ -5,6 +5,8 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/phuslu/log"
+
 	"github.com/common-nighthawk/go-figure"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -22,15 +24,16 @@ var (
 var aboutCmd = &cobra.Command{
 	Use:     "about",
 	Aliases: []string{"a"},
-	Short:   "Information about this CLI",
+	Example: `geol about`,
+	Short:   "Information about geol",
 	Long:    `This disruptive innovation CLI (functional scope, stack, Open Source) is the result of a whole process of innovations and context: the end user should be able to learn about it...from the terminal.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Define colors using the company's hexadecimal codes
-		titleColor := color.New(color.FgHiYellow).Add(color.BgBlue, color.Bold) // Yellow text on dark blue background
-		sloganColor := color.New(color.FgHiWhite, color.Italic)                 // #FFFFFF (white) in italic
-		sectionColor := color.New(color.FgHiYellow)                             // #FBBC09 (yellow)
-		labelColor := color.New(color.FgHiWhite)                                // #FFFFFF (white) for labels
-		valueColor := color.New(color.FgHiWhite)                                // #FFFFFF (white) for values
+		titleColor := color.New(color.FgHiYellow)               // Yellow text
+		sloganColor := color.New(color.FgHiWhite, color.Italic) // #FFFFFF (white) in italic
+		sectionColor := color.New(color.FgHiYellow)             // #FBBC09 (yellow)
+		labelColor := color.New(color.FgHiWhite)                // #FFFFFF (white) for labels
+		valueColor := color.New(color.FgHiWhite)                // #FFFFFF (white) for values
 
 		// Generate ASCII art in yellow on blue background
 		myFigure := figure.NewFigure("geol", "starwars", true)
@@ -43,100 +46,113 @@ var aboutCmd = &cobra.Command{
 		}
 		for _, line := range asciiArtLines {
 			paddedLine := line + strings.Repeat(" ", maxLength-len(line))
-			if _, err := titleColor.Add(color.BgBlue).Println(paddedLine); err != nil {
-				fmt.Printf("Error printing ASCII art line: %v\n", err)
+			if _, err := titleColor.Println(paddedLine); err != nil {
+				log.Error().Err(err).Msg("Error printing ASCII art line")
 			}
 		}
 
 		// Display the slogan in white and italic
-		if _, err := sloganColor.Println("\"TODO\""); err != nil { //TODO
-			fmt.Printf("Error printing slogan: %v\n", err)
+		if _, err := sloganColor.Println("⏳ Tech doesn’t last forever. Awareness does."); err != nil {
+			log.Error().Err(err).Msg("Error printing slogan")
 		}
 
 		// Display injected metadata
 		fmt.Println()
 		if _, err := sectionColor.Println("--- Build Info ---"); err != nil {
-			fmt.Printf("Error printing build info section: %v\n", err)
+			log.Error().Err(err).Msg("Error printing build info section")
 		}
 
 		if _, err := labelColor.Printf("%-20s ", "GitVersion:"); err != nil {
-			fmt.Printf("Error printing GitVersion label: %v\n", err)
+			log.Error().Err(err).Msg("Error printing GitVersion label")
 		}
 		if _, err := valueColor.Println(Version); err != nil {
-			fmt.Printf("Error printing GitVersion value: %v\n", err)
+			log.Error().Err(err).Msg("Error printing GitVersion value")
 		}
 
 		if _, err := labelColor.Printf("%-20s ", "Git Commit:"); err != nil {
-			fmt.Printf("Error printing Git Commit label: %v\n", err)
+			log.Error().Err(err).Msg("Error printing Git Commit label")
 		}
 		if _, err := valueColor.Println(Commit); err != nil {
-			fmt.Printf("Error printing Git Commit value: %v\n", err)
+			log.Error().Err(err).Msg("Error printing Git Commit value")
 		}
 
 		if _, err := labelColor.Printf("%-20s ", "BuildDate:"); err != nil {
-			fmt.Printf("Error printing BuildDate label: %v\n", err)
+			log.Error().Err(err).Msg("Error printing BuildDate label")
 		}
 		if _, err := valueColor.Println(Date); err != nil {
-			fmt.Printf("Error printing BuildDate value: %v\n", err)
+			log.Error().Err(err).Msg("Error printing BuildDate value")
 		}
 
 		if _, err := labelColor.Printf("%-20s ", "BuiltBy:"); err != nil {
-			fmt.Printf("Error printing BuiltBy label: %v\n", err)
+			log.Error().Err(err).Msg("Error printing BuiltBy label")
 		}
 		if _, err := valueColor.Println(BuiltBy); err != nil {
-			fmt.Printf("Error printing BuiltBy value: %v\n", err)
+			log.Error().Err(err).Msg("Error printing BuiltBy value")
 		}
 
 		if _, err := labelColor.Printf("%-20s ", "GoVersion:"); err != nil {
-			fmt.Printf("Error printing GoVersion label: %v\n", err)
+			log.Error().Err(err).Msg("Error printing GoVersion label")
 		}
 		if _, err := valueColor.Println(GoVersion); err != nil {
-			fmt.Printf("Error printing GoVersion value: %v\n", err)
+			log.Error().Err(err).Msg("Error printing GoVersion value")
 		}
 
 		if _, err := labelColor.Printf("%-20s ", "Compiler:"); err != nil {
-			fmt.Printf("Error printing Compiler label: %v\n", err)
+			log.Error().Err(err).Msg("Error printing Compiler label")
 		}
 		if _, err := valueColor.Println(runtime.Compiler); err != nil {
-			fmt.Printf("Error printing Compiler value: %v\n", err)
+			log.Error().Err(err).Msg("Error printing Compiler value")
 		}
 
 		if _, err := labelColor.Printf("%-20s ", "Platform:"); err != nil {
-			fmt.Printf("Error printing Platform label: %v\n", err)
+			log.Error().Err(err).Msg("Error printing Platform label")
 		}
 		if _, err := valueColor.Printf("%s/%s\n", runtime.GOOS, runtime.GOARCH); err != nil {
-			fmt.Printf("Error printing Platform value: %v\n", err)
+			log.Error().Err(err).Msg("Error printing Platform value")
 		}
 
 		// Affichage des ressources
 		fmt.Println()
 		if _, err := sectionColor.Println("--- Ressources ---"); err != nil {
-			fmt.Printf("Error printing resources section: %v\n", err)
+			log.Error().Err(err).Msg("Error printing resources section")
 		}
 
 		if _, err := labelColor.Printf("%-20s ", "Licence:"); err != nil {
-			fmt.Printf("Error printing Licence label: %v\n", err)
+			log.Error().Err(err).Msg("Error printing Licence label")
 		}
 		if _, err := valueColor.Println("Apache-2.0"); err != nil {
-			fmt.Printf("Error printing Licence value: %v\n", err)
+			log.Error().Err(err).Msg("Error printing Licence value")
 		}
 
 		if _, err := labelColor.Printf("%-20s ", "Code:"); err != nil {
-			fmt.Printf("Error printing Code label: %v\n", err)
+			log.Error().Err(err).Msg("Error printing Code label")
 		}
 		if _, err := valueColor.Println("https://github.com/opt-nc/geol"); err != nil {
-			fmt.Printf("Error printing Code value: %v\n", err)
+			log.Error().Err(err).Msg("Error printing Code value")
 		}
 
-		// if _, err := labelColor.Printf("%-20s ", "Roadmap:"); err != nil {
-		// 	fmt.Printf("Error printing Roadmap label: %v\n", err)
-		// }
-		// if _, err := valueColor.Println("https://github.com/orgs/opt-nc/projects/24"); err != nil {
-		// 	fmt.Printf("Error printing Roadmap value: %v\n", err)
-		// }
+		if _, err := labelColor.Printf("%-20s ", "Roadmap:"); err != nil {
+			log.Error().Err(err).Msg("Error printing Roadmap label")
+		}
+		if _, err := valueColor.Println("https://github.com/orgs/opt-nc/projects/28"); err != nil {
+			log.Error().Err(err).Msg("Error printing Roadmap value")
+		}
+
+		if _, err := labelColor.Printf("%-20s ", "API:"); err != nil {
+			log.Error().Err(err).Msg("Error printing API label")
+		}
+		if _, err := valueColor.Println("https://endoflife.date"); err != nil {
+			log.Error().Err(err).Msg("Error printing API value")
+		}
 	},
 }
 
 func init() {
+	// Set up pretty console writer for phuslu/log
+	log.DefaultLogger.Writer = &log.ConsoleWriter{
+		ColorOutput:    true,
+		QuoteString:    true,
+		EndWithMessage: true,
+	}
 	rootCmd.AddCommand(aboutCmd)
 }

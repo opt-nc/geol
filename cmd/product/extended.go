@@ -16,9 +16,11 @@ import (
 
 // extendedCmd represents the extended command
 var extendedCmd = &cobra.Command{
-	Use:   "extended",
-	Short: "Display extended release information for specified products (latest 10 versions by default).",
-	Long:  `Retrieve and display detailed release data for one or more products, including cycle, release dates, support periods, and end-of-life information. By default, the latest 10 versions are shown for each product; use the --number flag to display the latest n versions instead. Results are formatted in a styled table for easy reading. Products must exist in the local cache or be available via the API.`,
+	Use:     "extended",
+	Aliases: []string{"e"},
+	Example: `geol product extended golang k8s`,
+	Short:   "Display extended release information for specified products (latest 10 versions by default).",
+	Long:    `Retrieve and display detailed release data for one or more products, including cycle, release dates, support periods, and end-of-life information. By default, the latest 10 versions are shown for each product; use the --number flag to display the latest n versions instead. Results are formatted in a styled table for easy reading. Products must exist in the local cache or be available via the API.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		numberFlag, _ := cmd.Flags().GetInt("number")
 
@@ -273,7 +275,7 @@ var extendedCmd = &cobra.Command{
 				if showName {
 					nameWithShield := r.Name
 					if r.LTS && r.EolFrom > today {
-						nameWithShield += " 🧰"
+						nameWithShield += " ✅"
 					}
 					row = append(row, nameWithShield)
 				}

@@ -21,7 +21,8 @@ var ProductCmd = &cobra.Command{
 	Short:   "Display the latest version of one or more products and the end of life date.",
 	Long:    "Show the latest version, release date, and end-of-life information for one or more products. Use the `extended` subcommand for more detailed output.",
 	Example: `geol product linux ubuntu
-geol product extended golang k8s`,
+geol product extended golang k8s
+geol product describe nodejs`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			fmt.Println("Please specify at least one product.")
@@ -159,19 +160,12 @@ geol product extended golang k8s`,
 		buf.WriteString("|------|--------------|--------------|----------|\n")
 		for _, r := range results {
 			name := strings.ReplaceAll(r.Name, "|", "\\|")
-			//eolLabel := strings.ReplaceAll(r.EolLabel, "|", "\\|")
 			relName := strings.ReplaceAll(r.ReleaseName, "|", "\\|")
 			relDate := strings.ReplaceAll(r.ReleaseDate, "|", "\\|")
 			relEol := strings.ReplaceAll(r.EolFrom, "|", "\\|")
 			buf.WriteString(fmt.Sprintf("| %s | %s | %s | %s |\n", name, relName, relDate, relEol))
 		}
-		// r, _ := glamour.NewTermRenderer(
-		//      glamour.WithAutoStyle(),
-		//      //glamour.WithWordWrap(120),
-		// )
 
-		//out, err := glamour.Render(buf.String(), "dark")
-		//out, err := r.Render(buf.String())
 		out, err := glamour.RenderWithEnvironmentConfig(buf.String())
 		if err != nil {
 			fmt.Print(buf.String()) // raw fallback
@@ -183,4 +177,5 @@ geol product extended golang k8s`,
 
 func init() {
 	ProductCmd.AddCommand(extendedCmd)
+	ProductCmd.AddCommand(describeCmd)
 }
