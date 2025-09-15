@@ -20,6 +20,38 @@ func init() {
 	rootCmd.AddCommand(listCmd)
 }
 
+// getProductsWithCacheRefresh tries to unmarshal products from file, refreshes cache if needed, and returns the products.
+func getProductsWithCacheRefresh(cmd *cobra.Command, productsPath string) (utilities.ProductsFile, error) {
+	var products utilities.ProductsFile
+	if err := readAndUnmarshalProducts(productsPath, &products); err != nil {
+		log.Error().Err(err).Msg("Error parsing JSON")
+		log.Warn().Msg("Trying to refresh the cache now...")
+		if err := utilities.FetchAndSaveProducts(cmd); err != nil {
+			log.Error().Err(err).Msg("Error refreshing cache")
+			return products, err
+		}
+		log.Info().Msg("Cache refreshed successfully. Now getting the products...")
+		if err := readAndUnmarshalProducts(productsPath, &products); err != nil {
+			log.Error().Err(err).Msg("Error parsing JSON after refresh")
+			return products, err
+		}
+	}
+	return products, nil
+}
+
+// readAndUnmarshalProducts lit le fichier et fait l'unmarshal JSON dans products.
+func readAndUnmarshalProducts(productsPath string, products *utilities.ProductsFile) error {
+	data, err := os.ReadFile(productsPath)
+	if err != nil {
+		log.Error().Err(err).Msg("Error reading products file")
+		return err
+	}
+	if err := json.Unmarshal(data, products); err != nil {
+		return err
+	}
+	return nil
+}
+
 // listCmd represents the list command
 var listCmd = &cobra.Command{
 	Use:     "list",
@@ -45,31 +77,9 @@ geol l`,
 		modTime := info.ModTime()
 		utilities.CheckCacheTimeAndUpdate(cmd, modTime)
 
-		// Read and parse the products file
-		data, err := os.ReadFile(productsPath)
+		products, err := getProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {
-			log.Error().Err(err).Msg("Error reading products file - try running `geol cache refresh`")
 			return
-		}
-
-		var products utilities.ProductsFile
-		if err := json.Unmarshal(data, &products); err != nil {
-			log.Error().Err(err).Msg("Error parsing JSON")
-			log.Warn().Msg("Trying to refresh the cache now...")
-			if err := utilities.FetchAndSaveProducts(cmd); err != nil {
-				log.Error().Err(err).Msg("Error refreshing cache")
-				return
-			}
-			log.Info().Msg("Cache refreshed successfully. Now getting the products...")
-			data, err = os.ReadFile(productsPath)
-			if err != nil {
-				log.Error().Err(err).Msg("Error reading products file after refresh")
-				return
-			}
-			if err := json.Unmarshal(data, &products); err != nil {
-				log.Error().Err(err).Msg("Error parsing JSON after refresh")
-				return
-			}
 		}
 
 		// Print the list of products

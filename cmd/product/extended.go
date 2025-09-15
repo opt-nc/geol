@@ -272,21 +272,31 @@ var extendedCmd = &cobra.Command{
 					}
 					return styleGreen.Render(date)
 				}
+
+				// Helper to strikethrough a string if EOL is before today
+				strikethroughIfEOL := func(val string) string {
+					if r.EolFrom != "" && r.EolFrom < today {
+						return "\x1b[9m" + val + "\x1b[0m"
+					}
+					return val
+				}
+
 				if showName {
 					nameWithShield := r.Name
-					if r.LTS && r.EolFrom > today {
-						nameWithShield += " ✅"
+					if r.LTS {
+						nameWithShield += " (LTS)"
 					}
+					nameWithShield = strikethroughIfEOL(nameWithShield)
 					row = append(row, nameWithShield)
 				}
 				if showReleaseDate {
 					row = append(row, r.ReleaseDate)
 				}
 				if showLatestName {
-					row = append(row, r.LatestName)
+					row = append(row, strikethroughIfEOL(r.LatestName))
 				}
 				if showLatestDate {
-					row = append(row, r.LatestDate)
+					row = append(row, strikethroughIfEOL(r.LatestDate))
 				}
 				if showEoasFrom {
 					row = append(row, colorDate(r.EoasFrom))

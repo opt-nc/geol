@@ -46,7 +46,11 @@ var describeCmd = &cobra.Command{
 			cmd.PrintErrln("Error opening local cache:", err)
 			return
 		}
-		defer cacheFile.Close()
+		defer func() {
+			if err := cacheFile.Close(); err != nil {
+				cmd.PrintErrln("Error closing cache file:", err)
+			}
+		}()
 
 		var products utilities.ProductsFile
 		if err := json.NewDecoder(cacheFile).Decode(&products); err != nil {
@@ -88,7 +92,11 @@ var describeCmd = &cobra.Command{
 			cmd.PrintErrln("Error fetching markdown:", err)
 			return
 		}
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				cmd.PrintErrln("Error closing response body:", err)
+			}
+		}()
 
 		if resp.StatusCode != http.StatusOK {
 			cmd.Printf("Failed to fetch markdown. Status: %s\n", resp.Status)
@@ -134,7 +142,9 @@ var describeCmd = &cobra.Command{
 			Foreground(lipgloss.Color("#FFFF88")).
 			Background(lipgloss.Color("#5F5FFF")).
 			Render("# `" + mainName + "`")
-		os.Stdout.Write([]byte(styledTitle))
+		if _, err := os.Stdout.Write([]byte(styledTitle)); err != nil {
+			cmd.PrintErrln("Error writing styled title:", err)
+		}
 
 		// Glamour rendering only on the description
 		out, err := glamour.RenderWithEnvironmentConfig(desc)
@@ -142,7 +152,9 @@ var describeCmd = &cobra.Command{
 			cmd.PrintErrln("Error rendering markdown:", err)
 			return
 		}
-		os.Stdout.Write([]byte(out))
+		if _, err := os.Stdout.Write([]byte(out)); err != nil {
+			cmd.PrintErrln("Error writing rendered markdown:", err)
+		}
 
 	},
 }
