@@ -322,7 +322,7 @@ var extendedCmd = &cobra.Command{
 			t.BorderStyle(lipgloss.NewStyle().BorderForeground(lipgloss.Color("63")))
 			t.StyleFunc(func(row, col int) lipgloss.Style {
 				padding := 1
-				return lipgloss.NewStyle().Foreground(lipgloss.Color("252")).Align(lipgloss.Center).Padding(0, padding)
+				return lipgloss.NewStyle().Foreground(lipgloss.Color("252")).Align(lipgloss.Left).Padding(0, padding)
 			})
 			renderedTable := t.Render()
 			fmt.Println(renderedTable)

@@ -8,8 +8,21 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 )
+
+func InitLogger() {
+	log.DefaultLogger = log.Logger{
+		TimeField:  "time",
+		TimeFormat: "15:04",
+		Writer: &log.ConsoleWriter{
+			ColorOutput:    true,
+			QuoteString:    true,
+			EndWithMessage: true,
+		},
+	}
+}
 
 // TodayDateString retourne la date du jour au format YYYY-MM-DD
 func TodayDateString() string {
@@ -20,15 +33,15 @@ func TodayDateString() string {
 func EnsureCacheExists(cmd *cobra.Command, productsPath string) (os.FileInfo, error) {
 	info, err := os.Stat(productsPath)
 	if err != nil {
-		cmd.PrintErrln("cache not found, creating the cache...")
+		log.Warn().Err(err).Msg("cache not found, creating the cache...")
 		if ferr := FetchAndSaveProducts(cmd); ferr != nil {
-			cmd.PrintErrln("Failed to create cache:", ferr)
+			log.Error().Err(ferr).Msg("Failed to create cache")
 			return nil, ferr
 		}
 		// Try stat again after creating
 		info, err = os.Stat(productsPath)
 		if err != nil {
-			cmd.PrintErrln("Cache still not found after creation attempt:", productsPath)
+			log.Error().Err(err).Str("path", productsPath).Msg("Cache still not found after creation attempt")
 			return nil, err
 		}
 	}
@@ -82,12 +95,12 @@ func GetProductsPath() (string, error) {
 }
 
 func CheckCacheTimeAndUpdate(cmd *cobra.Command, modTime time.Time) {
-	cmd.Printf("Cache last updated: %s\n", modTime.Format("2006-01-02 15:04:05"))
+	log.Info().Msg("Cache last updated " + modTime.Format("2006-01-02 15:04:05"))
 	// Check if the cache is older than 24 hours
 	if modTime.Before(time.Now().Add(-24 * time.Hour)) {
-		cmd.Printf("Warning: The cache is older than 24 hours. Updating the cache...\n")
+		log.Warn().Msg("The cache is older than 24 hours. Updating the cache...")
 		if err := FetchAndSaveProducts(cmd); err != nil {
-			cmd.PrintErrln("Error updating cache:", err)
+			log.Error().Err(err).Msg("Error updating cache")
 		}
 	}
 }
@@ -103,25 +116,25 @@ func FetchAndSaveProducts(cmd *cobra.Command) error {
 	start := time.Now()
 	productsPath, err := GetProductsPath()
 	if err != nil {
-		cmd.PrintErrln("Error retrieving products path:", err)
+		log.Error().Err(err).Msg("Error retrieving products path")
 		return err
 	}
 
 	// Ensure the directory exists
 	if err := createDirectoryIfNotExists(productsPath); err != nil {
-		cmd.PrintErrln("Error ensuring directory exists:", err)
+		log.Error().Err(err).Msg("Error ensuring directory exists")
 		return err
 	}
 
 	// HTTP GET request (extracted)
 	resp, err := GetAPIResponse(ApiUrl + "products")
 	if err != nil {
-		cmd.PrintErrln("Error during HTTP request:", err)
+		log.Error().Err(err).Msg("Error during HTTP request")
 		return err
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			cmd.PrintErrln("Error closing response body:", err)
+			log.Error().Err(err).Msg("Error closing response body")
 		}
 	}()
 
@@ -133,7 +146,7 @@ func FetchAndSaveProducts(cmd *cobra.Command) error {
 
 	decoder := json.NewDecoder(resp.Body)
 	if err := decoder.Decode(&apiResp); err != nil {
-		cmd.PrintErrln("Error decoding JSON:", err)
+		log.Error().Err(err).Msg("Error decoding JSON")
 		return err
 	}
 
@@ -147,22 +160,23 @@ func FetchAndSaveProducts(cmd *cobra.Command) error {
 	// Marshal the data to JSON
 	data, err := json.MarshalIndent(products, "", "  ")
 	if err != nil {
-		cmd.PrintErrln("Error serializing JSON:", err)
+		log.Error().Err(err).Msg("Error serializing JSON")
 		return err
 	}
 
 	// Remove the file if it exists (extracted)
 	if err := RemoveFileIfExists(productsPath); err != nil {
-		cmd.PrintErrln("Error removing old file:", err)
+		log.Error().Err(err).Msg("Error removing old file")
 		return err
 	}
 	// Save to file
 	if err := os.WriteFile(productsPath, data, 0644); err != nil {
-		cmd.PrintErrln("Error writing file:", err)
+		log.Error().Err(err).Msg("Error writing file")
 		return err
 	}
 	// Print the number of products written and elapsed time
 	elapsed := time.Since(start).Milliseconds()
-	cmd.Printf("%d Products retrieved from endoflife.date \n(elapsed time: %d ms)\n", len(products.Products), elapsed)
+	//log.Info().Msg(fmt.Sprintf("%d Products retrieved from endoflife.date \n(elapsed time: %d ms)\n", len(products.Products), elapsed))
+	log.Info().Int("Number of products", len(products.Products)).Int64("elapsed time (ms)", elapsed).Msg("")
 	return nil
 }

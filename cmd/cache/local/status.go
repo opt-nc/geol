@@ -2,12 +2,16 @@ package local
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 
 	"github.com/opt-nc/geol/utilities"
+	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 )
+
+func init() {
+	utilities.InitLogger()
+}
 
 // StatusCmd represents the status command
 var StatusCmd = &cobra.Command{
@@ -18,50 +22,32 @@ var StatusCmd = &cobra.Command{
 
 This command prints the last update date and the number of products currently cached in geol/products.json. It helps verify if the cache is present and up to date.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Get the cache file path using shared function
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
-			cmd.PrintErrln("Error retrieving products path:", err)
+			log.Error().Err(err).Msg("Error retrieving products path")
 			return
 		}
 
-		// Ensure cache exists, create if missing
 		info, err := utilities.EnsureCacheExists(cmd, productsPath)
 		if err != nil {
 			return
 		}
 
-		// Print the last update date with system timezone
 		modTime := info.ModTime()
-		zone, offset := modTime.Zone()
-		tz := zone
-		if offset != 0 {
-			// Format offset as "+02:00" or "-07:00"
-			sign := "+"
-			if offset < 0 {
-				sign = "-"
-				offset = -offset
-			}
-			hours := offset / 3600
-			minutes := (offset % 3600) / 60
-			tz = fmt.Sprintf("%s%02d:%02d", sign, hours, minutes)
-		}
-		cmd.Printf("Last cache update: %s %s\n", modTime.Format("2006-01-02 15:04:05"), tz)
 
 		utilities.CheckCacheTimeAndUpdate(cmd, modTime)
 
-		// Read and parse the file to count the keys
 		data, err := os.ReadFile(productsPath)
 		if err != nil {
-			cmd.PrintErrln("Error reading cache file:", err)
+			log.Error().Err(err).Msg("Error reading cache file")
 			return
 		}
 		var products utilities.ProductsFile
 		if err := json.Unmarshal(data, &products); err != nil {
-			cmd.PrintErrln("Error parsing JSON:", err)
+			log.Error().Err(err).Msg("Error parsing JSON")
 			return
 		}
-		cmd.Printf("Number of items in cache: %d\n", len(products.Products))
+		log.Info().Int("Number of products", len(products.Products)).Msg("")
 	},
 }
 

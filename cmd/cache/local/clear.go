@@ -2,8 +2,14 @@ package local
 
 import (
 	"github.com/opt-nc/geol/utilities"
+	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 )
+
+func init() {
+	// Initialisation du logger global
+	utilities.InitLogger()
+}
 
 // ClearCmd represents the clear command
 var ClearCmd = &cobra.Command{
@@ -16,16 +22,13 @@ This command is useful for clearing the cached list of products and their aliase
 	Run: func(cmd *cobra.Command, args []string) {
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
-			cmd.PrintErrln("Error retrieving products path:", err)
+			log.Error().Err(err).Msg("Error retrieving products path")
 			return
 		}
 		if err := utilities.RemoveFileIfExists(productsPath); err != nil {
-			cmd.PrintErrln("Error deleting cache file:", err)
+			log.Error().Err(err).Msg("Error deleting cache file")
 			return
 		}
-		cmd.Println("Local products cache cleared successfully.")
+		log.Info().Msg("Local products cache cleared successfully.")
 	},
-}
-
-func init() {
 }

@@ -2,6 +2,7 @@ package cache
 
 import (
 	"github.com/opt-nc/geol/cmd/cache/local"
+	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 )
 
@@ -13,7 +14,7 @@ var CacheCmd = &cobra.Command{
 	Long:    `The cache command is used to update the local cache in the user's config directory, in 'geol/products.json'. It provides subcommands to refresh, clear, and check the status of the cache.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := cmd.Help(); err != nil {
-			cmd.PrintErrln("Error displaying help:", err)
+			log.Error().Err(err).Msg("Error displaying help")
 		}
 	},
 }
