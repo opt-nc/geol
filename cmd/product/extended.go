@@ -11,8 +11,14 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 	"github.com/opt-nc/geol/utilities"
+	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 )
+
+func init() {
+	extendedCmd.Flags().IntP("number", "n", 10, "Number of latest versions to display (default: 10, 0 to show all)")
+	utilities.InitLogger()
+}
 
 // extendedCmd represents the extended command
 var extendedCmd = &cobra.Command{
@@ -25,24 +31,24 @@ var extendedCmd = &cobra.Command{
 		numberFlag, _ := cmd.Flags().GetInt("number")
 
 		if numberFlag < 0 {
-			fmt.Println("The number of rows must be zero or positive.")
+			log.Warn().Msg("The number of rows must be zero or positive.")
 			return
 		}
 
 		if len(args) == 0 {
-			fmt.Println("Please specify at least one product.")
+			log.Warn().Msg("Please specify at least one product.")
 			return
 		}
 
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
-			fmt.Println("Error retrieving cache path:", err)
+			log.Error().Err(err).Msg("Error retrieving cache path")
 			return
 		}
 
 		info, err := utilities.EnsureCacheExists(cmd, productsPath)
 		if err != nil {
-			fmt.Println("Error ensuring cache exists:", err)
+			log.Error().Err(err).Msg("Error ensuring cache exists")
 			return
 		}
 
@@ -50,17 +56,17 @@ var extendedCmd = &cobra.Command{
 
 		cacheFile, err := os.Open(productsPath)
 		if err != nil {
-			fmt.Println("Error opening cache:", err)
+			log.Error().Err(err).Msg("Error opening cache")
 			return
 		}
 		defer func() {
 			if err := cacheFile.Close(); err != nil {
-				fmt.Fprintf(os.Stderr, "Error closing cache: %v\n", err)
+				log.Error().Err(err).Msg("Error closing cache")
 			}
 		}()
 		var products utilities.ProductsFile
 		if err := json.NewDecoder(cacheFile).Decode(&products); err != nil {
-			fmt.Println("Error decoding cache:", err)
+			log.Error().Err(err).Msg("Error decoding cache")
 			return
 		}
 
@@ -104,19 +110,19 @@ var extendedCmd = &cobra.Command{
 			url := utilities.ApiUrl + "products/" + prod
 			resp, err := http.Get(url)
 			if err != nil {
-				cmd.Printf("Error requesting %s: %v\n", prod, err)
+				log.Error().Err(err).Msgf("Error requesting %s", prod)
 				continue
 			}
 			body, err := io.ReadAll(resp.Body)
 			if cerr := resp.Body.Close(); cerr != nil {
-				fmt.Fprintf(os.Stderr, "Error closing HTTP body for %s: %v\n", prod, cerr)
+				log.Error().Err(cerr).Msgf("Error closing HTTP body for %s", prod)
 			}
 			if err != nil {
-				fmt.Printf("Error reading response for %s: %v\n", prod, err)
+				log.Error().Err(err).Msgf("Error reading response for %s", prod)
 				continue
 			}
 			if resp.StatusCode != 200 {
-				fmt.Printf("Product %s not found on the API.\n", prod)
+				log.Warn().Msgf("Product %s not found on the API.", prod)
 				continue
 			}
 
@@ -137,7 +143,7 @@ var extendedCmd = &cobra.Command{
 				}
 			}
 			if err := json.Unmarshal(body, &apiResp); err != nil {
-				fmt.Printf("Error decoding JSON for %s: %v\n", prod, err)
+				log.Error().Err(err).Msgf("Error decoding JSON for %s", prod)
 				continue
 			}
 
@@ -176,7 +182,7 @@ var extendedCmd = &cobra.Command{
 		}
 
 		if len(allProducts) == 0 {
-			fmt.Println("Aucun produit trouvé dans le cache ou l'API.")
+			log.Warn().Msg("Aucun produit trouvé dans le cache ou l'API.")
 			return
 		}
 
@@ -338,8 +344,4 @@ var extendedCmd = &cobra.Command{
 			fmt.Printf("%s\n", summary)
 		}
 	},
-}
-
-func init() {
-	extendedCmd.Flags().IntP("number", "n", 10, "Number of latest versions to display (default: 10, 0 to show all)")
 }

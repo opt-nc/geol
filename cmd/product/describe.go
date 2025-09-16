@@ -10,8 +10,13 @@ import (
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/opt-nc/geol/utilities"
+	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 )
+
+func init() {
+	utilities.InitLogger()
+}
 
 // describeCmd represents the describe command
 var describeCmd = &cobra.Command{
@@ -23,7 +28,7 @@ var describeCmd = &cobra.Command{
 	Args:    cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) != 1 {
-			cmd.Println("Please specify exactly one product.")
+			log.Error().Msg("Please specify exactly one product.")
 			return
 		}
 		prodArg := args[0]
@@ -31,30 +36,30 @@ var describeCmd = &cobra.Command{
 		// Check the cache
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
-			cmd.PrintErrln("Error retrieving cache path:", err)
+			log.Error().Err(err).Msg("Error retrieving cache path")
 			return
 		}
 		info, err := utilities.EnsureCacheExists(cmd, productsPath)
 		if err != nil {
-			cmd.PrintErrln("Error ensuring cache exists:", err)
+			log.Error().Err(err).Msg("Error ensuring cache exists")
 			return
 		}
 		utilities.CheckCacheTimeAndUpdate(cmd, info.ModTime())
 
 		cacheFile, err := os.Open(productsPath)
 		if err != nil {
-			cmd.PrintErrln("Error opening local cache:", err)
+			log.Error().Err(err).Msg("Error opening local cache")
 			return
 		}
 		defer func() {
 			if err := cacheFile.Close(); err != nil {
-				cmd.PrintErrln("Error closing cache file:", err)
+				log.Error().Err(err).Msg("Error closing cache file")
 			}
 		}()
 
 		var products utilities.ProductsFile
 		if err := json.NewDecoder(cacheFile).Decode(&products); err != nil {
-			cmd.PrintErrln("Error decoding cache:", err)
+			log.Error().Err(err).Msg("Error decoding cache")
 			return
 		}
 
@@ -79,7 +84,7 @@ var describeCmd = &cobra.Command{
 			}
 		}
 		if !found {
-			cmd.Printf("Product '%s' not found in cache.\n", prodArg)
+			log.Warn().Msgf("Product '%s' not found in cache.", prodArg)
 			return
 		}
 
@@ -89,23 +94,23 @@ var describeCmd = &cobra.Command{
 		// Retrieve the Markdown content
 		resp, err := http.Get(mdUrl)
 		if err != nil {
-			cmd.PrintErrln("Error fetching markdown:", err)
+			log.Error().Err(err).Msg("Error fetching markdown")
 			return
 		}
 		defer func() {
 			if err := resp.Body.Close(); err != nil {
-				cmd.PrintErrln("Error closing response body:", err)
+				log.Error().Err(err).Msg("Error closing response body")
 			}
 		}()
 
 		if resp.StatusCode != http.StatusOK {
-			cmd.Printf("Failed to fetch markdown. Status: %s\n", resp.Status)
+			log.Warn().Msgf("Failed to fetch markdown. Status: %s", resp.Status)
 			return
 		}
 
 		mdBytes, err := io.ReadAll(resp.Body)
 		if err != nil {
-			cmd.PrintErrln("Error reading markdown:", err)
+			log.Error().Err(err).Msg("Error reading markdown")
 			return
 		}
 
@@ -132,7 +137,7 @@ var describeCmd = &cobra.Command{
 		}
 		desc := strings.TrimRight(strings.Join(descLines, "\n"), "\n")
 		if desc == "" {
-			cmd.Println("No description found in markdown.")
+			log.Warn().Msg("No description found in markdown.")
 			return
 		}
 
@@ -143,21 +148,18 @@ var describeCmd = &cobra.Command{
 			Background(lipgloss.Color("#5F5FFF")).
 			Render("# `" + mainName + "`")
 		if _, err := os.Stdout.Write([]byte(styledTitle)); err != nil {
-			cmd.PrintErrln("Error writing styled title:", err)
+			log.Error().Err(err).Msg("Error writing styled title")
 		}
 
 		// Glamour rendering only on the description
 		out, err := glamour.RenderWithEnvironmentConfig(desc)
 		if err != nil {
-			cmd.PrintErrln("Error rendering markdown:", err)
+			log.Error().Err(err).Msg("Error rendering markdown")
 			return
 		}
 		if _, err := os.Stdout.Write([]byte(out)); err != nil {
-			cmd.PrintErrln("Error writing rendered markdown:", err)
+			log.Error().Err(err).Msg("Error writing rendered markdown")
 		}
 
 	},
-}
-
-func init() {
 }

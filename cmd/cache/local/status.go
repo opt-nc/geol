@@ -50,6 +50,3 @@ This command prints the last update date and the number of products currently ca
 		log.Info().Int("Number of products", len(products.Products)).Msg("")
 	},
 }
-
-func init() {
-}

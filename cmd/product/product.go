@@ -11,8 +11,15 @@ import (
 
 	"github.com/charmbracelet/glamour"
 	"github.com/opt-nc/geol/utilities"
+	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 )
+
+func init() {
+	ProductCmd.AddCommand(extendedCmd)
+	ProductCmd.AddCommand(describeCmd)
+	utilities.InitLogger()
+}
 
 // ProductCmd represents the product command
 var ProductCmd = &cobra.Command{
@@ -25,21 +32,21 @@ geol product extended golang k8s
 geol product describe nodejs`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			fmt.Println("Please specify at least one product.")
+			log.Warn().Msg("Please specify at least one product.")
 			return
 		}
 
 		// Load the local cache
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
-			fmt.Println("Error retrieving cache path:", err)
+			log.Error().Err(err).Msg("Error retrieving cache path")
 			return
 		}
 
 		// Ensure cache exists, create if missing
 		info, err := utilities.EnsureCacheExists(cmd, productsPath)
 		if err != nil {
-			fmt.Println("Error ensuring cache exists:", err)
+			log.Error().Err(err).Msg("Error ensuring cache exists")
 			return
 		}
 
@@ -47,19 +54,19 @@ geol product describe nodejs`,
 
 		cacheFile, err := os.Open(productsPath)
 		if err != nil {
-			fmt.Println("Error opening local cache:", err)
+			log.Error().Err(err).Msg("Error opening local cache")
 			return
 		}
 
 		defer func() {
 			if err := cacheFile.Close(); err != nil {
-				fmt.Fprintf(os.Stderr, "Error closing local cache: %v\n", err)
+				log.Error().Err(err).Msg("Error closing local cache")
 			}
 		}()
 
 		var products utilities.ProductsFile
 		if err := json.NewDecoder(cacheFile).Decode(&products); err != nil {
-			fmt.Println("Error decoding cache:", err)
+			log.Error().Err(err).Msg("Error decoding cache")
 			return
 		}
 
@@ -100,19 +107,19 @@ geol product describe nodejs`,
 			url := utilities.ApiUrl + "products/" + prod
 			resp, err := http.Get(url)
 			if err != nil {
-				fmt.Printf("Error requesting %s: %v\n", prod, err)
+				log.Error().Err(err).Msgf("Error requesting %s", prod)
 				continue
 			}
 			body, err := io.ReadAll(resp.Body)
 			if cerr := resp.Body.Close(); cerr != nil {
-				fmt.Fprintf(os.Stderr, "Error closing HTTP body for %s: %v\n", prod, cerr)
+				log.Error().Err(cerr).Msgf("Error closing HTTP body for %s", prod)
 			}
 			if err != nil {
-				fmt.Printf("Error reading response for %s: %v\n", prod, err)
+				log.Error().Err(err).Msgf("Error reading response for %s", prod)
 				continue
 			}
 			if resp.StatusCode != 200 {
-				fmt.Printf("Product %s not found on the API.\n", prod)
+				log.Warn().Msgf("Product %s not found on the API.", prod)
 				continue
 			}
 
@@ -131,7 +138,7 @@ geol product describe nodejs`,
 				} `json:"result"`
 			}
 			if err := json.Unmarshal(body, &apiResp); err != nil {
-				fmt.Printf("Error decoding JSON for %s: %v\n", prod, err)
+				log.Error().Err(err).Msgf("Error decoding JSON for %s", prod)
 				continue
 			}
 			var relName, relDate, relEol string
@@ -151,7 +158,7 @@ geol product describe nodejs`,
 
 		// Display markdown table with glamour
 		if len(results) == 0 {
-			fmt.Println("No product found in cache or API.")
+			log.Warn().Msg("No product found in cache or API.")
 			return
 		}
 		var buf bytes.Buffer
@@ -173,9 +180,4 @@ geol product describe nodejs`,
 			fmt.Print(out)
 		}
 	},
-}
-
-func init() {
-	ProductCmd.AddCommand(extendedCmd)
-	ProductCmd.AddCommand(describeCmd)
 }
