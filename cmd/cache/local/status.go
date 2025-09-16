@@ -1,9 +1,6 @@
 package local
 
 import (
-	"encoding/json"
-	"os"
-
 	"github.com/opt-nc/geol/utilities"
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
@@ -30,6 +27,7 @@ This command prints the last update date and the number of products currently ca
 
 		info, err := utilities.EnsureCacheExists(cmd, productsPath)
 		if err != nil {
+			log.Error().Err(err).Msg("Error ensuring cache exists")
 			return
 		}
 
@@ -37,14 +35,9 @@ This command prints the last update date and the number of products currently ca
 
 		utilities.CheckCacheTimeAndUpdate(cmd, modTime)
 
-		data, err := os.ReadFile(productsPath)
+		products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {
-			log.Error().Err(err).Msg("Error reading cache file")
-			return
-		}
-		var products utilities.ProductsFile
-		if err := json.Unmarshal(data, &products); err != nil {
-			log.Error().Err(err).Msg("Error parsing JSON")
+			log.Error().Err(err).Msg("Error retrieving products from cache")
 			return
 		}
 		log.Info().Int("Number of products", len(products.Products)).Msg("")

@@ -1,7 +1,6 @@
 package product
 
 import (
-	"encoding/json"
 	"io"
 	"net/http"
 	"os"
@@ -46,20 +45,9 @@ var describeCmd = &cobra.Command{
 		}
 		utilities.CheckCacheTimeAndUpdate(cmd, info.ModTime())
 
-		cacheFile, err := os.Open(productsPath)
+		products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {
-			log.Error().Err(err).Msg("Error opening local cache")
-			return
-		}
-		defer func() {
-			if err := cacheFile.Close(); err != nil {
-				log.Error().Err(err).Msg("Error closing cache file")
-			}
-		}()
-
-		var products utilities.ProductsFile
-		if err := json.NewDecoder(cacheFile).Decode(&products); err != nil {
-			log.Error().Err(err).Msg("Error decoding cache")
+			log.Error().Err(err).Msg("Error retrieving products from cache")
 			return
 		}
 

@@ -180,3 +180,35 @@ func FetchAndSaveProducts(cmd *cobra.Command) error {
 	log.Info().Int("Number of products", len(products.Products)).Int64("elapsed time (ms)", elapsed).Msg("")
 	return nil
 }
+
+// GetProductsWithCacheRefresh tries to unmarshal products from file, refreshes cache if needed, and returns the products.
+func GetProductsWithCacheRefresh(cmd *cobra.Command, productsPath string) (ProductsFile, error) {
+	var products ProductsFile
+	if err := readAndUnmarshalProducts(productsPath, &products); err != nil {
+		log.Error().Err(err).Msg("Error parsing JSON")
+		log.Warn().Msg("Trying to refresh the cache now...")
+		if err := FetchAndSaveProducts(cmd); err != nil {
+			log.Error().Err(err).Msg("Error refreshing cache")
+			return products, err
+		}
+		log.Info().Msg("Cache refreshed successfully. Now getting the products...")
+		if err := readAndUnmarshalProducts(productsPath, &products); err != nil {
+			log.Error().Err(err).Msg("Error parsing JSON after refresh")
+			return products, err
+		}
+	}
+	return products, nil
+}
+
+// readAndUnmarshalProducts lit le fichier et fait l'unmarshal JSON dans products.
+func readAndUnmarshalProducts(productsPath string, products *ProductsFile) error {
+	data, err := os.ReadFile(productsPath)
+	if err != nil {
+		log.Error().Err(err).Msg("Error reading products file")
+		return err
+	}
+	if err := json.Unmarshal(data, products); err != nil {
+		return err
+	}
+	return nil
+}

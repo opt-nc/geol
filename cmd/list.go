@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
-	"os"
 	"sort"
 
 	"github.com/opt-nc/geol/utilities"
@@ -18,38 +16,6 @@ func init() {
 		EndWithMessage: true,
 	}
 	rootCmd.AddCommand(listCmd)
-}
-
-// getProductsWithCacheRefresh tries to unmarshal products from file, refreshes cache if needed, and returns the products.
-func getProductsWithCacheRefresh(cmd *cobra.Command, productsPath string) (utilities.ProductsFile, error) {
-	var products utilities.ProductsFile
-	if err := readAndUnmarshalProducts(productsPath, &products); err != nil {
-		log.Error().Err(err).Msg("Error parsing JSON")
-		log.Warn().Msg("Trying to refresh the cache now...")
-		if err := utilities.FetchAndSaveProducts(cmd); err != nil {
-			log.Error().Err(err).Msg("Error refreshing cache")
-			return products, err
-		}
-		log.Info().Msg("Cache refreshed successfully. Now getting the products...")
-		if err := readAndUnmarshalProducts(productsPath, &products); err != nil {
-			log.Error().Err(err).Msg("Error parsing JSON after refresh")
-			return products, err
-		}
-	}
-	return products, nil
-}
-
-// readAndUnmarshalProducts lit le fichier et fait l'unmarshal JSON dans products.
-func readAndUnmarshalProducts(productsPath string, products *utilities.ProductsFile) error {
-	data, err := os.ReadFile(productsPath)
-	if err != nil {
-		log.Error().Err(err).Msg("Error reading products file")
-		return err
-	}
-	if err := json.Unmarshal(data, products); err != nil {
-		return err
-	}
-	return nil
 }
 
 // listCmd represents the list command
@@ -77,8 +43,9 @@ geol l`,
 		modTime := info.ModTime()
 		utilities.CheckCacheTimeAndUpdate(cmd, modTime)
 
-		products, err := getProductsWithCacheRefresh(cmd, productsPath)
+		products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {
+			log.Error().Err(err).Msg("Error retrieving products from cache")
 			return
 		}
 

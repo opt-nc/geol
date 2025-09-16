@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -54,19 +53,9 @@ var extendedCmd = &cobra.Command{
 
 		utilities.CheckCacheTimeAndUpdate(cmd, info.ModTime())
 
-		cacheFile, err := os.Open(productsPath)
+		products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {
-			log.Error().Err(err).Msg("Error opening cache")
-			return
-		}
-		defer func() {
-			if err := cacheFile.Close(); err != nil {
-				log.Error().Err(err).Msg("Error closing cache")
-			}
-		}()
-		var products utilities.ProductsFile
-		if err := json.NewDecoder(cacheFile).Decode(&products); err != nil {
-			log.Error().Err(err).Msg("Error decoding cache")
+			log.Error().Err(err).Msg("Error retrieving products from cache")
 			return
 		}
 
