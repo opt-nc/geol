@@ -277,12 +277,21 @@ var extendedCmd = &cobra.Command{
 				}
 
 				if showName {
-					nameWithShield := r.Name
+					nameWithBadge := r.Name
+					nameWithBadge = strikethroughIfEOL(nameWithBadge)
+					var ltsBadge string
 					if r.LTS {
-						nameWithShield += " (LTS)"
+						badgeStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("15")).Padding(0, 1)
+						today := utilities.TodayDateString()
+						if r.EolFrom != "" && r.EolFrom >= today {
+							badgeStyle = badgeStyle.Background(lipgloss.Color("34")).PaddingLeft(0).PaddingRight(0) // dark green
+						} else {
+							badgeStyle = badgeStyle.Background(lipgloss.Color("196")).PaddingLeft(0).PaddingRight(0) // rouge
+						}
+						ltsBadge = badgeStyle.Render("LTS")
+						nameWithBadge += " " + ltsBadge
 					}
-					nameWithShield = strikethroughIfEOL(nameWithShield)
-					row = append(row, nameWithShield)
+					row = append(row, nameWithBadge)
 				}
 				if showReleaseDate {
 					row = append(row, r.ReleaseDate)
