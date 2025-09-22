@@ -15,14 +15,8 @@ import (
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "geol",
-	Short: "A brief description of your application", // TODO: Update this description
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`, // TODO: Update this description
-}
+	Short: "Show end-of-life dates for products",
+	Long:  `Efficiently show end-of-life dates for a number of products in your terminal using https://endoflife.date/ API `}
 
 func Execute() {
 	rootCmd.PersistentFlags().BoolP("help", "h", false, "Help for this command")

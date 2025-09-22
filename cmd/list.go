@@ -1,50 +1,51 @@
 package cmd
 
 import (
-	"encoding/json"
-	"os"
 	"sort"
 
 	"github.com/opt-nc/geol/utilities"
+	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 )
+
+func init() {
+	// Set up pretty console writer for phuslu/log
+	log.DefaultLogger.Writer = &log.ConsoleWriter{
+		ColorOutput:    true,
+		QuoteString:    true,
+		EndWithMessage: true,
+	}
+	rootCmd.AddCommand(listCmd)
+}
 
 // listCmd represents the list command
 var listCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"l"},
 	Short:   "List all cached product names.",
-	Long: `Displays a sorted list of all product names currently stored in the local cache file.
-
-This command reads the products cache (geol/products.json) and prints each product name to the console. If the cache file is missing or cannot be read, an error message is shown and a suggestion to refresh the cache is provided. Use this command to quickly view which products are available in your local cache.`,
-	Example: `geol cache list
-geol cl`,
+	Long:    `Displays the list of all product names currently available on https://endoflife.date.`,
+	Example: `geol list
+geol l`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// List the cached products
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
-			cmd.PrintErrln("Error retrieving products path:", err)
+			log.Error().Err(err).Msg("Error retrieving products path")
 			return
 		}
 		// Ensure cache exists, create if missing
 		info, err := utilities.EnsureCacheExists(cmd, productsPath)
 		if err != nil {
+			log.Error().Err(err).Msg("Error ensuring cache exists")
 			return
 		}
 
 		modTime := info.ModTime()
 		utilities.CheckCacheTimeAndUpdate(cmd, modTime)
 
-		// Read and parse the products file
-		data, err := os.ReadFile(productsPath)
+		products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {
-			cmd.PrintErrln("Error reading products file:", err, "- try running `geol cache refresh`")
-			return
-		}
-
-		var products utilities.ProductsFile
-		if err := json.Unmarshal(data, &products); err != nil {
-			cmd.PrintErrln("Error parsing JSON:", err)
+			log.Error().Err(err).Msg("Error retrieving products from cache")
 			return
 		}
 
@@ -62,8 +63,4 @@ geol cl`,
 		}
 
 	},
-}
-
-func init() {
-	rootCmd.AddCommand(listCmd)
 }

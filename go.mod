@@ -1,6 +1,6 @@
 module github.com/opt-nc/geol
 
-go 1.25.0
+go 1.25.1
 
 require (
 	github.com/charmbracelet/fang v0.4.0
@@ -8,6 +8,7 @@ require (
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
 	github.com/fatih/color v1.18.0
+	github.com/phuslu/log v1.0.120
 	github.com/spf13/cobra v1.9.1
 )
 

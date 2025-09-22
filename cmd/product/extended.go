@@ -5,60 +5,57 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
 	"github.com/opt-nc/geol/utilities"
+	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 )
 
+func init() {
+	extendedCmd.Flags().IntP("number", "n", 10, "Number of latest versions to display (default: 10, 0 to show all)")
+	utilities.InitLogger()
+}
+
 // extendedCmd represents the extended command
 var extendedCmd = &cobra.Command{
-	Use:   "extended",
-	Short: "Display extended release information for specified products (latest 10 versions by default).",
-	Long:  `Retrieve and display detailed release data for one or more products, including cycle, release dates, support periods, and end-of-life information. By default, the latest 10 versions are shown for each product; use the --number flag to display the latest n versions instead. Results are formatted in a styled table for easy reading. Products must exist in the local cache or be available via the API.`,
+	Use:     "extended",
+	Aliases: []string{"e"},
+	Example: `geol product extended golang k8s`,
+	Short:   "Display extended release information for specified products (latest 10 versions by default).",
+	Long:    `Retrieve and display detailed release data for one or more products, including cycle, release dates, support periods, and end-of-life information. By default, the latest 10 versions are shown for each product; use the --number flag to display the latest n versions instead. Results are formatted in a styled table for easy reading. Products must exist in the local cache or be available via the API.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		numberFlag, _ := cmd.Flags().GetInt("number")
 
 		if numberFlag < 0 {
-			fmt.Println("The number of rows must be zero or positive.")
+			log.Warn().Msg("The number of rows must be zero or positive.")
 			return
 		}
 
 		if len(args) == 0 {
-			fmt.Println("Please specify at least one product.")
+			log.Warn().Msg("Please specify at least one product.")
 			return
 		}
 
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
-			fmt.Println("Error retrieving cache path:", err)
+			log.Error().Err(err).Msg("Error retrieving cache path")
 			return
 		}
 
 		info, err := utilities.EnsureCacheExists(cmd, productsPath)
 		if err != nil {
-			fmt.Println("Error ensuring cache exists:", err)
+			log.Error().Err(err).Msg("Error ensuring cache exists")
 			return
 		}
 
 		utilities.CheckCacheTimeAndUpdate(cmd, info.ModTime())
 
-		cacheFile, err := os.Open(productsPath)
+		products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {
-			fmt.Println("Error opening cache:", err)
-			return
-		}
-		defer func() {
-			if err := cacheFile.Close(); err != nil {
-				fmt.Fprintf(os.Stderr, "Error closing cache: %v\n", err)
-			}
-		}()
-		var products utilities.ProductsFile
-		if err := json.NewDecoder(cacheFile).Decode(&products); err != nil {
-			fmt.Println("Error decoding cache:", err)
+			log.Error().Err(err).Msg("Error retrieving products from cache")
 			return
 		}
 
@@ -102,19 +99,19 @@ var extendedCmd = &cobra.Command{
 			url := utilities.ApiUrl + "products/" + prod
 			resp, err := http.Get(url)
 			if err != nil {
-				cmd.Printf("Error requesting %s: %v\n", prod, err)
+				log.Error().Err(err).Msgf("Error requesting %s", prod)
 				continue
 			}
 			body, err := io.ReadAll(resp.Body)
 			if cerr := resp.Body.Close(); cerr != nil {
-				fmt.Fprintf(os.Stderr, "Error closing HTTP body for %s: %v\n", prod, cerr)
+				log.Error().Err(cerr).Msgf("Error closing HTTP body for %s", prod)
 			}
 			if err != nil {
-				fmt.Printf("Error reading response for %s: %v\n", prod, err)
+				log.Error().Err(err).Msgf("Error reading response for %s", prod)
 				continue
 			}
 			if resp.StatusCode != 200 {
-				fmt.Printf("Product %s not found on the API.\n", prod)
+				log.Warn().Msgf("Product %s not found on the API.", prod)
 				continue
 			}
 
@@ -135,7 +132,7 @@ var extendedCmd = &cobra.Command{
 				}
 			}
 			if err := json.Unmarshal(body, &apiResp); err != nil {
-				fmt.Printf("Error decoding JSON for %s: %v\n", prod, err)
+				log.Error().Err(err).Msgf("Error decoding JSON for %s", prod)
 				continue
 			}
 
@@ -174,7 +171,7 @@ var extendedCmd = &cobra.Command{
 		}
 
 		if len(allProducts) == 0 {
-			fmt.Println("Aucun produit trouvé dans le cache ou l'API.")
+			log.Warn().Msg("Aucun produit trouvé dans le cache ou l'API.")
 			return
 		}
 
@@ -270,21 +267,40 @@ var extendedCmd = &cobra.Command{
 					}
 					return styleGreen.Render(date)
 				}
-				if showName {
-					nameWithShield := r.Name
-					if r.LTS && r.EolFrom > today {
-						nameWithShield += " 🧰"
+
+				// Helper to strikethrough a string if EOL is before today
+				strikethroughIfEOL := func(val string) string {
+					if r.EolFrom != "" && r.EolFrom < today {
+						return "\x1b[9m" + val + "\x1b[0m"
 					}
-					row = append(row, nameWithShield)
+					return val
+				}
+
+				if showName {
+					nameWithBadge := r.Name
+					nameWithBadge = strikethroughIfEOL(nameWithBadge)
+					var ltsBadge string
+					if r.LTS {
+						badgeStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("15")).Padding(0, 1)
+						today := utilities.TodayDateString()
+						if r.EolFrom != "" && r.EolFrom >= today {
+							badgeStyle = badgeStyle.Background(lipgloss.Color("34")).PaddingLeft(0).PaddingRight(0) // dark green
+						} else {
+							badgeStyle = badgeStyle.Background(lipgloss.Color("196")).PaddingLeft(0).PaddingRight(0) // rouge
+						}
+						ltsBadge = badgeStyle.Render("LTS")
+						nameWithBadge += " " + ltsBadge
+					}
+					row = append(row, nameWithBadge)
 				}
 				if showReleaseDate {
 					row = append(row, r.ReleaseDate)
 				}
 				if showLatestName {
-					row = append(row, r.LatestName)
+					row = append(row, strikethroughIfEOL(r.LatestName))
 				}
 				if showLatestDate {
-					row = append(row, r.LatestDate)
+					row = append(row, strikethroughIfEOL(r.LatestDate))
 				}
 				if showEoasFrom {
 					row = append(row, colorDate(r.EoasFrom))
@@ -310,7 +326,7 @@ var extendedCmd = &cobra.Command{
 			t.BorderStyle(lipgloss.NewStyle().BorderForeground(lipgloss.Color("63")))
 			t.StyleFunc(func(row, col int) lipgloss.Style {
 				padding := 1
-				return lipgloss.NewStyle().Foreground(lipgloss.Color("252")).Align(lipgloss.Center).Padding(0, padding)
+				return lipgloss.NewStyle().Foreground(lipgloss.Color("252")).Align(lipgloss.Left).Padding(0, padding)
 			})
 			renderedTable := t.Render()
 			fmt.Println(renderedTable)
@@ -326,8 +342,4 @@ var extendedCmd = &cobra.Command{
 			fmt.Printf("%s\n", summary)
 		}
 	},
-}
-
-func init() {
-	extendedCmd.Flags().IntP("number", "n", 10, "Number of latest versions to display (default: 10, 0 to show all)")
 }

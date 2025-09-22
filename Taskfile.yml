@@ -10,9 +10,8 @@ tasks:
     desc: Run the app
     cmds:
       - GOFLAGS=-mod=mod go run main.go
-
   clean:
-    desc: Remove all retrieved *.png files
+    desc: Remove all the build files
     cmds:
       - rm -rf bin/
       - rm -rf dist/
