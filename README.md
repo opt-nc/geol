@@ -1,3 +1,16 @@
+# Geol
+
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/opt-nc/geol)
+![GitHub Workflow Status](https://github.com/opt-nc/geol/actions/workflows/test-release.yml/badge.svg)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/opt-nc/geol)
+![GitHub License](https://img.shields.io/github/license/opt-nc/geol)
+![GitHub Repo stars](https://img.shields.io/github/stars/opt-nc/geol)
+[![Powered By: GoReleaser](https://img.shields.io/badge/powered%20by-goreleaser-green.svg)](https://github.com/goreleaser)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
+[![GoReportCard](https://goreportcard.com/badge/github.com//opt-nc/geol)](https://goreportcard.com/report/github.com/opt-nc/geol)
+[![GoDoc](https://godoc.org/github.com/opt-nc/geol?status.svg)](https://pkg.go.dev/github.com/opt-nc/geol)
+[![lint-workflow](https://github.com/opt-nc/geol/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/opt-nc/geol/actions/workflows/golangci-lint.yml)
+
 # ❔ About
 
 `geol` is a Go based alternative to the famous [`hugovk/norwegianblue`](https://github.com/hugovk/norwegianblue) python
