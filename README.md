@@ -33,14 +33,41 @@ Its ambitions are to :
 - [🔬 Gitlab 15.8 analysis w. endoflife.date, grype, (x)eol 🐋](https://dev.to/optnc/gitlab-158-analysis-w-endoflifedate-grype-xeol-24b0)
 - [endoflife.date Series' Articles](https://dev.to/adriens/series/21232)
 
-# 🚀 Quickstart
+
+# 🚀 QuickStart
+
+To install:
+
+- **Manually**: Go to the [releases](https://github.com/opt-nc/geol/releases) page and download the version corresponding to your operating system
+- **Automatic**: Install via `brew` see [homebrew-tap](https://github.com/opt-nc/homebrew-tap)
+
+1. Install `geol`
+
+With `brew`:
+
+```sh
+brew install opt-nc/homebrew-tap/geol
+```
+
+Or simply with `go`:
+
+```sh
+go install github.com/opt-nc/geol@latest
+```
+
+2. Update:
+
+```sh
+brew update && brew upgrade
+geol version
+```
 
 ## 🤓 Build it yourself
 
 To build it youself : 
 
 ```sh
-
+go build -o geol ./cmd/geol
 ```
 
 ## 🙏 Acknowledgments
