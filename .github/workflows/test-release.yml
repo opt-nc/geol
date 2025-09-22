@@ -34,15 +34,14 @@ jobs:
         if: steps.release.outputs.new_release_published == 'true' # Run only if a new release was published
         uses: goreleaser/goreleaser-action@9c156ee8a17a598857849441385a2041ef570552
         with:
-          # either 'goreleaser' (default) or 'goreleaser-pro'
           distribution: goreleaser
-          # 'latest', 'nightly', or a semver
           version: '~> v2'
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PUBLIC_HOMEBREW_TAP_TOKEN: ${{ secrets.PUBLIC_HOMEBREW_TAP_TOKEN }}
       - name: Generate artifact attestation
+        if: steps.release.outputs.new_release_published == 'true' # Run only if a new release was published
         uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be
         with:
           subject-checksums: ./dist/checksums.txt
