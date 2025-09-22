@@ -1,0 +1,69 @@
+name: 🎯 Test & release
+
+on:
+  push:
+    branches: [main, develop]
+
+permissions:
+  id-token: write
+  contents: write
+  attestations: write
+  pull-requests: write
+
+jobs:
+  test-release:
+    name: 🎯 Test & Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: 📦 Semantic Release
+        id: release
+        uses: cycjimmy/semantic-release-action@16ca923e6ccbb50770c415a0ccd43709a8c5f7a4
+        with:
+          extra_plugins: |
+            @semantic-release/exec
+            @semantic-release/git
+            @semantic-release/release-notes-generator
+            conventional-changelog-conventionalcommits
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: anchore/sbom-action/download-syft@7b36ad622f042cab6f59a75c2ac24ccb256e9b45 # installs syft
+      - name: Run GoReleaser
+        if: steps.release.outputs.new_release_published == 'true' # Run only if a new release was published
+        uses: goreleaser/goreleaser-action@9c156ee8a17a598857849441385a2041ef570552
+        with:
+          # either 'goreleaser' (default) or 'goreleaser-pro'
+          distribution: goreleaser
+          # 'latest', 'nightly', or a semver
+          version: '~> v2'
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PUBLIC_HOMEBREW_TAP_TOKEN: ${{ secrets.PUBLIC_HOMEBREW_TAP_TOKEN }}
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be
+        with:
+          subject-checksums: ./dist/checksums.txt
+        
+
+      - name: 👍 Merge main back to dev
+        if: github.ref == 'refs/heads/main' && steps.release.outputs.new_release_published == 'true'
+        run: |
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git fetch
+            git checkout develop
+            git branch --set-upstream-to=origin/develop develop
+            git pull
+            git merge --no-ff main -m "Auto-merge main back to dev"
+            git push
+
+      - name: 🧹 Delete pre-releases
+        if: github.ref == 'refs/heads/main' && steps.release.outputs.new_release_published == 'true'
+        uses: dev-drprasad/delete-older-releases@dfbe6be2a006e9475dfcbe5b8d201f1824c2a9fe
+        with:
+          delete_tag_pattern: develop
+          keep_latest: 0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
