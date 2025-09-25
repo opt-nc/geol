@@ -1,0 +1,43 @@
+name: Close Stale Issues and PRs
+
+on:
+  schedule:
+    - cron: '0 13 * * *' # Runs daily at midnight UTC+11
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: write # only for delete-branch option
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+        - name: Checkout repository
+          uses: actions/checkout@v5
+        - name: Ensure stale label exists with correct properties
+          run: |
+            gh label create stale --force --color FFD700 --description "Issues and PRs marked as stale"
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        - name: Close Stale Issues and PRs
+          uses: actions/stale@3a9db7e6a41a89f618792c92c0e97cc736e1b13f
+          with:
+            repo-token: ${{ secrets.GITHUB_TOKEN }}
+            stale-issue-message: 'This issue has been automatically marked as stale because it has not had recent activity. It will be closed in 7 days if no further activity occurs.'
+            stale-pr-message: 'This pull request has been automatically marked as stale because it has not had recent activity. It will be closed in 14 days if no further activity occurs.'
+            stale-issue-label: 'stale'
+            stale-pr-label: 'stale'
+            close-issue-message: 'Closing this issue due to prolonged inactivity.'
+            close-pr-message: 'Closing this pull request due to prolonged inactivity.'
+            days-before-issue-stale: 90
+            days-before-issue-close: 7
+            days-before-pr-stale: 90
+            days-before-pr-close: 14
+            exempt-draft-pr: true
+            delete-branch: true
+            operations-per-run: 60
+
