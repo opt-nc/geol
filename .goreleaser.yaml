@@ -101,7 +101,7 @@ homebrew_casks:
     commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
     
     # Directory inside the repository to put the formula.
-    directory: Cask
+    directory: Casks
 
     # The formula license.
     license: Apache-2.0
