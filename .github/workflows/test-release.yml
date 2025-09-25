@@ -32,7 +32,7 @@ jobs:
       - uses: anchore/sbom-action/download-syft@7b36ad622f042cab6f59a75c2ac24ccb256e9b45 # installs syft
       - name: Run GoReleaser
         if: steps.release.outputs.new_release_published == 'true' # Run only if a new release was published
-        uses: goreleaser/goreleaser-action@9c156ee8a17a598857849441385a2041ef570552
+        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a
         with:
           distribution: goreleaser
           version: '~> v2'
