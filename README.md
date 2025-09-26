@@ -46,7 +46,7 @@ To install:
 With `brew`:
 
 ```sh
-brew install opt-nc/homebrew-tap/geol
+brew install --cask opt-nc/homebrew-tap/geol
 ```
 
 Or simply with `go`:
