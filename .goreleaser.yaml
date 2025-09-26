@@ -12,9 +12,8 @@ before:
   hooks:
     # You may remove this if you don't use go modules.
     - go mod tidy
-    # you may remove this if you don't need go generate
-    - go generate ./...
-
+    - ./scripts/completions.sh
+    - ./scripts/manpages.sh
 builds:
   - main: main.go
     env:
@@ -46,6 +45,7 @@ archives:
         formats: [tar.gz]
     files:
       - src: completions/*
+      - src: manpages/*
 
 changelog:
   sort: asc
@@ -83,6 +83,9 @@ homebrew_casks:
       owner: opt-nc
       name: homebrew-tap
       token: "{{ .Env.PUBLIC_HOMEBREW_TAP_TOKEN }}"
+
+    manpages:
+      - "manpages/geol.1.gz"
 
     # Completions for different shells
     #
