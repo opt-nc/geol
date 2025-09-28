@@ -10,6 +10,7 @@
 [![GoReportCard](https://goreportcard.com/badge/github.com//opt-nc/geol)](https://goreportcard.com/report/github.com/opt-nc/geol)
 [![GoDoc](https://godoc.org/github.com/opt-nc/geol?status.svg)](https://pkg.go.dev/github.com/opt-nc/geol)
 [![lint-workflow](https://github.com/opt-nc/geol/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/opt-nc/geol/actions/workflows/golangci-lint.yml)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11239/badge)](https://www.bestpractices.dev/projects/11239)
 
 # ❔ About
 
