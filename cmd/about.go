@@ -29,11 +29,9 @@ var aboutCmd = &cobra.Command{
 	Long:    `This disruptive innovation CLI (functional scope, stack, Open Source) is the result of a whole process of innovations and context: the end user should be able to learn about it...from the terminal.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Define colors using the company's hexadecimal codes
-		titleColor := color.New(color.FgHiYellow)               // Yellow text
-		sloganColor := color.New(color.FgHiWhite, color.Italic) // #FFFFFF (white) in italic
-		sectionColor := color.New(color.FgHiYellow)             // #FBBC09 (yellow)
-		labelColor := color.New(color.FgHiWhite)                // #FFFFFF (white) for labels
-		valueColor := color.New(color.FgHiWhite)                // #FFFFFF (white) for values
+		titleColor := color.New(color.FgHiYellow)   // Yellow text
+		sloganColor := color.New(color.Italic)      // #FFFFFF (white) in italic
+		sectionColor := color.New(color.FgHiYellow) // #FBBC09 (yellow)
 
 		// Generate ASCII art in yellow on blue background
 		myFigure := figure.NewFigure("geol", "starwars", true)
@@ -62,52 +60,52 @@ var aboutCmd = &cobra.Command{
 			log.Error().Err(err).Msg("Error printing build info section")
 		}
 
-		if _, err := labelColor.Printf("%-20s ", "GitVersion:"); err != nil {
+		if _, err := fmt.Printf("%-20s ", "GitVersion:"); err != nil {
 			log.Error().Err(err).Msg("Error printing GitVersion label")
 		}
-		if _, err := valueColor.Println(Version); err != nil {
+		if _, err := fmt.Println(Version); err != nil {
 			log.Error().Err(err).Msg("Error printing GitVersion value")
 		}
 
-		if _, err := labelColor.Printf("%-20s ", "Git Commit:"); err != nil {
+		if _, err := fmt.Printf("%-20s ", "Git Commit:"); err != nil {
 			log.Error().Err(err).Msg("Error printing Git Commit label")
 		}
-		if _, err := valueColor.Println(Commit); err != nil {
+		if _, err := fmt.Println(Commit); err != nil {
 			log.Error().Err(err).Msg("Error printing Git Commit value")
 		}
 
-		if _, err := labelColor.Printf("%-20s ", "BuildDate:"); err != nil {
+		if _, err := fmt.Printf("%-20s ", "BuildDate:"); err != nil {
 			log.Error().Err(err).Msg("Error printing BuildDate label")
 		}
-		if _, err := valueColor.Println(Date); err != nil {
+		if _, err := fmt.Println(Date); err != nil {
 			log.Error().Err(err).Msg("Error printing BuildDate value")
 		}
 
-		if _, err := labelColor.Printf("%-20s ", "BuiltBy:"); err != nil {
+		if _, err := fmt.Printf("%-20s ", "BuiltBy:"); err != nil {
 			log.Error().Err(err).Msg("Error printing BuiltBy label")
 		}
-		if _, err := valueColor.Println(BuiltBy); err != nil {
+		if _, err := fmt.Println(BuiltBy); err != nil {
 			log.Error().Err(err).Msg("Error printing BuiltBy value")
 		}
 
-		if _, err := labelColor.Printf("%-20s ", "GoVersion:"); err != nil {
+		if _, err := fmt.Printf("%-20s ", "GoVersion:"); err != nil {
 			log.Error().Err(err).Msg("Error printing GoVersion label")
 		}
-		if _, err := valueColor.Println(GoVersion); err != nil {
+		if _, err := fmt.Println(GoVersion); err != nil {
 			log.Error().Err(err).Msg("Error printing GoVersion value")
 		}
 
-		if _, err := labelColor.Printf("%-20s ", "Compiler:"); err != nil {
+		if _, err := fmt.Printf("%-20s ", "Compiler:"); err != nil {
 			log.Error().Err(err).Msg("Error printing Compiler label")
 		}
-		if _, err := valueColor.Println(runtime.Compiler); err != nil {
+		if _, err := fmt.Println(runtime.Compiler); err != nil {
 			log.Error().Err(err).Msg("Error printing Compiler value")
 		}
 
-		if _, err := labelColor.Printf("%-20s ", "Platform:"); err != nil {
+		if _, err := fmt.Printf("%-20s ", "Platform:"); err != nil {
 			log.Error().Err(err).Msg("Error printing Platform label")
 		}
-		if _, err := valueColor.Printf("%s/%s\n", runtime.GOOS, runtime.GOARCH); err != nil {
+		if _, err := fmt.Printf("%s/%s\n", runtime.GOOS, runtime.GOARCH); err != nil {
 			log.Error().Err(err).Msg("Error printing Platform value")
 		}
 
@@ -117,31 +115,31 @@ var aboutCmd = &cobra.Command{
 			log.Error().Err(err).Msg("Error printing resources section")
 		}
 
-		if _, err := labelColor.Printf("%-20s ", "Licence:"); err != nil {
+		if _, err := fmt.Printf("%-20s ", "Licence:"); err != nil {
 			log.Error().Err(err).Msg("Error printing Licence label")
 		}
-		if _, err := valueColor.Println("Apache-2.0"); err != nil {
+		if _, err := fmt.Println("Apache-2.0"); err != nil {
 			log.Error().Err(err).Msg("Error printing Licence value")
 		}
 
-		if _, err := labelColor.Printf("%-20s ", "Code:"); err != nil {
+		if _, err := fmt.Printf("%-20s ", "Code:"); err != nil {
 			log.Error().Err(err).Msg("Error printing Code label")
 		}
-		if _, err := valueColor.Println("https://github.com/opt-nc/geol"); err != nil {
+		if _, err := fmt.Println("https://github.com/opt-nc/geol"); err != nil {
 			log.Error().Err(err).Msg("Error printing Code value")
 		}
 
-		if _, err := labelColor.Printf("%-20s ", "Roadmap:"); err != nil {
+		if _, err := fmt.Printf("%-20s ", "Roadmap:"); err != nil {
 			log.Error().Err(err).Msg("Error printing Roadmap label")
 		}
-		if _, err := valueColor.Println("https://github.com/orgs/opt-nc/projects/28"); err != nil {
+		if _, err := fmt.Println("https://github.com/orgs/opt-nc/projects/28"); err != nil {
 			log.Error().Err(err).Msg("Error printing Roadmap value")
 		}
 
-		if _, err := labelColor.Printf("%-20s ", "API:"); err != nil {
+		if _, err := fmt.Printf("%-20s ", "API:"); err != nil {
 			log.Error().Err(err).Msg("Error printing API label")
 		}
-		if _, err := valueColor.Println("https://endoflife.date"); err != nil {
+		if _, err := fmt.Println("https://endoflife.date"); err != nil {
 			log.Error().Err(err).Msg("Error printing API value")
 		}
 	},
