@@ -3,6 +3,7 @@ package cmd
 import (
 	"sort"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/opt-nc/geol/utilities"
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
@@ -49,18 +50,17 @@ geol l`,
 			return
 		}
 
-		// Print the list of products
-		cmd.Println("Cached products:")
-		cmd.Println("")
-		// Collect and sort product names
+		// Print the list of products with a green '+ product' prefix using lipgloss
 		var names []string
 		for name := range products.Products {
 			names = append(names, name)
 		}
 		sort.Strings(names)
+		plusStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Render("+")
 		for _, name := range names {
-			cmd.Printf("%s\n", name)
+			cmd.Printf("%s %s\n", plusStyle, name)
 		}
+		cmd.Printf("\n%d products listed\n", len(names))
 
 	},
 }
