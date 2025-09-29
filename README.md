@@ -10,6 +10,7 @@
 [![GoReportCard](https://goreportcard.com/badge/github.com//opt-nc/geol)](https://goreportcard.com/report/github.com/opt-nc/geol)
 [![GoDoc](https://godoc.org/github.com/opt-nc/geol?status.svg)](https://pkg.go.dev/github.com/opt-nc/geol)
 [![lint-workflow](https://github.com/opt-nc/geol/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/opt-nc/geol/actions/workflows/golangci-lint.yml)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11239/badge)](https://www.bestpractices.dev/projects/11239)
 
 # ❔ About
 
@@ -33,14 +34,41 @@ Its ambitions are to :
 - [🔬 Gitlab 15.8 analysis w. endoflife.date, grype, (x)eol 🐋](https://dev.to/optnc/gitlab-158-analysis-w-endoflifedate-grype-xeol-24b0)
 - [endoflife.date Series' Articles](https://dev.to/adriens/series/21232)
 
-# 🚀 Quickstart
+
+# 🚀 QuickStart
+
+To install:
+
+- **Manually**: Go to the [releases](https://github.com/opt-nc/geol/releases) page and download the version corresponding to your operating system
+- **Automatic**: Install via `brew` see [homebrew-tap](https://github.com/opt-nc/homebrew-tap)
+
+1. Install `geol`
+
+With `brew`:
+
+```sh
+brew install --cask opt-nc/homebrew-tap/geol
+```
+
+Or simply with `go`:
+
+```sh
+go install github.com/opt-nc/geol@latest
+```
+
+2. Update:
+
+```sh
+brew update && brew upgrade
+geol version
+```
 
 ## 🤓 Build it yourself
 
 To build it youself : 
 
 ```sh
-
+go build -o geol ./cmd/geol
 ```
 
 ## 🙏 Acknowledgments
