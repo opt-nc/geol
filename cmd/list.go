@@ -1,9 +1,13 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
 	"sort"
+	"strconv"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/fatih/color"
 	"github.com/opt-nc/geol/utilities"
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
@@ -56,11 +60,21 @@ geol l`,
 			names = append(names, name)
 		}
 		sort.Strings(names)
-		plusStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("2")).Render("+")
+		plusStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("2")).Render("+")
+		productColor := color.New(color.Bold)
 		for _, name := range names {
-			cmd.Printf("%s %s\n", plusStyle, name)
+			if _, err := fmt.Fprintf(os.Stdout, "%s %s\n", plusStyle, productColor.Sprint(name)); err != nil {
+				log.Error().Err(err).Msg("Error writing product name to stdout")
+				return
+			}
 		}
-		cmd.Printf("\n%d products listed\n", len(names))
+
+		nbProducts := strconv.Itoa(len(names))
+		nbProductsStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("2"))
+		if _, err := fmt.Fprintf(os.Stdout, "\n%s products listed\n", nbProductsStyle.Render(nbProducts)); err != nil {
+			log.Error().Err(err).Msg("Error writing product count to stdout")
+			return
+		}
 
 	},
 }
