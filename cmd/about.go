@@ -29,9 +29,10 @@ var aboutCmd = &cobra.Command{
 	Long:    `This disruptive innovation CLI (functional scope, stack, Open Source) is the result of a whole process of innovations and context: the end user should be able to learn about it...from the terminal.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Define colors using the company's hexadecimal codes
-		titleColor := color.New(color.FgHiYellow)   // Yellow text
-		sloganColor := color.New(color.Italic)      // #FFFFFF (white) in italic
-		sectionColor := color.New(color.FgHiYellow) // #FBBC09 (yellow)
+		// #2E7D32 (vert)
+		titleColor := color.New(color.FgHiGreen, color.Bold, color.Attribute(38), color.Attribute(2))
+		sloganColor := color.New(color.Italic) // #FFFFFF (white) en italic
+		sectionColor := color.New(color.FgHiGreen, color.Bold, color.Attribute(38), color.Attribute(2))
 
 		// Generate ASCII art in yellow on blue background
 		myFigure := figure.NewFigure("geol", "starwars", true)
