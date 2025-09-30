@@ -134,7 +134,7 @@ var describeCmd = &cobra.Command{
 			Bold(true).
 			Foreground(lipgloss.Color("#FFFF88")).
 			Background(lipgloss.Color("#5F5FFF")).
-			Render("# `" + mainName + "`")
+			Render("# " + mainName)
 		if _, err := os.Stdout.Write([]byte(styledTitle)); err != nil {
 			log.Error().Err(err).Msg("Error writing styled title")
 		}
