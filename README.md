@@ -10,6 +10,7 @@
 [![GoReportCard](https://goreportcard.com/badge/github.com//opt-nc/geol)](https://goreportcard.com/report/github.com/opt-nc/geol)
 [![GoDoc](https://godoc.org/github.com/opt-nc/geol?status.svg)](https://pkg.go.dev/github.com/opt-nc/geol)
 [![lint-workflow](https://github.com/opt-nc/geol/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/opt-nc/geol/actions/workflows/golangci-lint.yml)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11239/badge)](https://www.bestpractices.dev/projects/11239)
 
 # ❔ About
 
@@ -60,6 +61,40 @@ go install github.com/opt-nc/geol@latest
 ```sh
 brew update && brew upgrade
 geol version
+```
+
+## Autocompletion
+
+If the autocompletion is not working yet, you need to update your fpath.
+
+For `zsh` you need to add the following lines to your `.zshrc` file : 
+
+```sh
+# === Homebrew completions ===
+# Add Homebrew completions to fpath
+fpath=(/home/linuxbrew/.linuxbrew/share/zsh/site-functions $fpath)
+
+# Activate Homebrew completions
+autoload -Uz compinit
+compinit
+
+# (Optional) Disable the warning of duplicate completions
+zstyle ':completion:*' verbose yes
+```
+
+Then restart your terminal or source your `.zshrc` file : 
+
+```sh
+source ~/.zshrc
+```
+
+## 🧑‍💻 Documentation
+
+You can access the help either by using the `help` subcommand or with the man page.
+
+```sh
+geol help
+man geol
 ```
 
 ## 🤓 Build it yourself
