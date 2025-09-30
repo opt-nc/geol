@@ -88,6 +88,15 @@ Then restart your terminal or source your `.zshrc` file :
 source ~/.zshrc
 ```
 
+## 🧑‍💻 Documentation
+
+You can access the help either by using the `help` subcommand or with the man page.
+
+```sh
+geol help
+man geol
+```
+
 ## 🤓 Build it yourself
 
 To build it youself : 
