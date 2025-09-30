@@ -59,7 +59,7 @@ go install github.com/opt-nc/geol@latest
 2. Update:
 
 ```sh
-brew update && brew upgrade
+brew update && brew upgrade --cask
 geol version
 ```
 
