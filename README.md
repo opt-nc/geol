@@ -63,6 +63,40 @@ brew update && brew upgrade
 geol version
 ```
 
+## Autocompletion
+
+If the autocompletion is not working yet, you need to update your fpath.
+
+For `zsh` you need to add the following lines to your `.zshrc` file : 
+
+```sh
+# === Homebrew completions ===
+# Add Homebrew completions to fpath
+fpath=(/home/linuxbrew/.linuxbrew/share/zsh/site-functions $fpath)
+
+# Activate Homebrew completions
+autoload -Uz compinit
+compinit
+
+# (Optional) Disable the warning of duplicate completions
+zstyle ':completion:*' verbose yes
+```
+
+Then restart your terminal or source your `.zshrc` file : 
+
+```sh
+source ~/.zshrc
+```
+
+## 🧑‍💻 Documentation
+
+You can access the help either by using the `help` subcommand or with the man page.
+
+```sh
+geol help
+man geol
+```
+
 ## 🤓 Build it yourself
 
 To build it youself : 
