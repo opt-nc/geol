@@ -1,6 +1,8 @@
 package local
 
 import (
+	"os"
+
 	"github.com/opt-nc/geol/utilities"
 	"github.com/spf13/cobra"
 )
@@ -15,7 +17,7 @@ var RefreshCmd = &cobra.Command{
 This command is useful for keeping the local product list in sync with the upstream source for further use by the application. The resulting file is stored in the config directory under geol/products.json.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := utilities.FetchAndSaveProducts(cmd); err != nil {
-			return
+			os.Exit(1)
 		}
 	},
 }

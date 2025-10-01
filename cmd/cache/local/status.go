@@ -1,6 +1,8 @@
 package local
 
 import (
+	"os"
+
 	"github.com/opt-nc/geol/utilities"
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
@@ -22,13 +24,13 @@ This command prints the last update date and the number of products currently ca
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
 			log.Error().Err(err).Msg("Error retrieving products path")
-			return
+			os.Exit(1)
 		}
 
 		info, err := utilities.EnsureCacheExists(cmd, productsPath)
 		if err != nil {
 			log.Error().Err(err).Msg("Error ensuring cache exists")
-			return
+			os.Exit(1)
 		}
 
 		modTime := info.ModTime()
@@ -38,7 +40,7 @@ This command prints the last update date and the number of products currently ca
 		products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {
 			log.Error().Err(err).Msg("Error retrieving products from cache")
-			return
+			os.Exit(1)
 		}
 		log.Info().Int("Number of products", len(products.Products)).Msg("")
 	},
