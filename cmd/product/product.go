@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/charmbracelet/glamour"
@@ -31,22 +32,22 @@ geol product extended golang k8s
 geol product describe nodejs`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			log.Warn().Msg("Please specify at least one product.")
-			return
+			log.Error().Msg("Please specify at least one product.")
+			os.Exit(1)
 		}
 
 		// Load the local cache
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
 			log.Error().Err(err).Msg("Error retrieving cache path")
-			return
+			os.Exit(1)
 		}
 
 		// Ensure cache exists, create if missing
 		info, err := utilities.EnsureCacheExists(cmd, productsPath)
 		if err != nil {
 			log.Error().Err(err).Msg("Error ensuring cache exists")
-			return
+			os.Exit(1)
 		}
 
 		utilities.CheckCacheTimeAndUpdate(cmd, info.ModTime())
@@ -54,7 +55,7 @@ geol product describe nodejs`,
 		products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {
 			log.Error().Err(err).Msg("Error retrieving products from cache")
-			return
+			os.Exit(1)
 		}
 
 		// Structure to store results
@@ -95,19 +96,20 @@ geol product describe nodejs`,
 			resp, err := http.Get(url)
 			if err != nil {
 				log.Error().Err(err).Msgf("Error requesting %s", prod)
-				continue
+				os.Exit(1)
 			}
 			body, err := io.ReadAll(resp.Body)
 			if cerr := resp.Body.Close(); cerr != nil {
 				log.Error().Err(cerr).Msgf("Error closing HTTP body for %s", prod)
+				os.Exit(1)
 			}
 			if err != nil {
 				log.Error().Err(err).Msgf("Error reading response for %s", prod)
-				continue
+				os.Exit(1)
 			}
 			if resp.StatusCode != 200 {
 				log.Warn().Msgf("Product %s not found on the API.", prod)
-				continue
+				os.Exit(1)
 			}
 
 			// JSON decoding
@@ -126,7 +128,7 @@ geol product describe nodejs`,
 			}
 			if err := json.Unmarshal(body, &apiResp); err != nil {
 				log.Error().Err(err).Msgf("Error decoding JSON for %s", prod)
-				continue
+				os.Exit(1)
 			}
 			var relName, relDate, relEol string
 			if len(apiResp.Result.Releases) > 0 {
@@ -146,7 +148,7 @@ geol product describe nodejs`,
 		// Display markdown table with glamour
 		if len(results) == 0 {
 			log.Warn().Msg("No product found in cache or API.")
-			return
+			os.Exit(1)
 		}
 		var buf bytes.Buffer
 		// Header
