@@ -1,4 +1,4 @@
-# Geol
+# `geol`
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/opt-nc/geol)
 ![GitHub Workflow Status](https://github.com/opt-nc/geol/actions/workflows/test-release.yml/badge.svg)
@@ -24,6 +24,11 @@ Its ambitions are to :
 3. Make delivery easier and safer
 4. Enhance with new custom awaited features
 5. Create innovative ways to manager EOLs for more security, for all
+
+# 🧑‍🤝‍🧑 Team
+
+- **🎯 Product Manager** : [`@adriens`](https://github.com/adriens/)
+- **👩‍💻Lead dev** : [`@supervinh`](https://github.com/supervinh)
 
 # 📑 Resources
 
@@ -59,7 +64,7 @@ go install github.com/opt-nc/geol@latest
 2. Update:
 
 ```sh
-brew update && brew upgrade
+brew update && brew upgrade --cask
 geol version
 ```
 
