@@ -1,4 +1,4 @@
-package cmd
+package items
 
 import (
 	"fmt"
@@ -15,36 +15,31 @@ import (
 )
 
 func init() {
-	// Set up pretty console writer for phuslu/log
-	log.DefaultLogger.Writer = &log.ConsoleWriter{
-		ColorOutput:    true,
-		QuoteString:    true,
-		EndWithMessage: true,
-	}
-	rootCmd.AddCommand(listCmd)
-	listCmd.Flags().BoolP("tree", "t", false, "List all products including aliases in a tree structure.")
+	utilities.InitLogger()
+	ProductsCmd.Flags().BoolP("tree", "t", false, "List all products including aliases in a tree structure.")
 }
 
-// listCmd represents the list command
-var listCmd = &cobra.Command{
-	Use:     "list",
-	Aliases: []string{"l"},
+// ProductsCmd represents the products command
+var ProductsCmd = &cobra.Command{
+	Use:     "products",
+	Aliases: []string{"p"},
 	Short:   "List all cached product names.",
 	Long:    `Displays the list of all product names currently available on https://endoflife.date.`,
-	Example: `geol list
-geol l`,
+	Example: `geol list products
+geol list products --tree
+geol l p -t`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// List the cached products
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
 			log.Error().Err(err).Msg("Error retrieving products path")
-			return
+			os.Exit(1)
 		}
 		// Ensure cache exists, create if missing
 		info, err := utilities.EnsureCacheExists(cmd, productsPath)
 		if err != nil {
 			log.Error().Err(err).Msg("Error ensuring cache exists")
-			return
+			os.Exit(1)
 		}
 
 		modTime := info.ModTime()
@@ -53,7 +48,7 @@ geol l`,
 		products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {
 			log.Error().Err(err).Msg("Error retrieving products from cache")
-			return
+			os.Exit(1)
 		}
 
 		treeFlag, _ := cmd.Flags().GetBool("tree")
@@ -83,7 +78,7 @@ geol l`,
 			}
 			if _, err := fmt.Fprintln(os.Stdout, productTree.String()); err != nil {
 				log.Error().Err(err).Msg("Error writing product tree to stdout")
-				return
+				os.Exit(1)
 			}
 		} else {
 			// Print the list of products with a green '+ product' prefix using lipgloss
@@ -91,7 +86,7 @@ geol l`,
 			for _, name := range names {
 				if _, err := fmt.Fprintf(os.Stdout, "%s %s\n", plusStyle, productColor.Sprint(name)); err != nil {
 					log.Error().Err(err).Msg("Error writing product name to stdout")
-					return
+					os.Exit(1)
 				}
 			}
 		}
@@ -100,7 +95,7 @@ geol l`,
 		nbProductsStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("2"))
 		if _, err := fmt.Fprintf(os.Stdout, "\n%s products listed\n", nbProductsStyle.Render(nbProducts)); err != nil {
 			log.Error().Err(err).Msg("Error writing product count to stdout")
-			return
+			os.Exit(1)
 		}
 
 	},
