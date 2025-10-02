@@ -12,6 +12,9 @@ import (
 func init() {
 	utilities.InitLogger()
 	ListCmd.AddCommand(items.ProductsCmd)
+	ListCmd.AddCommand(items.CategoriesCmd)
+	ListCmd.AddCommand(items.TagsCmd)
+
 }
 
 // ListCmd represents the list command
