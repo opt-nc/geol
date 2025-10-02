@@ -30,20 +30,12 @@ geol list products --tree
 geol l p -t`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// List the cached products
+		utilities.AnalyzeCacheValidity(cmd)
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
 			log.Error().Err(err).Msg("Error retrieving products path")
 			os.Exit(1)
 		}
-		// Ensure cache exists, create if missing
-		info, err := utilities.EnsureCacheExists(cmd, productsPath)
-		if err != nil {
-			log.Error().Err(err).Msg("Error ensuring cache exists")
-			os.Exit(1)
-		}
-
-		modTime := info.ModTime()
-		utilities.CheckCacheTimeAndUpdate(cmd, modTime)
 
 		products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {
