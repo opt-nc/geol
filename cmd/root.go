@@ -16,7 +16,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "geol",
 	Short: "Show end-of-life dates for products",
-	Long:  `Efficiently show end-of-life dates for a number of products in your terminal using https://endoflife.date/ API `}
+	Long:  `Efficiently display product end-of-life dates in your terminal using the endoflife.date API.`}
 
 func Execute() {
 	rootCmd.PersistentFlags().BoolP("help", "h", false, "Help for this command")
