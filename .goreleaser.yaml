@@ -73,7 +73,7 @@ homebrew_casks:
     name: geol
 
     # Your app's description.
-    description: "geol, CLI to efficiently show end-of-life dates for a number of products"
+    description: "geol, the cli to efficiently display product end-of-life dates in your terminal using the endoflife.date API."
 
     # Homepage is the link to the project page of the formula.
     homepage: https://github.com/opt-nc/geol
