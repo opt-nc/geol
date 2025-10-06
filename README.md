@@ -25,10 +25,15 @@ Its ambitions are to :
 4. Enhance with new custom awaited features
 5. Create innovative ways to manager EOLs for more security, for all
 
-# 🧑‍🤝‍🧑 Team
+# 🧑‍🤝‍🧑 Core team and roles
 
-- **🎯 Product Manager** : [`@adriens`](https://github.com/adriens/)
-- **👩‍💻Lead dev** : [`@supervinh`](https://github.com/supervinh)
+| Person                                     | 🎯 Product Manager | 👩‍💻 Lead Dev | 📊 Data Scientist | 🛠️ Data Engineer | 🎤 Storyteller | 🧪 End-user & Tester |
+|--------------------------------------------|--------------------|---------------|-----------------|------------------|----------------|----------------------|
+| [@adriens](https://github.com/adriens)     |         ✅         |               |       ✅        |       ✅         |                |                      |
+| [@supervinh](https://github.com/supervinh) |                    |       ✅      |                 |                  |                |                      |
+| [@mbarre](https://github.com/mbarre)       |                    |               |                 |                  |                |           ✅         |
+| [@Draks898](https://github.com/Draks898)   |                    |               |                 |                  |                |           ✅         |
+
 
 # 📑 Resources
 

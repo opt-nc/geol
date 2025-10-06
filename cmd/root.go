@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/opt-nc/geol/cmd/cache"
+	"github.com/opt-nc/geol/cmd/list"
 	"github.com/opt-nc/geol/cmd/product"
 )
 
@@ -16,7 +17,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "geol",
 	Short: "Show end-of-life dates for products",
-	Long:  `Efficiently show end-of-life dates for a number of products in your terminal using https://endoflife.date/ API `}
+	Long:  `Efficiently display product end-of-life dates in your terminal using the endoflife.date API.`}
 
 func Execute() {
 	rootCmd.PersistentFlags().BoolP("help", "h", false, "Help for this command")
@@ -34,5 +35,6 @@ func Execute() {
 func init() {
 	rootCmd.AddCommand(cache.CacheCmd)
 	rootCmd.AddCommand(product.ProductCmd)
+	rootCmd.AddCommand(list.ListCmd)
 
 }
