@@ -1,4 +1,4 @@
-# Geol
+# `geol`
 
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/opt-nc/geol)
 ![GitHub Workflow Status](https://github.com/opt-nc/geol/actions/workflows/test-release.yml/badge.svg)
@@ -24,6 +24,16 @@ Its ambitions are to :
 3. Make delivery easier and safer
 4. Enhance with new custom awaited features
 5. Create innovative ways to manager EOLs for more security, for all
+
+# 🧑‍🤝‍🧑 Core team and roles
+
+| Person                                     | 🎯 Product Manager | 👩‍💻 Lead Dev | 📊 Data Scientist | 🛠️ Data Engineer | 🎤 Storyteller | 🧪 End-user & Tester |
+|--------------------------------------------|--------------------|---------------|-----------------|------------------|----------------|----------------------|
+| [@adriens](https://github.com/adriens)     |         ✅         |               |       ✅        |       ✅         |                |                      |
+| [@supervinh](https://github.com/supervinh) |                    |       ✅      |                 |                  |                |                      |
+| [@mbarre](https://github.com/mbarre)       |                    |               |                 |                  |                |           ✅         |
+| [@Draks898](https://github.com/Draks898)   |                    |               |                 |                  |                |           ✅         |
+
 
 # 📑 Resources
 
@@ -59,8 +69,42 @@ go install github.com/opt-nc/geol@latest
 2. Update:
 
 ```sh
-brew update && brew upgrade
+brew update && brew upgrade --cask
 geol version
+```
+
+## Autocompletion
+
+If the autocompletion is not working yet, you need to update your fpath.
+
+For `zsh` you need to add the following lines to your `.zshrc` file : 
+
+```sh
+# === Homebrew completions ===
+# Add Homebrew completions to fpath
+fpath=(/home/linuxbrew/.linuxbrew/share/zsh/site-functions $fpath)
+
+# Activate Homebrew completions
+autoload -Uz compinit
+compinit
+
+# (Optional) Disable the warning of duplicate completions
+zstyle ':completion:*' verbose yes
+```
+
+Then restart your terminal or source your `.zshrc` file : 
+
+```sh
+source ~/.zshrc
+```
+
+## 🧑‍💻 Documentation
+
+You can access the help either by using the `help` subcommand or with the man page.
+
+```sh
+geol help
+man geol
 ```
 
 ## 🤓 Build it yourself

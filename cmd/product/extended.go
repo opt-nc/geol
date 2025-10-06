@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -23,32 +24,33 @@ func init() {
 var extendedCmd = &cobra.Command{
 	Use:     "extended",
 	Aliases: []string{"e"},
-	Example: `geol product extended golang k8s`,
+	Example: `geol product extended golang k8s
+geol product extended quarkus -n 15`,
 	Short:   "Display extended release information for specified products (latest 10 versions by default).",
 	Long:    `Retrieve and display detailed release data for one or more products, including cycle, release dates, support periods, and end-of-life information. By default, the latest 10 versions are shown for each product; use the --number flag to display the latest n versions instead. Results are formatted in a styled table for easy reading. Products must exist in the local cache or be available via the API.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		numberFlag, _ := cmd.Flags().GetInt("number")
 
 		if numberFlag < 0 {
-			log.Warn().Msg("The number of rows must be zero or positive.")
-			return
+			log.Error().Msg("The number of rows must be zero or positive.")
+			os.Exit(1)
 		}
 
 		if len(args) == 0 {
-			log.Warn().Msg("Please specify at least one product.")
-			return
+			log.Error().Msg("Please specify at least one product.")
+			os.Exit(1)
 		}
 
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
 			log.Error().Err(err).Msg("Error retrieving cache path")
-			return
+			os.Exit(1)
 		}
 
 		info, err := utilities.EnsureCacheExists(cmd, productsPath)
 		if err != nil {
 			log.Error().Err(err).Msg("Error ensuring cache exists")
-			return
+			os.Exit(1)
 		}
 
 		utilities.CheckCacheTimeAndUpdate(cmd, info.ModTime())
@@ -56,7 +58,7 @@ var extendedCmd = &cobra.Command{
 		products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {
 			log.Error().Err(err).Msg("Error retrieving products from cache")
-			return
+			os.Exit(1)
 		}
 
 		type ProductReleases struct {
@@ -100,19 +102,20 @@ var extendedCmd = &cobra.Command{
 			resp, err := http.Get(url)
 			if err != nil {
 				log.Error().Err(err).Msgf("Error requesting %s", prod)
-				continue
+				os.Exit(1)
 			}
 			body, err := io.ReadAll(resp.Body)
 			if cerr := resp.Body.Close(); cerr != nil {
 				log.Error().Err(cerr).Msgf("Error closing HTTP body for %s", prod)
+				os.Exit(1)
 			}
 			if err != nil {
 				log.Error().Err(err).Msgf("Error reading response for %s", prod)
-				continue
+				os.Exit(1)
 			}
 			if resp.StatusCode != 200 {
-				log.Warn().Msgf("Product %s not found on the API.", prod)
-				continue
+				log.Error().Msgf("Product %s not found on the API.", prod)
+				os.Exit(1)
 			}
 
 			var apiResp struct {
@@ -133,7 +136,7 @@ var extendedCmd = &cobra.Command{
 			}
 			if err := json.Unmarshal(body, &apiResp); err != nil {
 				log.Error().Err(err).Msgf("Error decoding JSON for %s", prod)
-				continue
+				os.Exit(1)
 			}
 
 			var releases []struct {
@@ -171,8 +174,8 @@ var extendedCmd = &cobra.Command{
 		}
 
 		if len(allProducts) == 0 {
-			log.Warn().Msg("Aucun produit trouvé dans le cache ou l'API.")
-			return
+			log.Error().Msg("Aucun produit trouvé dans le cache ou l'API.")
+			os.Exit(1)
 		}
 
 		// Print as a title "# Products"

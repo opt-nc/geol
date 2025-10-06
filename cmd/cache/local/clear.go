@@ -1,6 +1,8 @@
 package local
 
 import (
+	"os"
+
 	"github.com/opt-nc/geol/utilities"
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
@@ -23,11 +25,11 @@ This command is useful for clearing the cached list of products and their aliase
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
 			log.Error().Err(err).Msg("Error retrieving products path")
-			return
+			os.Exit(1)
 		}
 		if err := utilities.RemoveFileIfExists(productsPath); err != nil {
 			log.Error().Err(err).Msg("Error deleting cache file")
-			return
+			os.Exit(1)
 		}
 		log.Info().Msg("Local products cache cleared successfully.")
 	},
