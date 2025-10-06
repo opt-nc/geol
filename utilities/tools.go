@@ -112,6 +112,23 @@ func createDirectoryIfNotExists(path string) error {
 	return nil
 }
 
+func AnalyzeCacheValidity(cmd *cobra.Command) {
+	productsPath, err := GetProductsPath()
+	if err != nil {
+		log.Error().Err(err).Msg("Error retrieving products path")
+		os.Exit(1)
+	}
+	// Ensure cache exists, create if missing
+	info, err := EnsureCacheExists(cmd, productsPath)
+	if err != nil {
+		log.Error().Err(err).Msg("Error ensuring cache exists")
+		os.Exit(1)
+	}
+
+	modTime := info.ModTime()
+	CheckCacheTimeAndUpdate(cmd, modTime)
+}
+
 func FetchAndSaveProducts(cmd *cobra.Command) error {
 	start := time.Now()
 	productsPath, err := GetProductsPath()

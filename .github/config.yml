@@ -1,0 +1,22 @@
+# Configuration for welcome - https://github.com/behaviorbot/welcome
+
+# Configuration for new-issue-welcome - https://github.com/behaviorbot/new-issue-welcome
+
+# Comment to be posted to on first time issues
+newIssueWelcomeComment: >
+  Thanks for opening your first issue here :facepunch: ! Be sure to follow the issue template if you choose one !
+  ![The senate will decide your fate](https://media1.tenor.com/m/IeMyQ0rSntYAAAAd/mace-windu-star-wars.gif)
+
+# Configuration for new-pr-welcome - https://github.com/behaviorbot/new-pr-welcome
+
+# Comment to be posted to on PRs from first time contributors in your repository
+newPRWelcomeComment: >
+  Thanks for opening this pull request! ![You sure about that ?](https://media1.tenor.com/m/kmaH_jidTt0AAAAC/you-sure-about-that-i-think-you-should-leave-with-tim-robinson.gif)
+
+# Configuration for first-pr-merge - https://github.com/behaviorbot/first-pr-merge
+
+# Comment to be posted to on pull requests merged by a first time user
+firstPRMergeComment: >
+  Congrats on merging your first pull request! ![Welcome to the dark side](https://media1.tenor.com/m/k72QHWNyPogAAAAC/darth-vader-storm-troopers.gif)
+
+# It is recommend to include as many gifs and emojis as possible

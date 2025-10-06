@@ -21,21 +21,13 @@ var StatusCmd = &cobra.Command{
 
 This command prints the last update date and the number of products currently cached in geol/products.json. It helps verify if the cache is present and up to date.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		utilities.AnalyzeCacheValidity(cmd)
+
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
 			log.Error().Err(err).Msg("Error retrieving products path")
 			os.Exit(1)
 		}
-
-		info, err := utilities.EnsureCacheExists(cmd, productsPath)
-		if err != nil {
-			log.Error().Err(err).Msg("Error ensuring cache exists")
-			os.Exit(1)
-		}
-
-		modTime := info.ModTime()
-
-		utilities.CheckCacheTimeAndUpdate(cmd, modTime)
 
 		products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {
