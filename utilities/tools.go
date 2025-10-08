@@ -7,7 +7,23 @@ import (
 	"time"
 
 	"github.com/phuslu/log"
+	"github.com/spf13/cobra"
 )
+
+func AnalyzeCacheValidity(cmd *cobra.Command) {
+	AnalyzeCacheProductsValidity(cmd)
+}
+
+// CheckCacheTimeAndUpdateGeneric logs the cache mod time and updates the cache if older than maxAge.
+func CheckCacheTimeAndUpdateGeneric(modTime time.Time, maxAge time.Duration, updateCache func() error) {
+	log.Info().Msg("Cache last updated " + modTime.Format("2006-01-02 15:04:05"))
+	if modTime.Before(time.Now().Add(-maxAge)) {
+		log.Warn().Msg("The cache is older than " + maxAge.String() + ". Updating the cache...")
+		if err := updateCache(); err != nil {
+			log.Error().Err(err).Msg("Error updating cache")
+		}
+	}
+}
 
 // ensureCacheExistsGeneric checks if the cache file exists, creates it if missing using the provided fetchAndSave function, and returns its FileInfo or an error.
 func ensureCacheExistsGeneric(cachePath string, fetchAndSave func() error) (os.FileInfo, error) {

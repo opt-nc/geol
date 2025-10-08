@@ -19,8 +19,6 @@ type ProductsFile struct {
 	Products map[string][]string `json:"products"`
 }
 
-var productApiUrl = "products"
-
 // GetProductsPath returns the path to the products.json file in the user's config directory.
 func GetProductsPath() (string, error) {
 	configDir, err := os.UserConfigDir()
@@ -31,18 +29,13 @@ func GetProductsPath() (string, error) {
 	return productsPath, nil
 }
 
-func CheckCacheTimeAndUpdate(cmd *cobra.Command, modTime time.Time) {
-	log.Info().Msg("Cache last updated " + modTime.Format("2006-01-02 15:04:05"))
-	// Check if the cache is older than 24 hours
-	if modTime.Before(time.Now().Add(-24 * time.Hour)) {
-		log.Warn().Msg("The cache is older than 24 hours. Updating the cache...")
-		if err := FetchAndSaveProducts(cmd); err != nil {
-			log.Error().Err(err).Msg("Error updating cache")
-		}
-	}
+func CheckCacheProductsTimeAndUpdate(cmd *cobra.Command, modTime time.Time) {
+	CheckCacheTimeAndUpdateGeneric(modTime, 24*time.Hour, func() error {
+		return FetchAndSaveProducts(cmd)
+	})
 }
 
-func AnalyzeCacheValidity(cmd *cobra.Command) {
+func AnalyzeCacheProductsValidity(cmd *cobra.Command) {
 	productsPath, err := GetProductsPath()
 	if err != nil {
 		log.Error().Err(err).Msg("Error retrieving products path")
@@ -58,7 +51,7 @@ func AnalyzeCacheValidity(cmd *cobra.Command) {
 	}
 
 	modTime := info.ModTime()
-	CheckCacheTimeAndUpdate(cmd, modTime)
+	CheckCacheProductsTimeAndUpdate(cmd, modTime)
 }
 
 func FetchAndSaveProducts(cmd *cobra.Command) error {
@@ -113,7 +106,7 @@ func FetchAndSaveProducts(cmd *cobra.Command) error {
 		return err
 	}
 
-	// Remove the file if it exists (extracted)
+	// Remove the file if it exists
 	if err := RemoveFileIfExists(productsPath); err != nil {
 		log.Error().Err(err).Msg("Error removing old file")
 		return err
@@ -125,7 +118,6 @@ func FetchAndSaveProducts(cmd *cobra.Command) error {
 	}
 	// Print the number of products written and elapsed time
 	elapsed := time.Since(start).Milliseconds()
-	//log.Info().Msg(fmt.Sprintf("%d Products retrieved from endoflife.date \n(elapsed time: %d ms)\n", len(products.Products), elapsed))
 	log.Info().Int("Number of products", len(products.Products)).Int64("elapsed time (ms)", elapsed).Msg("")
 	return nil
 }
