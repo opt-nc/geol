@@ -81,10 +81,10 @@ func FetchAndSaveProducts(cmd *cobra.Command) error {
 	}()
 
 	// Define structure to parse the response
-	type ApiResponse struct {
+	type apiResponse struct {
 		Result []Product `json:"result"`
 	}
-	var apiResp ApiResponse
+	var apiResp apiResponse
 
 	decoder := json.NewDecoder(resp.Body)
 	if err := decoder.Decode(&apiResp); err != nil {

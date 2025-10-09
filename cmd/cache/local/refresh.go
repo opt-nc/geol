@@ -19,6 +19,12 @@ This command is useful for keeping the local product list in sync with the upstr
 		if err := utilities.FetchAndSaveProducts(cmd); err != nil {
 			os.Exit(1)
 		}
+		if err := utilities.FetchAndSaveTags(cmd); err != nil {
+			os.Exit(1)
+		}
+		if err := utilities.FetchAndSaveCategories(cmd); err != nil {
+			os.Exit(1)
+		}
 	},
 }
 
