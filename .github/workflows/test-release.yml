@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493
       - name: 📦 Semantic Release
         id: release
-        uses: cycjimmy/semantic-release-action@ebcbc663748eae8da59a127a7d8b8e22f82514b2
+        uses: cycjimmy/semantic-release-action@ba330626c4750c19d8299de843f05c7aa5574f62
         with:
           extra_plugins: |
             @semantic-release/exec
