@@ -12,6 +12,8 @@ import (
 
 func AnalyzeCacheValidity(cmd *cobra.Command) {
 	AnalyzeCacheProductsValidity(cmd)
+	AnalyzeCacheCategoriesValidity(cmd)
+	AnalyzeCacheTagsValidity(cmd)
 }
 
 // CheckCacheTimeAndUpdateGeneric logs the cache mod time and updates the cache if older than maxAge.

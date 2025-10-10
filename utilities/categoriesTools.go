@@ -24,9 +24,7 @@ type Category struct {
 	Uri  string `json:"uri"`
 }
 
-type CategoriesFile struct {
-	Categories map[string]string `json:"categories"`
-}
+type CategoriesFile map[string]string
 
 func CheckCacheCategoriesTimeAndUpdate(cmd *cobra.Command, modTime time.Time) {
 	CheckCacheTimeAndUpdateGeneric(modTime, 24*time.Hour, func() error {
@@ -84,9 +82,9 @@ func FetchAndSaveCategories(cmd *cobra.Command) error {
 		return err
 	}
 
-	categories := CategoriesFile{Categories: make(map[string]string)}
+	categories := make(CategoriesFile)
 	for _, category := range apiResp.Result {
-		categories.Categories[category.Name] = category.Uri
+		categories[category.Name] = category.Uri
 	}
 
 	// Marshal the data to JSON
@@ -109,6 +107,38 @@ func FetchAndSaveCategories(cmd *cobra.Command) error {
 	}
 
 	elapsed := time.Since(start).Milliseconds()
-	log.Info().Int("Number of categories", len(categories.Categories)).Int64("elapsed time (ms)", elapsed).Msg("")
+	log.Info().Int("Number of categories", len(categories)).Int64("elapsed time (ms)", elapsed).Msg("")
+	return nil
+}
+
+// GetCategoriesWithCacheRefresh tries to unmarshal categories from file, refreshes cache if needed, and returns the categories.
+func GetCategoriesWithCacheRefresh(cmd *cobra.Command, categoriesPath string) (CategoriesFile, error) {
+	categories := make(CategoriesFile)
+	if err := readAndUnmarshalCategories(categoriesPath, &categories); err != nil {
+		log.Error().Err(err).Msg("Error parsing JSON")
+		log.Warn().Msg("Trying to refresh the cache now...")
+		if err := FetchAndSaveCategories(cmd); err != nil {
+			log.Error().Err(err).Msg("Error refreshing cache")
+			return categories, err
+		}
+		log.Info().Msg("Cache refreshed successfully. Now getting the categories...")
+		if err := readAndUnmarshalCategories(categoriesPath, &categories); err != nil {
+			log.Error().Err(err).Msg("Error parsing JSON after refresh")
+			return categories, err
+		}
+	}
+	return categories, nil
+}
+
+// readAndUnmarshalCategories lit le fichier et fait l'unmarshal JSON dans categories.
+func readAndUnmarshalCategories(categoriesPath string, categories *CategoriesFile) error {
+	data, err := os.ReadFile(categoriesPath)
+	if err != nil {
+		log.Error().Err(err).Msg("Error reading categories file")
+		return err
+	}
+	if err := json.Unmarshal(data, categories); err != nil {
+		return err
+	}
 	return nil
 }

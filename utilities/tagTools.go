@@ -15,9 +15,7 @@ type Tag struct {
 	Uri  string `json:"uri"`
 }
 
-type TagsFile struct {
-	Tags map[string]string `json:"tags"`
-}
+type TagsFile map[string]string
 
 func GetTagsPath() (string, error) {
 	configDir, err := os.UserConfigDir()
@@ -84,9 +82,9 @@ func FetchAndSaveTags(cmd *cobra.Command) error {
 		return err
 	}
 
-	tags := TagsFile{Tags: make(map[string]string)}
+	tags := make(TagsFile)
 	for _, tag := range apiResp.Result {
-		tags.Tags[tag.Name] = tag.Uri
+		tags[tag.Name] = tag.Uri
 	}
 
 	// Marshal the data to JSON
@@ -109,6 +107,38 @@ func FetchAndSaveTags(cmd *cobra.Command) error {
 	}
 
 	elapsed := time.Since(start).Milliseconds()
-	log.Info().Int("Number of tags", len(tags.Tags)).Int64("elapsed time (ms)", elapsed).Msg("")
+	log.Info().Int("Number of tags", len(tags)).Int64("elapsed time (ms)", elapsed).Msg("")
+	return nil
+}
+
+// GetTagsWithCacheRefresh tries to unmarshal tags from file, refreshes cache if needed, and returns the tags.
+func GetTagsWithCacheRefresh(cmd *cobra.Command, tagsPath string) (TagsFile, error) {
+	tags := make(TagsFile)
+	if err := readAndUnmarshalTags(tagsPath, &tags); err != nil {
+		log.Error().Err(err).Msg("Error parsing JSON")
+		log.Warn().Msg("Trying to refresh the cache now...")
+		if err := FetchAndSaveTags(cmd); err != nil {
+			log.Error().Err(err).Msg("Error refreshing cache")
+			return tags, err
+		}
+		log.Info().Msg("Cache refreshed successfully. Now getting the tags...")
+		if err := readAndUnmarshalTags(tagsPath, &tags); err != nil {
+			log.Error().Err(err).Msg("Error parsing JSON after refresh")
+			return tags, err
+		}
+	}
+	return tags, nil
+}
+
+// readAndUnmarshalTags lit le fichier et fait l'unmarshal JSON dans tags.
+func readAndUnmarshalTags(tagsPath string, tags *TagsFile) error {
+	data, err := os.ReadFile(tagsPath)
+	if err != nil {
+		log.Error().Err(err).Msg("Error reading tags file")
+		return err
+	}
+	if err := json.Unmarshal(data, tags); err != nil {
+		return err
+	}
 	return nil
 }
