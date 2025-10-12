@@ -2,22 +2,60 @@ package items
 
 import (
 	"fmt"
+	"os"
+	"sort"
+	"strconv"
 
+	"github.com/charmbracelet/lipgloss"
+	"github.com/fatih/color"
+	"github.com/opt-nc/geol/utilities"
+	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 )
 
 // CategoriesCmd represents the categories command
 var CategoriesCmd = &cobra.Command{
-	Use:   "categories",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Use:     "categories",
+	Aliases: []string{"c"},
+	Short:   "List all cached category names.",
+	Long:    `Displays the list of all category names currently available in the cache.`,
+	Example: `geol list categories\ngeol l c`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("categories called")
+		// List the cached categories
+		utilities.AnalyzeCacheCategoriesValidity(cmd)
+		categoriesPath, err := utilities.GetCategoriesPath()
+		if err != nil {
+			log.Error().Err(err).Msg("Error retrieving categories path")
+			os.Exit(1)
+		}
+
+		categories, err := utilities.GetCategoriesWithCacheRefresh(cmd, categoriesPath)
+		if err != nil {
+			log.Error().Err(err).Msg("Error retrieving categories from cache")
+			os.Exit(1)
+		}
+
+		var names []string
+		for name := range categories {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+		categoryColor := color.New(color.Bold)
+
+		plusStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("2")).Render("+")
+		for _, name := range names {
+			if _, err := fmt.Fprintf(os.Stdout, "%s %s\n", plusStyle, categoryColor.Sprint(name)); err != nil {
+				log.Error().Err(err).Msg("Error writing category name to stdout")
+				os.Exit(1)
+			}
+		}
+
+		nbCategories := strconv.Itoa(len(names))
+		nbCategoriesStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("2"))
+		if _, err := fmt.Fprintf(os.Stdout, "\n%s categories listed\n", nbCategoriesStyle.Render(nbCategories)); err != nil {
+			log.Error().Err(err).Msg("Error writing category count to stdout")
+			os.Exit(1)
+		}
 	},
 }
 
