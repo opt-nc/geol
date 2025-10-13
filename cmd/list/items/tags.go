@@ -22,7 +22,7 @@ var TagsCmd = &cobra.Command{
 	Example: `geol list tags\ngeol l t`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// List the cached tags
-		utilities.AnalyzeCacheTagsValidity(cmd)
+		utilities.AnalyzeCacheProductsValidity(cmd)
 		tagsPath, err := utilities.GetTagsPath()
 		if err != nil {
 			log.Error().Err(err).Msg("Error retrieving tags path")

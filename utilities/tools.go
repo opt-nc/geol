@@ -10,32 +10,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func AnalyzeCacheValidity(cmd *cobra.Command) {
-	AnalyzeCacheProductsValidity(cmd)
-	AnalyzeCacheCategoriesValidity(cmd)
-	AnalyzeCacheTagsValidity(cmd)
-}
-
-// CheckCacheTimeAndUpdateGeneric logs the cache mod time and updates the cache if older than maxAge.
-func CheckCacheTimeAndUpdateGeneric(modTime time.Time, maxAge time.Duration, updateCache func() error) {
+// CheckCacheTimeAndUpdateGeneric logs the cache mod time and updates the cache if older than maxAge using RefreshAllCaches.
+func CheckCacheTimeAndUpdateGeneric(modTime time.Time, maxAge time.Duration, cmd *cobra.Command) {
 	log.Info().Msg("Cache last updated " + modTime.Format("2006-01-02 15:04:05"))
 	if modTime.Before(time.Now().Add(-maxAge)) {
 		log.Warn().Msg("The cache is older than " + maxAge.String() + ". Updating the cache...")
-		if err := updateCache(); err != nil {
-			log.Error().Err(err).Msg("Error updating cache")
-		}
+		RefreshAllCaches(cmd)
 	}
 }
 
-// ensureCacheExistsGeneric checks if the cache file exists, creates it if missing using the provided fetchAndSave function, and returns its FileInfo or an error.
-func ensureCacheExistsGeneric(cachePath string, fetchAndSave func() error) (os.FileInfo, error) {
+// ensureCacheExistsGeneric checks if the cache file exists, creates it if missing using RefreshAllCaches, and returns its FileInfo or an error.
+func ensureCacheExistsGeneric(cachePath string, cmd *cobra.Command) (os.FileInfo, error) {
 	info, err := os.Stat(cachePath)
 	if err != nil {
 		log.Warn().Err(err).Str("path", cachePath).Msg("cache not found, creating the cache...")
-		if ferr := fetchAndSave(); ferr != nil {
-			log.Error().Err(ferr).Msg("Failed to create cache")
-			return nil, ferr
-		}
+		RefreshAllCaches(cmd)
 		// Try stat again after creating
 		info, err = os.Stat(cachePath)
 		if err != nil {
@@ -95,4 +84,17 @@ func createDirectoryIfNotExists(path string) error {
 		return os.MkdirAll(path, 0755)
 	}
 	return nil
+}
+
+// RefreshAllCaches runs all cache refresh functions and exits with code 1 if any fail.
+func RefreshAllCaches(cmd *cobra.Command) {
+	if err := FetchAndSaveProducts(cmd); err != nil {
+		os.Exit(1)
+	}
+	if err := FetchAndSaveTags(cmd); err != nil {
+		os.Exit(1)
+	}
+	if err := FetchAndSaveCategories(cmd); err != nil {
+		os.Exit(1)
+	}
 }

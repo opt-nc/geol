@@ -22,7 +22,7 @@ var CategoriesCmd = &cobra.Command{
 	Example: `geol list categories\ngeol l c`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// List the cached categories
-		utilities.AnalyzeCacheCategoriesValidity(cmd)
+		utilities.AnalyzeCacheProductsValidity(cmd)
 		categoriesPath, err := utilities.GetCategoriesPath()
 		if err != nil {
 			log.Error().Err(err).Msg("Error retrieving categories path")

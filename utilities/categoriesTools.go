@@ -26,31 +26,6 @@ type Category struct {
 
 type CategoriesFile map[string]string
 
-func CheckCacheCategoriesTimeAndUpdate(cmd *cobra.Command, modTime time.Time) {
-	CheckCacheTimeAndUpdateGeneric(modTime, 24*time.Hour, func() error {
-		return FetchAndSaveCategories(cmd)
-	})
-}
-
-func AnalyzeCacheCategoriesValidity(cmd *cobra.Command) {
-	categoriesPath, err := GetCategoriesPath()
-	if err != nil {
-		log.Error().Err(err).Msg("Error retrieving categories path")
-		os.Exit(1)
-	}
-	// Ensure cache exists, create if missing
-	info, err := ensureCacheExistsGeneric(categoriesPath, func() error {
-		return FetchAndSaveCategories(cmd)
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("Error ensuring cache exists")
-		os.Exit(1)
-	}
-
-	modTime := info.ModTime()
-	CheckCacheCategoriesTimeAndUpdate(cmd, modTime)
-}
-
 func FetchAndSaveCategories(cmd *cobra.Command) error {
 	start := time.Now()
 	categoriesPath, err := GetCategoriesPath()

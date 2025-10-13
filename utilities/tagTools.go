@@ -26,31 +26,6 @@ func GetTagsPath() (string, error) {
 	return tagsPath, nil
 }
 
-func CheckCacheTagsTimeAndUpdate(cmd *cobra.Command, modTime time.Time) {
-	CheckCacheTimeAndUpdateGeneric(modTime, 24*time.Hour, func() error {
-		return FetchAndSaveTags(cmd)
-	})
-}
-
-func AnalyzeCacheTagsValidity(cmd *cobra.Command) {
-	tagsPath, err := GetTagsPath()
-	if err != nil {
-		log.Error().Err(err).Msg("Error retrieving tags path")
-		os.Exit(1)
-	}
-	// Ensure cache exists, create if missing
-	info, err := ensureCacheExistsGeneric(tagsPath, func() error {
-		return FetchAndSaveTags(cmd)
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("Error ensuring cache exists")
-		os.Exit(1)
-	}
-
-	modTime := info.ModTime()
-	CheckCacheTagsTimeAndUpdate(cmd, modTime)
-}
-
 func FetchAndSaveTags(cmd *cobra.Command) error {
 	start := time.Now()
 	tagsPath, err := GetTagsPath()

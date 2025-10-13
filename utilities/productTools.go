@@ -29,12 +29,6 @@ func GetProductsPath() (string, error) {
 	return productsPath, nil
 }
 
-func CheckCacheProductsTimeAndUpdate(cmd *cobra.Command, modTime time.Time) {
-	CheckCacheTimeAndUpdateGeneric(modTime, 24*time.Hour, func() error {
-		return FetchAndSaveProducts(cmd)
-	})
-}
-
 func AnalyzeCacheProductsValidity(cmd *cobra.Command) {
 	productsPath, err := GetProductsPath()
 	if err != nil {
@@ -42,16 +36,14 @@ func AnalyzeCacheProductsValidity(cmd *cobra.Command) {
 		os.Exit(1)
 	}
 	// Ensure cache exists, create if missing
-	info, err := ensureCacheExistsGeneric(productsPath, func() error {
-		return FetchAndSaveProducts(cmd)
-	})
+	info, err := ensureCacheExistsGeneric(productsPath, cmd)
 	if err != nil {
 		log.Error().Err(err).Msg("Error ensuring cache exists")
 		os.Exit(1)
 	}
 
 	modTime := info.ModTime()
-	CheckCacheProductsTimeAndUpdate(cmd, modTime)
+	CheckCacheTimeAndUpdateGeneric(modTime, 24*time.Hour, cmd)
 }
 
 func FetchAndSaveProducts(cmd *cobra.Command) error {
