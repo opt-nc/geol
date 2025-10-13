@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/phuslu/log"
@@ -97,4 +98,22 @@ func RefreshAllCaches(cmd *cobra.Command) {
 	if err := FetchAndSaveCategories(cmd); err != nil {
 		os.Exit(1)
 	}
+
+	if err := CreateDoNotEditFile(); err != nil {
+		log.Error().Err(err).Msg("Error creating DO_NOT_EDIT_ANYTHING file")
+		os.Exit(1)
+	}
+}
+
+// CreateDoNotEditFile creates a DO_NOT_EDIT_ANYTHING file in the geol config directory to warn users not to edit anything there.
+func CreateDoNotEditFile() error {
+	configDir, err := os.UserConfigDir()
+	if err != nil {
+		return err
+	}
+	file := filepath.Join(configDir, "geol", "DO_NOT_EDIT_ANYTHING")
+	if err := os.WriteFile(file, []byte("This directory is managed by geol. Do not edit anything here."), 0644); err != nil {
+		return err
+	}
+	return nil
 }
