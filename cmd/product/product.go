@@ -36,7 +36,7 @@ geol product describe nodejs`,
 			os.Exit(1)
 		}
 
-		utilities.AnalyzeCacheValidity(cmd)
+		utilities.AnalyzeCacheProductsValidity(cmd)
 
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
