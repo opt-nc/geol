@@ -30,7 +30,7 @@ geol list products --tree
 geol l p -t`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// List the cached products
-		utilities.AnalyzeCacheValidity(cmd)
+		utilities.AnalyzeCacheProductsValidity(cmd)
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
 			log.Error().Err(err).Msg("Error retrieving products path")

@@ -26,8 +26,8 @@ var extendedCmd = &cobra.Command{
 	Aliases: []string{"e"},
 	Example: `geol product extended golang k8s
 geol product extended quarkus -n 15`,
-	Short:   "Display extended release information for specified products (latest 10 versions by default).",
-	Long:    `Retrieve and display detailed release data for one or more products, including cycle, release dates, support periods, and end-of-life information. By default, the latest 10 versions are shown for each product; use the --number flag to display the latest n versions instead. Results are formatted in a styled table for easy reading. Products must exist in the local cache or be available via the API.`,
+	Short: "Display extended release information for specified products (latest 10 versions by default).",
+	Long:  `Retrieve and display detailed release data for one or more products, including cycle, release dates, support periods, and end-of-life information. By default, the latest 10 versions are shown for each product; use the --number flag to display the latest n versions instead. Results are formatted in a styled table for easy reading. Products must exist in the local cache or be available via the API.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		numberFlag, _ := cmd.Flags().GetInt("number")
 
@@ -41,7 +41,7 @@ geol product extended quarkus -n 15`,
 			os.Exit(1)
 		}
 
-		utilities.AnalyzeCacheValidity(cmd)
+		utilities.AnalyzeCacheProductsValidity(cmd)
 
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {

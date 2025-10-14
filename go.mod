@@ -18,12 +18,12 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/colorprofile v0.3.2 // indirect
 	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.3.0.20250917201909-41ff0bf215ea // indirect
-	github.com/charmbracelet/ultraviolet v0.0.0-20250915111650-81d4262876ef // indirect
+	github.com/charmbracelet/ultraviolet v0.0.0-20251005154327-b52d39da4eb7 // indirect
 	github.com/charmbracelet/x/ansi v0.10.2 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13 // indirect
-	github.com/charmbracelet/x/exp/charmtone v0.0.0-20250930200525-31788bbe6486 // indirect
-	github.com/charmbracelet/x/exp/color v0.0.0-20250930200525-31788bbe6486 // indirect
-	github.com/charmbracelet/x/exp/slice v0.0.0-20250930200525-31788bbe6486 // indirect
+	github.com/charmbracelet/x/exp/charmtone v0.0.0-20251008171431-5d3777519489 // indirect
+	github.com/charmbracelet/x/exp/color v0.0.0-20251006100439-2151805163c8 // indirect
+	github.com/charmbracelet/x/exp/slice v0.0.0-20251008171431-5d3777519489 // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/charmbracelet/x/termios v0.1.1 // indirect
 	github.com/charmbracelet/x/windows v0.2.2 // indirect
@@ -48,9 +48,9 @@ require (
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/yuin/goldmark v1.7.13 // indirect
 	github.com/yuin/goldmark-emoji v1.0.6 // indirect
-	golang.org/x/net v0.44.0 // indirect
+	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
-	golang.org/x/sys v0.36.0 // indirect
-	golang.org/x/term v0.35.0 // indirect
-	golang.org/x/text v0.29.0 // indirect
+	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/term v0.36.0 // indirect
+	golang.org/x/text v0.30.0 // indirect
 )

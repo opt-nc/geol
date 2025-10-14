@@ -33,7 +33,7 @@ var describeCmd = &cobra.Command{
 		prodArg := args[0]
 
 		// Check the cache
-		utilities.AnalyzeCacheValidity(cmd)
+		utilities.AnalyzeCacheProductsValidity(cmd)
 
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
