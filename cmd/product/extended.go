@@ -26,8 +26,8 @@ var extendedCmd = &cobra.Command{
 	Aliases: []string{"e"},
 	Example: `geol product extended golang k8s
 geol product extended quarkus -n 15`,
-	Short:   "Display extended release information for specified products (latest 10 versions by default).",
-	Long:    `Retrieve and display detailed release data for one or more products, including cycle, release dates, support periods, and end-of-life information. By default, the latest 10 versions are shown for each product; use the --number flag to display the latest n versions instead. Results are formatted in a styled table for easy reading. Products must exist in the local cache or be available via the API.`,
+	Short: "Display extended release information for specified products (latest 10 versions by default).",
+	Long:  `Retrieve and display detailed release data for one or more products, including cycle, release dates, support periods, and end-of-life information. By default, the latest 10 versions are shown for each product; use the --number flag to display the latest n versions instead. Results are formatted in a styled table for easy reading. Products must exist in the local cache or be available via the API.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		numberFlag, _ := cmd.Flags().GetInt("number")
 
@@ -41,19 +41,13 @@ geol product extended quarkus -n 15`,
 			os.Exit(1)
 		}
 
+		utilities.AnalyzeCacheProductsValidity(cmd)
+
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
-			log.Error().Err(err).Msg("Error retrieving cache path")
+			log.Error().Err(err).Msg("Error retrieving products path")
 			os.Exit(1)
 		}
-
-		info, err := utilities.EnsureCacheExists(cmd, productsPath)
-		if err != nil {
-			log.Error().Err(err).Msg("Error ensuring cache exists")
-			os.Exit(1)
-		}
-
-		utilities.CheckCacheTimeAndUpdate(cmd, info.ModTime())
 
 		products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {
@@ -286,7 +280,7 @@ geol product extended quarkus -n 15`,
 					if r.LTS {
 						badgeStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("15")).Padding(0, 1)
 						today := utilities.TodayDateString()
-						if r.EolFrom != "" && r.EolFrom >= today {
+						if r.EolFrom == "" || r.EolFrom >= today {
 							badgeStyle = badgeStyle.Background(lipgloss.Color("34")).PaddingLeft(0).PaddingRight(0) // dark green
 						} else {
 							badgeStyle = badgeStyle.Background(lipgloss.Color("196")).PaddingLeft(0).PaddingRight(0) // rouge

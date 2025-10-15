@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/opt-nc/geol/cmd/cache"
+	"github.com/opt-nc/geol/cmd/list"
 	"github.com/opt-nc/geol/cmd/product"
 )
 
@@ -34,5 +35,6 @@ func Execute() {
 func init() {
 	rootCmd.AddCommand(cache.CacheCmd)
 	rootCmd.AddCommand(product.ProductCmd)
+	rootCmd.AddCommand(list.ListCmd)
 
 }

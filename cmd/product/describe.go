@@ -33,17 +33,13 @@ var describeCmd = &cobra.Command{
 		prodArg := args[0]
 
 		// Check the cache
+		utilities.AnalyzeCacheProductsValidity(cmd)
+
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
-			log.Error().Err(err).Msg("Error retrieving cache path")
+			log.Error().Err(err).Msg("Error retrieving products path")
 			os.Exit(1)
 		}
-		info, err := utilities.EnsureCacheExists(cmd, productsPath)
-		if err != nil {
-			log.Error().Err(err).Msg("Error ensuring cache exists")
-			os.Exit(1)
-		}
-		utilities.CheckCacheTimeAndUpdate(cmd, info.ModTime())
 
 		products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {

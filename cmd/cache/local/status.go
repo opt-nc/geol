@@ -21,27 +21,50 @@ var StatusCmd = &cobra.Command{
 
 This command prints the last update date and the number of products currently cached in geol/products.json. It helps verify if the cache is present and up to date.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		utilities.AnalyzeCacheProductsValidity(cmd)
+		var errorOccurred = false
+
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
 			log.Error().Err(err).Msg("Error retrieving products path")
-			os.Exit(1)
+			errorOccurred = true
 		}
-
-		info, err := utilities.EnsureCacheExists(cmd, productsPath)
-		if err != nil {
-			log.Error().Err(err).Msg("Error ensuring cache exists")
-			os.Exit(1)
-		}
-
-		modTime := info.ModTime()
-
-		utilities.CheckCacheTimeAndUpdate(cmd, modTime)
 
 		products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {
 			log.Error().Err(err).Msg("Error retrieving products from cache")
-			os.Exit(1)
+			errorOccurred = true
 		}
 		log.Info().Int("Number of products", len(products.Products)).Msg("")
+
+		tagsPath, err := utilities.GetTagsPath()
+		if err != nil {
+			log.Error().Err(err).Msg("Error retrieving tags path")
+			errorOccurred = true
+		}
+
+		tags, err := utilities.GetTagsWithCacheRefresh(cmd, tagsPath)
+		if err != nil {
+			log.Error().Err(err).Msg("Error retrieving tags from cache")
+			errorOccurred = true
+		}
+		log.Info().Int("Number of tags", len(tags)).Msg("")
+
+		categoriesPath, err := utilities.GetCategoriesPath()
+		if err != nil {
+			log.Error().Err(err).Msg("Error retrieving categories path")
+			errorOccurred = true
+		}
+
+		categories, err := utilities.GetCategoriesWithCacheRefresh(cmd, categoriesPath)
+		if err != nil {
+			log.Error().Err(err).Msg("Error retrieving categories from cache")
+			errorOccurred = true
+		}
+		log.Info().Int("Number of categories", len(categories)).Msg("")
+
+		if errorOccurred {
+			os.Exit(1)
+		}
 	},
 }

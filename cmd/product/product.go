@@ -25,7 +25,7 @@ func init() {
 var ProductCmd = &cobra.Command{
 	Use:     "product",
 	Aliases: []string{"p"},
-	Short:   "Display the latest version of one or more products and the end of life date.",
+	Short:   "Display the latest version of product(s) and the end of life date.",
 	Long:    "Show the latest version, release date, and end-of-life information for one or more products. Use the `extended` subcommand for more detailed output.",
 	Example: `geol product linux ubuntu
 geol product extended golang k8s
@@ -36,21 +36,13 @@ geol product describe nodejs`,
 			os.Exit(1)
 		}
 
-		// Load the local cache
+		utilities.AnalyzeCacheProductsValidity(cmd)
+
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
-			log.Error().Err(err).Msg("Error retrieving cache path")
+			log.Error().Err(err).Msg("Error retrieving products path")
 			os.Exit(1)
 		}
-
-		// Ensure cache exists, create if missing
-		info, err := utilities.EnsureCacheExists(cmd, productsPath)
-		if err != nil {
-			log.Error().Err(err).Msg("Error ensuring cache exists")
-			os.Exit(1)
-		}
-
-		utilities.CheckCacheTimeAndUpdate(cmd, info.ModTime())
 
 		products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {
