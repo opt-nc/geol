@@ -106,22 +106,8 @@ geol product extended quarkus > quarkus-eol.md`,
 				os.Exit(1)
 			}
 
-			var apiResp struct {
-				Result struct {
-					Name     string `json:"name"`
-					Releases []struct {
-						Name        string `json:"name"`
-						ReleaseDate string `json:"releaseDate"`
-						Latest      struct {
-							Name string `json:"name"`
-							Date string `json:"date"`
-						} `json:"latest"`
-						EoasFrom string `json:"eoasFrom"`
-						EolFrom  string `json:"eolFrom"`
-						IsLTS    bool   `json:"isLTS"`
-					} `json:"releases"`
-				}
-			}
+			var apiResp ApiRespExtended
+
 			if err := json.Unmarshal(body, &apiResp); err != nil {
 				log.Error().Err(err).Msgf("Error decoding JSON for %s", prod)
 				os.Exit(1)
