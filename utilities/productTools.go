@@ -36,7 +36,7 @@ func AnalyzeCacheProductsValidity(cmd *cobra.Command) {
 		os.Exit(1)
 	}
 	// Ensure cache exists, create if missing
-	info, err := ensureCacheExistsGeneric(productsPath, cmd)
+	info, err := EnsureCacheExistsGeneric(productsPath, cmd)
 	if err != nil {
 		log.Error().Err(err).Msg("Error ensuring cache exists")
 		os.Exit(1)
