@@ -53,19 +53,27 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 		var status string
 		var days int
 		var eolT time.Time
-		if eolDate != "" && item.Critical {
+		if eolDate != "" {
 			eolT, _ = time.Parse("2006-01-02", eolDate)
 			days = int(eolT.Sub(today).Hours() / 24)
-			if days < 0 {
-				status = "❌ EOL"
-				errorOut = true
-			} else if days < 180 {
-				status = "⚠️ WARN"
+			if item.Critical {
+				if days < 0 {
+					status = "EOL"
+					errorOut = true
+				} else if days < 30 {
+					status = "WARN"
+				} else {
+					status = "OK"
+				}
 			} else {
-				status = "✅ OK"
+				status = "INFO"
 			}
 		} else {
-			status = "📝 INFO"
+			if item.Critical {
+				status = "OK"
+			} else {
+				status = "INFO"
+			}
 		}
 		rows = append(rows, stackTableRow{
 			Software: item.Name,
@@ -100,7 +108,6 @@ func lookupEolDate(idEol, version string) string {
 
 	if len(prod) > 0 {
 		url := utilities.ApiUrl + "products/" + prod[0] + "/releases/" + version
-		// log.Info().Msgf("Requesting EOL date from URL: %s", url)
 		resp, err := http.Get(url)
 		if err != nil {
 			log.Error().Err(err).Msgf("Error requesting %s", prod)
@@ -148,19 +155,34 @@ func renderStackTable(rows []stackTableRow) string {
 	)
 	for _, r := range rows {
 		var daysStr string
-		if r.Days > 31 {
+		if r.Days > 30 {
 			daysStr = green.Render(fmt.Sprintf("%d", r.Days))
 		} else if r.Days < 0 {
 			daysStr = red.Render(fmt.Sprintf("%d", r.Days))
 		} else {
 			daysStr = orange.Render(fmt.Sprintf("%d", r.Days))
 		}
+		criticalStr := "n"
+		if r.Critical {
+			criticalStr = "y"
+		}
+		var statusStr string
+		switch r.Status {
+		case "EOL":
+			statusStr = red.Render(r.Status)
+		case "OK":
+			statusStr = green.Render(r.Status)
+		case "WARN":
+			statusStr = orange.Render(r.Status)
+		default:
+			statusStr = r.Status
+		}
 		t.Row(
 			r.Software,
 			r.Version,
 			r.EolDate,
-			r.Status,
-			fmt.Sprintf("%v", r.Critical),
+			statusStr,
+			criticalStr,
 			daysStr,
 		)
 	}
@@ -202,7 +224,6 @@ func checkRequiredKeys(config geolConfig) []string {
 		if fmt.Sprintf("%v", item.Critical) != "true" && fmt.Sprintf("%v", item.Critical) != "false" {
 			missing = append(missing, fmt.Sprintf("stack[%d].critical", i))
 		}
-		log.Info().Msgf("Critical value for stack[%d]: %v", i, item.Critical)
 	}
 	return missing
 }
@@ -211,8 +232,17 @@ func checkRequiredKeys(config geolConfig) []string {
 var checkCmd = &cobra.Command{
 	Use:     "check",
 	Aliases: []string{"chk"},
-	Short:   "TODO",
-	Long:    `TODO`,
+	Short:   "Check EOL status of your stack.",
+	Long: `The 'check' command analyzes each software component listed in your stack YAML file (default: .geol.yaml), retrieves End-of-Life (EOL) information, and displays a color-coded table indicating the EOL status and criticality of each item. This helps you quickly identify outdated or unsupported software in your stack.
+
+YAML file format:
+app_name: <string>
+stack:
+  - name: <string>
+    version: <string>
+    id_eol: <string>
+    critical: <true|false>
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 		file, _ := cmd.Flags().GetString("file")
 		_, err := os.Stat(file)
