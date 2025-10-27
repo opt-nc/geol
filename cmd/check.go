@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sort"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -38,7 +39,6 @@ type stackTableRow struct {
 	Version  string
 	EolDate  string
 	Status   string
-	Critical bool
 	Days     int
 }
 
@@ -60,6 +60,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 				if days < 0 {
 					status = "EOL"
 					errorOut = true
+					log.Error().Msgf("Critical software %s version %s is EOL since %s", item.Name, item.Version, eolDate)
 				} else if days < 30 {
 					status = "WARN"
 				} else {
@@ -80,10 +81,22 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			Version:  item.Version,
 			EolDate:  eolDate,
 			Status:   status,
-			Critical: item.Critical,
 			Days:     days,
 		})
 	}
+	// Sort rows by Status: EOL, WARN, OK, INFO
+	statusOrder := map[string]int{"EOL": 0, "WARN": 1, "OK": 2, "INFO": 3}
+	sort.SliceStable(rows, func(i, j int) bool {
+		orderI, okI := statusOrder[rows[i].Status]
+		orderJ, okJ := statusOrder[rows[j].Status]
+		if !okI {
+			orderI = 99
+		}
+		if !okJ {
+			orderJ = 99
+		}
+		return orderI < orderJ
+	})
 	return rows, errorOut
 }
 
@@ -151,7 +164,7 @@ func renderStackTable(rows []stackTableRow) string {
 
 	t := table.New()
 	t.Headers(
-		"SOFTWARE", "VERSION", "EOL DATE", "STATUS", "CRITICAL", "DAYS",
+		"SOFTWARE", "VERSION", "EOL DATE", "STATUS", "DAYS",
 	)
 	for _, r := range rows {
 		var daysStr string
@@ -161,10 +174,6 @@ func renderStackTable(rows []stackTableRow) string {
 			daysStr = red.Render(fmt.Sprintf("%d", r.Days))
 		} else {
 			daysStr = orange.Render(fmt.Sprintf("%d", r.Days))
-		}
-		criticalStr := "n"
-		if r.Critical {
-			criticalStr = "y"
 		}
 		var statusStr string
 		switch r.Status {
@@ -182,11 +191,10 @@ func renderStackTable(rows []stackTableRow) string {
 			r.Version,
 			r.EolDate,
 			statusStr,
-			criticalStr,
 			daysStr,
 		)
 	}
-	t.Border(lipgloss.MarkdownBorder())
+	t.Border(lipgloss.RoundedBorder())
 	t.BorderBottom(false)
 	t.BorderTop(false)
 	t.BorderLeft(false)
@@ -234,14 +242,6 @@ var checkCmd = &cobra.Command{
 	Aliases: []string{"chk"},
 	Short:   "Check EOL status of your stack.",
 	Long: `The 'check' command analyzes each software component listed in your stack YAML file (default: .geol.yaml), retrieves End-of-Life (EOL) information, and displays a color-coded table indicating the EOL status and criticality of each item. This helps you quickly identify outdated or unsupported software in your stack.
-
-YAML file format:
-app_name: <string>
-stack:
-  - name: <string>
-    version: <string>
-    id_eol: <string>
-    critical: <true|false>
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		file, _ := cmd.Flags().GetString("file")
@@ -276,6 +276,7 @@ stack:
 		rows, errorOut := getStackTableRows(config.Stack, today)
 		// if term.IsTerminal(os.Stdout.Fd()) { // detect if output is a terminal
 		tableStr := renderStackTable(rows)
+		fmt.Println("##", config.AppName+"\n")
 		fmt.Println(tableStr)
 		// } else {
 		// 	// TODO
