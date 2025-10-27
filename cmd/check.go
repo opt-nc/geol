@@ -12,7 +12,6 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
-	"github.com/charmbracelet/x/term"
 	"github.com/opt-nc/geol/utilities"
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
@@ -66,7 +65,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 				status = "✅ OK"
 			}
 		} else {
-			status = "➿ INFO"
+			status = "📝 INFO"
 		}
 		rows = append(rows, stackTableRow{
 			Software: item.Name,
@@ -139,18 +138,30 @@ func lookupEolDate(idEol, version string) string {
 
 // renderStackTable renders the stack table using lipgloss/table
 func renderStackTable(rows []stackTableRow) string {
+	green := lipgloss.NewStyle().Foreground(lipgloss.Color("46"))
+	orange := lipgloss.NewStyle().Foreground(lipgloss.Color("208"))
+	red := lipgloss.NewStyle().Foreground(lipgloss.Color("196"))
+
 	t := table.New()
 	t.Headers(
 		"SOFTWARE", "VERSION", "EOL DATE", "STATUS", "CRITICAL", "DAYS",
 	)
 	for _, r := range rows {
+		var daysStr string
+		if r.Days > 31 {
+			daysStr = green.Render(fmt.Sprintf("%d", r.Days))
+		} else if r.Days < 0 {
+			daysStr = red.Render(fmt.Sprintf("%d", r.Days))
+		} else {
+			daysStr = orange.Render(fmt.Sprintf("%d", r.Days))
+		}
 		t.Row(
 			r.Software,
 			r.Version,
 			r.EolDate,
 			r.Status,
 			fmt.Sprintf("%v", r.Critical),
-			fmt.Sprintf("%d", r.Days),
+			daysStr,
 		)
 	}
 	t.Border(lipgloss.MarkdownBorder())
@@ -191,6 +202,7 @@ func checkRequiredKeys(config geolConfig) []string {
 		if fmt.Sprintf("%v", item.Critical) != "true" && fmt.Sprintf("%v", item.Critical) != "false" {
 			missing = append(missing, fmt.Sprintf("stack[%d].critical", i))
 		}
+		log.Info().Msgf("Critical value for stack[%d]: %v", i, item.Critical)
 	}
 	return missing
 }
@@ -232,13 +244,13 @@ var checkCmd = &cobra.Command{
 		today := time.Now()
 		// log.Info().Msg(fmt.Sprintf("Checking stack in file: %+v", config.Stack))
 		rows, errorOut := getStackTableRows(config.Stack, today)
-		if term.IsTerminal(os.Stdout.Fd()) { // detect if output is a terminal
-			tableStr := renderStackTable(rows)
-			fmt.Println(tableStr)
-		} else {
-			// TODO
-			log.Info().Msg("Non-terminal output not implemented yet")
-		}
+		// if term.IsTerminal(os.Stdout.Fd()) { // detect if output is a terminal
+		tableStr := renderStackTable(rows)
+		fmt.Println(tableStr)
+		// } else {
+		// 	// TODO
+		// 	log.Info().Msg("Non-terminal output not implemented yet")
+		// }
 		if errorOut {
 			os.Exit(1)
 		}
