@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -84,7 +85,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			Days:     days,
 		})
 	}
-	// Sort rows by Status: EOL, WARN, OK, INFO
+	// Sort rows by Status: EOL, WARN, OK, INFO, puis par Days (du plus petit au plus grand)
 	statusOrder := map[string]int{"EOL": 0, "WARN": 1, "OK": 2, "INFO": 3}
 	sort.SliceStable(rows, func(i, j int) bool {
 		orderI, okI := statusOrder[rows[i].Status]
@@ -95,7 +96,11 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 		if !okJ {
 			orderJ = 99
 		}
-		return orderI < orderJ
+		if orderI != orderJ {
+			return orderI < orderJ
+		}
+		// Si status identique, trier par Days croissant
+		return rows[i].Days < rows[j].Days
 	})
 	return rows, errorOut
 }
@@ -116,11 +121,34 @@ func lookupEolDate(idEol, version string) string {
 		return ""
 	}
 
-	// Find product by id_eol
-	prod := products.Products[idEol]
+	prod := idEol
+
+	found := false
+	for name, aliases := range products.Products {
+		if strings.EqualFold(prod, name) {
+			found = true
+			prod = name
+			break
+		}
+		for _, alias := range aliases {
+			if strings.EqualFold(prod, alias) {
+				found = true
+				prod = name
+				break
+			}
+		}
+		if found {
+			break
+		}
+	}
+
+	if !found {
+		log.Error().Msgf("Product with id_eol %s not found in cache", idEol)
+		os.Exit(1)
+	}
 
 	if len(prod) > 0 {
-		url := utilities.ApiUrl + "products/" + prod[0] + "/releases/" + version
+		url := utilities.ApiUrl + "products/" + prod + "/releases/" + version
 		resp, err := http.Get(url)
 		if err != nil {
 			log.Error().Err(err).Msgf("Error requesting %s", prod)
