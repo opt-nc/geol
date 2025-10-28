@@ -50,15 +50,7 @@ geol product describe nodejs`,
 			os.Exit(1)
 		}
 
-		// Structure to store results
-		type ProductResult struct {
-			Name        string
-			EolLabel    string
-			ReleaseName string
-			ReleaseDate string
-			EolFrom     string
-		}
-		var results []ProductResult
+		var results []productResult
 
 		for _, prod := range args {
 			found := false
@@ -128,7 +120,7 @@ geol product describe nodejs`,
 				relDate = apiResp.Result.Releases[0].ReleaseDate
 				relEol = apiResp.Result.Releases[0].EolFrom
 			}
-			results = append(results, ProductResult{
+			results = append(results, productResult{
 				Name: apiResp.Result.Name,
 				//EolLabel:    apiResp.Result.Labels.Eol,
 				ReleaseName: relName,

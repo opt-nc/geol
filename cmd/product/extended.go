@@ -10,6 +10,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
+	"github.com/charmbracelet/x/term"
 	"github.com/opt-nc/geol/utilities"
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
@@ -24,12 +25,17 @@ func init() {
 var extendedCmd = &cobra.Command{
 	Use:     "extended",
 	Aliases: []string{"e"},
-	Example: `geol product extended golang k8s
-geol product extended quarkus -n 15`,
+	Example: `# Show the latest 10 versions of Golang and Kubernetes
+geol product extended golang k8s
+# Show the latest 15 versions of Quarkus
+geol product extended quarkus -n 15
+# Redirect output to a markdown file
+geol product extended quarkus > quarkus-eol.md`,
 	Short: "Display extended release information for specified products (latest 10 versions by default).",
 	Long:  `Retrieve and display detailed release data for one or more products, including cycle, release dates, support periods, and end-of-life information. By default, the latest 10 versions are shown for each product; use the --number flag to display the latest n versions instead. Results are formatted in a styled table for easy reading. Products must exist in the local cache or be available via the API.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		numberFlag, _ := cmd.Flags().GetInt("number")
+		mdFlag := !term.IsTerminal(os.Stdout.Fd()) // detect if output is not a terminal
 
 		if numberFlag < 0 {
 			log.Error().Msg("The number of rows must be zero or positive.")
@@ -55,19 +61,7 @@ geol product extended quarkus -n 15`,
 			os.Exit(1)
 		}
 
-		type ProductReleases struct {
-			Name     string
-			Releases []struct {
-				Name        string
-				ReleaseDate string
-				LatestName  string
-				LatestDate  string
-				EoasFrom    string
-				EolFrom     string
-				LTS         bool
-			}
-		}
-		var allProducts []ProductReleases
+		var allProducts []productReleases
 
 		for _, prod := range args {
 			found := false
@@ -133,25 +127,10 @@ geol product extended quarkus -n 15`,
 				os.Exit(1)
 			}
 
-			var releases []struct {
-				Name        string
-				ReleaseDate string
-				LatestName  string
-				LatestDate  string
-				EoasFrom    string
-				EolFrom     string
-				LTS         bool
-			}
+			var releases []ReleaseInfo
+
 			for _, r := range apiResp.Result.Releases {
-				releases = append(releases, struct {
-					Name        string
-					ReleaseDate string
-					LatestName  string
-					LatestDate  string
-					EoasFrom    string
-					EolFrom     string
-					LTS         bool
-				}{
+				releases = append(releases, ReleaseInfo{
 					Name:        r.Name,
 					ReleaseDate: r.ReleaseDate,
 					LatestName:  r.Latest.Name,
@@ -161,7 +140,7 @@ geol product extended quarkus -n 15`,
 					LTS:         r.IsLTS,
 				})
 			}
-			allProducts = append(allProducts, ProductReleases{
+			allProducts = append(allProducts, productReleases{
 				Name:     apiResp.Result.Name,
 				Releases: releases,
 			})
@@ -268,6 +247,9 @@ geol product extended quarkus -n 15`,
 				// Helper to strikethrough a string if EOL is before today
 				strikethroughIfEOL := func(val string) string {
 					if r.EolFrom != "" && r.EolFrom < today {
+						if mdFlag {
+							return "~~" + val + "~~"
+						}
 						return "\x1b[9m" + val + "\x1b[0m"
 					}
 					return val
@@ -315,9 +297,14 @@ geol product extended quarkus -n 15`,
 				}
 				t.Row(dotsRow...)
 			}
-			t.Border(lipgloss.RoundedBorder())
+			if !mdFlag {
+				t.Border(lipgloss.RoundedBorder())
+				t.BorderBottom(true)
+			} else {
+				t.Border(lipgloss.MarkdownBorder())
+				t.BorderBottom(false)
+			}
 			t.BorderTop(false)
-			t.BorderBottom(true)
 			t.BorderLeft(false)
 			t.BorderRight(false)
 			t.BorderStyle(lipgloss.NewStyle().BorderForeground(lipgloss.Color("63")))
