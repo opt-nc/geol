@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/term"
 	"gopkg.in/yaml.v3"
 
 	"github.com/charmbracelet/lipgloss"
@@ -196,23 +197,20 @@ func renderStackTable(rows []stackTableRow) string {
 	)
 	for _, r := range rows {
 		var daysStr string
-		if r.Days > 30 {
-			daysStr = green.Render(fmt.Sprintf("%d", r.Days))
-		} else if r.Days < 0 {
-			daysStr = red.Render(fmt.Sprintf("%d", r.Days))
-		} else {
-			daysStr = orange.Render(fmt.Sprintf("%d", r.Days))
-		}
 		var statusStr string
 		switch r.Status {
 		case "EOL":
 			statusStr = red.Render(r.Status)
+			daysStr = red.Render(fmt.Sprintf("%d", r.Days))
 		case "OK":
 			statusStr = green.Render(r.Status)
+			daysStr = green.Render(fmt.Sprintf("%d", r.Days))
 		case "WARN":
 			statusStr = orange.Render(r.Status)
+			daysStr = orange.Render(fmt.Sprintf("%d", r.Days))
 		default:
 			statusStr = r.Status
+			daysStr = fmt.Sprintf("%d", r.Days)
 		}
 		t.Row(
 			r.Software,
@@ -222,7 +220,11 @@ func renderStackTable(rows []stackTableRow) string {
 			daysStr,
 		)
 	}
-	t.Border(lipgloss.RoundedBorder())
+	if term.IsTerminal(int(os.Stdout.Fd())) {
+		t.Border(lipgloss.RoundedBorder())
+	} else {
+		t.Border(lipgloss.MarkdownBorder())
+	}
 	t.BorderBottom(false)
 	t.BorderTop(false)
 	t.BorderLeft(false)
@@ -300,16 +302,10 @@ var checkCmd = &cobra.Command{
 
 		utilities.AnalyzeCacheProductsValidity(cmd)
 		today := time.Now()
-		// log.Info().Msg(fmt.Sprintf("Checking stack in file: %+v", config.Stack))
 		rows, errorOut := getStackTableRows(config.Stack, today)
-		// if term.IsTerminal(os.Stdout.Fd()) { // detect if output is a terminal
 		tableStr := renderStackTable(rows)
 		fmt.Println("##", config.AppName+"\n")
 		fmt.Println(tableStr)
-		// } else {
-		// 	// TODO
-		// 	log.Info().Msg("Non-terminal output not implemented yet")
-		// }
 		if errorOut {
 			os.Exit(1)
 		}
