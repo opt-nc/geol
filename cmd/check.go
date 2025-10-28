@@ -41,7 +41,7 @@ type stackTableRow struct {
 	Version  string
 	EolDate  string
 	Status   string
-	Days     int
+	Days     string
 }
 
 // getStackTableRows returns a slice of StackTableRow for a given stack and today date
@@ -50,20 +50,21 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 	errorOut := false
 
 	for _, item := range stack {
-		// Lookup EOL date using id_eol and version (placeholder logic)
 		eolDate := lookupEolDate(item.IdEol, item.Version)
 		var status string
-		var days int
+		var daysStr string
+		var daysInt int
 		var eolT time.Time
 		if eolDate != "" {
 			eolT, _ = time.Parse("2006-01-02", eolDate)
-			days = int(eolT.Sub(today).Hours() / 24)
+			daysInt = int(eolT.Sub(today).Hours() / 24)
+			daysStr = fmt.Sprintf("%d", daysInt)
 			if item.Critical {
-				if days < 0 {
+				if daysInt < 0 {
 					status = "EOL"
 					errorOut = true
 					log.Error().Msgf("Critical software %s version %s is EOL since %s", item.Name, item.Version, eolDate)
-				} else if days < 30 {
+				} else if daysInt < 30 {
 					status = "WARN"
 				} else {
 					status = "OK"
@@ -72,6 +73,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 				status = "INFO"
 			}
 		} else {
+			daysStr = "-"
 			if item.Critical {
 				status = "OK"
 			} else {
@@ -83,10 +85,10 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			Version:  item.Version,
 			EolDate:  eolDate,
 			Status:   status,
-			Days:     days,
+			Days:     daysStr,
 		})
 	}
-	// Sort rows by Status: EOL, WARN, OK, INFO, puis par Days (du plus petit au plus grand)
+	// Sort rows by Status: EOL, WARN, OK, INFO, then by Days (from smallest to largest)
 	statusOrder := map[string]int{"EOL": 0, "WARN": 1, "OK": 2, "INFO": 3}
 	sort.SliceStable(rows, func(i, j int) bool {
 		orderI, okI := statusOrder[rows[i].Status]
@@ -100,7 +102,24 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 		if orderI != orderJ {
 			return orderI < orderJ
 		}
-		// Si status identique, trier par Days croissant
+		// If status is identical, sort by Days ascending ("-" at the end), comparing as int
+		if rows[i].Days == "-" && rows[j].Days != "-" {
+			return false
+		}
+		if rows[i].Days != "-" && rows[j].Days == "-" {
+			return true
+		}
+		if rows[i].Days == "-" && rows[j].Days == "-" {
+			return false // equal, do not change order
+		}
+		// Both are int, compare as int
+		var di, dj int
+		_, erri := fmt.Sscanf(rows[i].Days, "%d", &di)
+		_, errj := fmt.Sscanf(rows[j].Days, "%d", &dj)
+		if erri == nil && errj == nil {
+			return di < dj
+		}
+		// fallback to lexicographical if problem
 		return rows[i].Days < rows[j].Days
 	})
 	return rows, errorOut
@@ -201,16 +220,16 @@ func renderStackTable(rows []stackTableRow) string {
 		switch r.Status {
 		case "EOL":
 			statusStr = red.Render(r.Status)
-			daysStr = red.Render(fmt.Sprintf("%d", r.Days))
+			daysStr = red.Render(r.Days)
 		case "OK":
 			statusStr = green.Render(r.Status)
-			daysStr = green.Render(fmt.Sprintf("%d", r.Days))
+			daysStr = green.Render(r.Days)
 		case "WARN":
 			statusStr = orange.Render(r.Status)
-			daysStr = orange.Render(fmt.Sprintf("%d", r.Days))
+			daysStr = orange.Render(r.Days)
 		default:
 			statusStr = r.Status
-			daysStr = fmt.Sprintf("%d", r.Days)
+			daysStr = r.Days
 		}
 		t.Row(
 			r.Software,
