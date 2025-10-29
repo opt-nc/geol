@@ -1,0 +1,32 @@
+geolVersion: "1"
+app_name: MySuperApp
+
+stack:
+  - name: java temurin
+    version: "21"
+    id_eol: eclipse-temurin
+    critical: true     # dépendance critique
+
+  - name: quarkus
+    version: "3.12"
+    id_eol: quarkus-framework
+    critical: true
+
+  - name: postgresql
+    version: "14"
+    id_eol: postgresql
+
+  - name: opensearch
+    version: "2"
+    id_eol: opensearch
+    critical: true
+
+  - name: kafka
+    version: "3.8"
+    id_eol: apache-kafka
+    critical: true
+
+  - name: consul
+    version: "1.19"
+    id_eol: consul
+    critical: false    # observé mais pas bloquant

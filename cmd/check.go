@@ -163,7 +163,7 @@ func lookupEolDate(idEol, version string) string {
 	}
 
 	if !found {
-		log.Error().Msgf("Product with id_eol %s not found in cache", idEol)
+		log.Error().Msgf("Product with id_eol %s not found in the API", idEol)
 		os.Exit(1)
 	}
 
@@ -290,8 +290,10 @@ var checkCmd = &cobra.Command{
 	Use:     "check",
 	Aliases: []string{"chk"},
 	Short:   "Check EOL status of your stack.",
-	Long: `The 'check' command analyzes each software component listed in your stack YAML file (default: .geol.yaml), retrieves End-of-Life (EOL) information, and displays a color-coded table indicating the EOL status and criticality of each item. This helps you quickly identify outdated or unsupported software in your stack.
-`,
+	Long: `The 'check' command analyzes each software component listed in your stack YAML file (default: .geol.yaml), retrieves End-of-Life (EOL) information, and displays a color-coded table indicating the EOL status and criticality of each item. This helps you quickly identify outdated software in your stack.
+Try using 'geol check template' to generate a sample stack YAML file.`,
+	Example: `geol check
+geol check --file stack.yaml`,
 	Run: func(cmd *cobra.Command, args []string) {
 		file, _ := cmd.Flags().GetString("file")
 		_, err := os.Stat(file)

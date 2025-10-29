@@ -33,3 +33,6 @@ go.work.sum
 
 bin/
 dist/
+
+completions/
+manpages/
