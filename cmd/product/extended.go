@@ -83,6 +83,7 @@ geol product extended quarkus > quarkus-eol.md`,
 				}
 			}
 			if !found {
+				log.Error().Msgf("Product %s not found in the API.", prod)
 				continue // product not found in cache
 			}
 
@@ -133,7 +134,7 @@ geol product extended quarkus > quarkus-eol.md`,
 		}
 
 		if len(allProducts) == 0 {
-			log.Error().Msg("Aucun produit trouvé dans le cache ou l'API.")
+			log.Error().Msg("None of the products were found in the API.")
 			os.Exit(1)
 		}
 

@@ -11,6 +11,7 @@ require (
 	github.com/fatih/color v1.18.0
 	github.com/phuslu/log v1.0.120
 	github.com/spf13/cobra v1.10.1
+	golang.org/x/term v0.36.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -20,12 +21,12 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/colorprofile v0.3.2 // indirect
 	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.3.0.20250917201909-41ff0bf215ea // indirect
-	github.com/charmbracelet/ultraviolet v0.0.0-20251017140847-d4ace4d6e731 // indirect
+	github.com/charmbracelet/ultraviolet v0.0.0-20251027184610-54aaed923e4e // indirect
 	github.com/charmbracelet/x/ansi v0.10.2 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13 // indirect
-	github.com/charmbracelet/x/exp/charmtone v0.0.0-20251023181713-f594ac034d6b // indirect
+	github.com/charmbracelet/x/exp/charmtone v0.0.0-20251028133951-21a390f3cede // indirect
 	github.com/charmbracelet/x/exp/color v0.0.0-20251006100439-2151805163c8 // indirect
-	github.com/charmbracelet/x/exp/slice v0.0.0-20251023181713-f594ac034d6b // indirect
+	github.com/charmbracelet/x/exp/slice v0.0.0-20251028133951-21a390f3cede // indirect
 	github.com/charmbracelet/x/termios v0.1.1 // indirect
 	github.com/charmbracelet/x/windows v0.2.2 // indirect
 	github.com/clipperhouse/stringish v0.1.1 // indirect
@@ -53,6 +54,5 @@ require (
 	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect
-	golang.org/x/term v0.36.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
 )
