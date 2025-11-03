@@ -23,6 +23,7 @@ import (
 func init() {
 	rootCmd.AddCommand(checkCmd)
 	checkCmd.Flags().StringP("file", "f", ".geol.yaml", "File to check (default .geol.yaml)")
+	checkCmd.Flags().BoolP("strict", "s", false, "Exit with error if any critical software is EOL")
 }
 
 type stackItem struct {
@@ -297,6 +298,7 @@ Try using 'geol check init' to generate a sample stack YAML file.`,
 geol check --file stack.yaml`,
 	Run: func(cmd *cobra.Command, args []string) {
 		file, _ := cmd.Flags().GetString("file")
+		strict, _ := cmd.Flags().GetBool("strict")
 		_, err := os.Stat(file)
 		if err != nil {
 			log.Error().Msg("Error: the file does not exist: " + file)
@@ -332,7 +334,7 @@ geol check --file stack.yaml`,
 			Render("# " + config.AppName)
 		fmt.Println(styledTitle)
 		fmt.Println(tableStr)
-		if errorOut {
+		if errorOut && strict {
 			os.Exit(1)
 		}
 	},
