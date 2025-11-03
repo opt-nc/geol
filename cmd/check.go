@@ -66,6 +66,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 					log.Error().Msgf("Critical software %s version %s is EOL since %s", item.Name, item.Version, eolDate)
 				} else if daysInt < 30 {
 					status = "WARN"
+					log.Warn().Msgf("Critical software %s version %s is nearing EOL on %s (%d days left)", item.Name, item.Version, eolDate, daysInt)
 				} else {
 					status = "OK"
 				}

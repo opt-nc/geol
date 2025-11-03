@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	utilities.InitLogger()
+
 }
 
 // StatusCmd represents the status command

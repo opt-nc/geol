@@ -37,10 +37,22 @@ func EnsureCacheExistsGeneric(cachePath string, cmd *cobra.Command) (os.FileInfo
 
 var ApiUrl = "https://endoflife.date/api/v1/"
 
-func InitLogger() {
+func InitLogger(logLevel string) {
+	var level log.Level
+	switch logLevel {
+	case "debug":
+		level = log.DebugLevel
+	case "info":
+		level = log.InfoLevel
+	case "warn":
+		level = log.WarnLevel
+	default:
+		level = log.ErrorLevel
+	}
 	log.DefaultLogger = log.Logger{
 		TimeField:  "time",
 		TimeFormat: "15:04",
+		Level:      level,
 		Writer: &log.ConsoleWriter{
 			ColorOutput:    true,
 			QuoteString:    true,

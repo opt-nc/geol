@@ -18,7 +18,7 @@ import (
 func init() {
 	ProductCmd.AddCommand(extendedCmd)
 	ProductCmd.AddCommand(describeCmd)
-	utilities.InitLogger()
+
 }
 
 // ProductCmd represents the product command

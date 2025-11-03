@@ -18,7 +18,7 @@ import (
 
 func init() {
 	extendedCmd.Flags().IntP("number", "n", 10, "Number of latest versions to display (default: 10, 0 to show all)")
-	utilities.InitLogger()
+
 }
 
 // extendedCmd represents the extended command
