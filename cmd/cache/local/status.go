@@ -9,7 +9,7 @@ import (
 )
 
 func init() {
-	utilities.InitLogger()
+
 }
 
 // StatusCmd represents the status command
@@ -21,14 +21,15 @@ var StatusCmd = &cobra.Command{
 
 This command prints the last update date and the number of products currently cached in geol/products.json. It helps verify if the cache is present and up to date.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		productsPath, err := utilities.GetProductsPath()
+		if err == nil {
+			if info, err2 := utilities.EnsureCacheExistsGeneric(productsPath, cmd); err2 == nil {
+				modTime := info.ModTime()
+				log.Info().Msg("Cache last updated " + modTime.Format("2006-01-02 15:04:05"))
+			}
+		}
 		utilities.AnalyzeCacheProductsValidity(cmd)
 		var errorOccurred = false
-
-		productsPath, err := utilities.GetProductsPath()
-		if err != nil {
-			log.Error().Err(err).Msg("Error retrieving products path")
-			errorOccurred = true
-		}
 
 		products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {

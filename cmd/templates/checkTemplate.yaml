@@ -1,0 +1,38 @@
+geolVersion: "1"
+app_name: MySuperApp
+
+stack:
+  - name: ubuntu
+    version: "25.10"
+    id_eol: ubuntu
+    critical: true
+
+  - name: java temurin
+    version: "21"
+    id_eol: eclipse-temurin
+    critical: true
+
+  - name: quarkus
+    version: "3.12"
+    id_eol: quarkus-framework
+    critical: true
+
+  - name: postgresql
+    version: "14"
+    id_eol: psql
+
+  - name: opensearch
+    version: "2"
+    id_eol: opensearch
+    critical: false
+
+  - name: maven
+    version: "3.6"
+    id_eol: apache-maven
+    critical: true
+
+  - name: traefik
+    version: "2.11"
+    id_eol: traefik
+    critical: true
+

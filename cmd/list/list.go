@@ -6,11 +6,10 @@ import (
 	"github.com/phuslu/log"
 
 	"github.com/opt-nc/geol/cmd/list/items"
-	"github.com/opt-nc/geol/utilities"
 )
 
 func init() {
-	utilities.InitLogger()
+
 	ListCmd.AddCommand(items.ProductsCmd)
 	ListCmd.AddCommand(items.CategoriesCmd)
 	ListCmd.AddCommand(items.TagsCmd)
