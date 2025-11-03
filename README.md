@@ -29,7 +29,7 @@ Its ambitions are to :
 
 | Person                                     | 🎯 Product Manager | 👩‍💻 Lead Dev | 📊 Data Scientist | 🛠️ Data Engineer | 🎤 Storyteller | 🧪 End-user & Tester |
 |--------------------------------------------|--------------------|---------------|-----------------|------------------|----------------|----------------------|
-| [@adriens](https://github.com/adriens)     |         ✅         |               |       ✅        |       ✅         |                |          ✅          |
+| [@adriens](https://github.com/adriens)     |         ✅         |               |       ✅        |       ✅         |     ✅         |          ✅          |
 | [@supervinh](https://github.com/supervinh) |                    |       ✅      |                 |                  |                |                      |
 | [@mbarre](https://github.com/mbarre)       |                    |               |                 |                  |                |           ✅         |
 | [@Draks898](https://github.com/Draks898)   |                    |               |                 |                  |                |           ✅         |
@@ -114,6 +114,11 @@ To build it youself :
 ```sh
 go build -o geol ./cmd/geol
 ```
+## 🍿 See it in action
+
+<a href= "https://www.youtube.com/watch?v=vhFXWGqB_-g"><img width="1280" height="720" alt="geol-unboxing-video-thumbnail" src="https://github.com/user-attachments/assets/427e704a-d3ac-4be9-8bf8-7ece98d302cc" /></a>
+
+
 
 ## 🙏 Acknowledgments
 

@@ -18,7 +18,7 @@ import (
 
 func init() {
 	extendedCmd.Flags().IntP("number", "n", 10, "Number of latest versions to display (default: 10, 0 to show all)")
-	utilities.InitLogger()
+
 }
 
 // extendedCmd represents the extended command
@@ -83,6 +83,7 @@ geol product extended quarkus > quarkus-eol.md`,
 				}
 			}
 			if !found {
+				log.Error().Msgf("Product %s not found in the API.", prod)
 				continue // product not found in cache
 			}
 
@@ -106,22 +107,8 @@ geol product extended quarkus > quarkus-eol.md`,
 				os.Exit(1)
 			}
 
-			var apiResp struct {
-				Result struct {
-					Name     string `json:"name"`
-					Releases []struct {
-						Name        string `json:"name"`
-						ReleaseDate string `json:"releaseDate"`
-						Latest      struct {
-							Name string `json:"name"`
-							Date string `json:"date"`
-						} `json:"latest"`
-						EoasFrom string `json:"eoasFrom"`
-						EolFrom  string `json:"eolFrom"`
-						IsLTS    bool   `json:"isLTS"`
-					} `json:"releases"`
-				}
-			}
+			var apiResp ApiRespExtended
+
 			if err := json.Unmarshal(body, &apiResp); err != nil {
 				log.Error().Err(err).Msgf("Error decoding JSON for %s", prod)
 				os.Exit(1)
@@ -147,7 +134,7 @@ geol product extended quarkus > quarkus-eol.md`,
 		}
 
 		if len(allProducts) == 0 {
-			log.Error().Msg("Aucun produit trouvé dans le cache ou l'API.")
+			log.Error().Msg("None of the products were found in the API.")
 			os.Exit(1)
 		}
 

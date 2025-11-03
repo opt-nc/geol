@@ -13,15 +13,14 @@ import (
 
 // CheckCacheTimeAndUpdateGeneric logs the cache mod time and updates the cache if older than maxAge using RefreshAllCaches.
 func CheckCacheTimeAndUpdateGeneric(modTime time.Time, maxAge time.Duration, cmd *cobra.Command) {
-	log.Info().Msg("Cache last updated " + modTime.Format("2006-01-02 15:04:05"))
 	if modTime.Before(time.Now().Add(-maxAge)) {
-		log.Warn().Msg("The cache is older than " + maxAge.String() + ". Updating the cache...")
+		log.Warn().Msg("Cache last updated " + modTime.Format("2006-01-02 15:04:05") + ", older than 24 hours. Updating the cache...")
 		RefreshAllCaches(cmd)
 	}
 }
 
 // ensureCacheExistsGeneric checks if the cache file exists, creates it if missing using RefreshAllCaches, and returns its FileInfo or an error.
-func ensureCacheExistsGeneric(cachePath string, cmd *cobra.Command) (os.FileInfo, error) {
+func EnsureCacheExistsGeneric(cachePath string, cmd *cobra.Command) (os.FileInfo, error) {
 	info, err := os.Stat(cachePath)
 	if err != nil {
 		log.Warn().Err(err).Str("path", cachePath).Msg("cache not found, creating the cache...")
@@ -38,10 +37,22 @@ func ensureCacheExistsGeneric(cachePath string, cmd *cobra.Command) (os.FileInfo
 
 var ApiUrl = "https://endoflife.date/api/v1/"
 
-func InitLogger() {
+func InitLogger(logLevel string) {
+	var level log.Level
+	switch logLevel {
+	case "debug":
+		level = log.DebugLevel
+	case "info":
+		level = log.InfoLevel
+	case "warn":
+		level = log.WarnLevel
+	default:
+		level = log.ErrorLevel
+	}
 	log.DefaultLogger = log.Logger{
 		TimeField:  "time",
 		TimeFormat: "15:04",
+		Level:      level,
 		Writer: &log.ConsoleWriter{
 			ColorOutput:    true,
 			QuoteString:    true,

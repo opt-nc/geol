@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	utilities.InitLogger()
+
 }
 
 // describeCmd represents the describe command
