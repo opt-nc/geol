@@ -26,4 +26,5 @@ func GenerateTemplate(outputPath string) {
 		os.Exit(1)
 	}
 	log.Info().Msgf("Template file %s generated successfully", outputPath)
+	log.Info().Msg("You can now analyze your stack by running 'geol check --file " + outputPath + "'")
 }

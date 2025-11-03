@@ -213,7 +213,7 @@ func renderStackTable(rows []stackTableRow) string {
 
 	t := table.New()
 	t.Headers(
-		"SOFTWARE", "VERSION", "EOL DATE", "STATUS", "DAYS",
+		"Software", "Version", "EOL Date", "Status", "Days",
 	)
 	for _, r := range rows {
 		var daysStr string
@@ -290,9 +290,9 @@ func checkRequiredKeys(config geolConfig) []string {
 var checkCmd = &cobra.Command{
 	Use:     "check",
 	Aliases: []string{"chk"},
-	Short:   "Check EOL status of your stack.",
-	Long: `The 'check' command analyzes each software component listed in your stack YAML file (default: .geol.yaml), retrieves End-of-Life (EOL) information, and displays a color-coded table indicating the EOL status and criticality of each item. This helps you quickly identify outdated software in your stack.
-Try using 'geol check template' to generate a sample stack YAML file.`,
+	Short:   "Analyzes a stack from a YAML file, checks each component’s EOL status.",
+	Long: `The 'check' command analyzes each software component listed in your stack YAML file (default: .geol.yaml), retrieves End-of-Life (EOL) information, and displays the EOL status report. Great to identify outdated software in a given stack.
+Try using 'geol check init' to generate a sample stack YAML file.`,
 	Example: `geol check
 geol check --file stack.yaml`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -326,7 +326,11 @@ geol check --file stack.yaml`,
 		today := time.Now()
 		rows, errorOut := getStackTableRows(config.Stack, today)
 		tableStr := renderStackTable(rows)
-		fmt.Println("##", config.AppName+"\n")
+		styledTitle := lipgloss.NewStyle().
+			Bold(true).Foreground(lipgloss.Color("#FFFF88")).
+			Background(lipgloss.Color("#5F5FFF")).
+			Render("# " + config.AppName)
+		fmt.Println(styledTitle)
 		fmt.Println(tableStr)
 		if errorOut {
 			os.Exit(1)
