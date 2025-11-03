@@ -1,0 +1,37 @@
+version: '3'
+
+tasks:
+  default:
+    desc: "This Taskfile dynamically creates PNG and JPEG image assets from SVG source files. Run 'task generate' to create them."
+    cmds:
+      - task generate
+
+  setup:
+    desc: "Check for required tools (svgexport and convert)"
+    cmds:
+      - |
+        command -v svgexport >/dev/null || \
+        (echo "svgexport not found. Please install it globally: npm install -g svgexport" && exit 1)
+      - |
+        command -v convert >/dev/null || \
+        (echo "convert (ImageMagick) not found. Please install ImageMagick (e.g., sudo apt install imagemagick)." && exit 1)
+
+  generate:
+    desc: "Generate PNG and JPEG versions of the logos from SVG files"
+    deps: [setup]
+    cmds:
+      # Convert SVG to PNG (transparent background)
+      - svgexport logo-no-name.svg logo-no-name.png
+      - svgexport logo-with-name.svg logo-with-name.png
+      # Convert SVG to JPEG (default white background)
+      - svgexport logo-no-name.svg logo-no-name.jpeg
+      - svgexport logo-with-name.svg logo-with-name.jpeg
+      # Convert PNG to JPEG (black background)
+      - |
+        convert logo-no-name.png \
+        -background black \
+        -flatten logo-no-name-black.jpeg
+      - |
+        convert logo-with-name.png \
+        -background black \
+        -flatten logo-with-name-black.jpeg

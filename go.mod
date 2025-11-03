@@ -1,15 +1,18 @@
 module github.com/opt-nc/geol
 
-go 1.25.1
+go 1.25.3
 
 require (
 	github.com/charmbracelet/fang v0.4.3
 	github.com/charmbracelet/glamour v0.10.0
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
+	github.com/charmbracelet/x/term v0.2.1
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
 	github.com/fatih/color v1.18.0
 	github.com/phuslu/log v1.0.120
 	github.com/spf13/cobra v1.10.1
+	golang.org/x/term v0.36.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -18,16 +21,16 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/colorprofile v0.3.2 // indirect
 	github.com/charmbracelet/lipgloss/v2 v2.0.0-beta.3.0.20250917201909-41ff0bf215ea // indirect
-	github.com/charmbracelet/ultraviolet v0.0.0-20251017140847-d4ace4d6e731 // indirect
+	github.com/charmbracelet/ultraviolet v0.0.0-20251027184610-54aaed923e4e // indirect
 	github.com/charmbracelet/x/ansi v0.10.2 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13 // indirect
-	github.com/charmbracelet/x/exp/charmtone v0.0.0-20251020183722-ee4914f58d13 // indirect
+	github.com/charmbracelet/x/exp/charmtone v0.0.0-20251028133951-21a390f3cede // indirect
 	github.com/charmbracelet/x/exp/color v0.0.0-20251006100439-2151805163c8 // indirect
-	github.com/charmbracelet/x/exp/slice v0.0.0-20251020183722-ee4914f58d13 // indirect
-	github.com/charmbracelet/x/term v0.2.1 // indirect
+	github.com/charmbracelet/x/exp/slice v0.0.0-20251028133951-21a390f3cede // indirect
 	github.com/charmbracelet/x/termios v0.1.1 // indirect
 	github.com/charmbracelet/x/windows v0.2.2 // indirect
-	github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
+	github.com/clipperhouse/stringish v0.1.1 // indirect
+	github.com/clipperhouse/uax29/v2 v2.3.0 // indirect
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -51,6 +54,5 @@ require (
 	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect
-	golang.org/x/term v0.36.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
 )

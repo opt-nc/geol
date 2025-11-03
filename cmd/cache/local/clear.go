@@ -10,7 +10,7 @@ import (
 
 func init() {
 	// Initialisation du logger global
-	utilities.InitLogger()
+
 }
 
 // ClearCmd represents the clear command
