@@ -11,6 +11,7 @@ import (
 	"github.com/opt-nc/geol/cmd/cache"
 	"github.com/opt-nc/geol/cmd/list"
 	"github.com/opt-nc/geol/cmd/product"
+	"github.com/opt-nc/geol/utilities"
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -37,4 +38,7 @@ func init() {
 	rootCmd.AddCommand(product.ProductCmd)
 	rootCmd.AddCommand(list.ListCmd)
 
+	rootCmd.PersistentFlags().StringP("log-level", "l", "info", "Logging level, default info (debug, info, warn, error)")
+	logLevel, _ := rootCmd.PersistentFlags().GetString("log-level")
+	utilities.InitLogger(logLevel)
 }

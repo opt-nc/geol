@@ -18,7 +18,7 @@ import (
 func init() {
 	ProductCmd.AddCommand(extendedCmd)
 	ProductCmd.AddCommand(describeCmd)
-	utilities.InitLogger()
+
 }
 
 // ProductCmd represents the product command
@@ -72,6 +72,7 @@ geol product describe nodejs`,
 				}
 			}
 			if !found {
+				log.Error().Msgf("Product %s not found in the API.", prod)
 				continue // product not found in cache
 			}
 
@@ -131,7 +132,7 @@ geol product describe nodejs`,
 
 		// Display markdown table with glamour
 		if len(results) == 0 {
-			log.Warn().Msg("No product found in cache or API.")
+			log.Error().Msg("None of the products were found in the API.")
 			os.Exit(1)
 		}
 		var buf bytes.Buffer

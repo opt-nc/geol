@@ -15,7 +15,7 @@ import (
 )
 
 func init() {
-	utilities.InitLogger()
+
 	ProductsCmd.Flags().BoolP("tree", "t", false, "List all products including aliases in a tree structure.")
 }
 

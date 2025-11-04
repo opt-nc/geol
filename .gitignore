@@ -33,3 +33,12 @@ go.work.sum
 
 bin/
 dist/
+
+completions/
+manpages/
+# Ignore local node_modules directory within assets/logos
+/assets/logos/node_modules
+
+# Ignore local package manager files within assets/logos
+/assets/logos/package.json
+/assets/logos/package-lock.json
