@@ -1,6 +1,6 @@
 module github.com/opt-nc/geol
 
-go 1.25.3
+go 1.25.4
 
 require (
 	github.com/charmbracelet/fang v0.4.3
