@@ -65,6 +65,11 @@ Or simply with `go`:
 ```sh
 go install github.com/opt-nc/geol@latest
 ```
+Or with shell script:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/opt-nc/geol/main/install.sh | bash
+```
 
 2. Update:
 
