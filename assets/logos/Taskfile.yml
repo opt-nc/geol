@@ -32,7 +32,8 @@ tasks:
     deps: [setup]
     cmds:
       - mkdir -p dist
-      - echo "WARNING: These files are automatically generated from SVG source files by 'task generate'.\nDO NOT MANUALLY EDIT ANY FILE IN THIS DIRECTORY. Your changes will be overwritten.\nEdit the source SVG files and run 'task' again." > dist/DO_NOT_MANUALLY_EDIT_ANY_FILE_HERE
+      - |
+        echo "WARNING: These files are automatically generated from SVG source files by 'task generate'.\nDO NOT MANUALLY EDIT ANY FILE IN THIS DIRECTORY. Your changes will be overwritten.\nEdit the source SVG files and run 'task' again." > dist/DO_NOT_MANUALLY_EDIT_ANY_FILE_HERE
       # --- No Gradient Versions ---
       # Convert SVG to PNG (transparent background)
       - svgexport logo-no-name-nogradient.svg dist/logo-no-name-nogradient.png
@@ -83,6 +84,8 @@ tasks:
         convert dist/logo-with-name-nogradient-multicolor-text.png \
         -background black \
         -flatten dist/logo-with-name-nogradient-multicolor-text-black.jpeg
+      - echo "Successfully generated files:"
+      - tree dist
 
   clean:
     desc: "Remove all generated files"
