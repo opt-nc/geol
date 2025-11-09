@@ -11,5 +11,5 @@
   <!-- Red (Bottom) -->
   <path d="M 50,150 L 150,150" stroke="rgb(255,0,0)" stroke-width="20" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
 
-  <text x="100" y="190" font-family="sans-serif" font-size="35" font-weight="bold" text-anchor="middle" fill="darkgreen">geol</text>
+  <text x="100" y="190" font-family="sans-serif" font-size="35" font-weight="bold" text-anchor="middle" fill="rgb(0,255,0)">geol</text>
 </svg>
