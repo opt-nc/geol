@@ -45,7 +45,7 @@ func FetchAndSaveCategories(cmd *cobra.Command) error {
 		}
 	}()
 
-	//define structure to parse the response
+	// define structure to parse the response
 	type apiResponse struct {
 		Result []Category `json:"result"`
 	}
@@ -76,7 +76,7 @@ func FetchAndSaveCategories(cmd *cobra.Command) error {
 	}
 
 	// Save to file
-	if err := os.WriteFile(categoriesPath, data, 0644); err != nil {
+	if err := os.WriteFile(categoriesPath, data, 0o644); err != nil {
 		log.Error().Err(err).Msg("Error writing categories file")
 		return err
 	}
