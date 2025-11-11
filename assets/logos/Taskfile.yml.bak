@@ -32,11 +32,7 @@ tasks:
     deps: [setup]
     cmds:
       - mkdir -p dist
-      - echo "Generating PNG, JPEG, and GIF logo assets..."
-      - |
-        echo "WARNING: These files are automatically generated from SVG source files by 'task generate'.\nDO NOT MANUALLY EDIT ANY FILE IN THIS DIRECTORY. Your changes will be overwritten.\nEdit the source SVG files and run 'task' again." > dist/DO_NOT_MANUALLY_EDIT_ANY_FILE_HERE
       # --- No Gradient Versions ---
-      - echo "Generating non-gradient logos..."
       # Convert SVG to PNG (transparent background)
       - svgexport logo-no-name-nogradient.svg dist/logo-no-name-nogradient.png
       - svgexport logo-with-name-nogradient.svg dist/logo-with-name-nogradient.png
@@ -54,7 +50,6 @@ tasks:
         -flatten dist/logo-with-name-nogradient-black.jpeg
 
       # --- Gradient Versions ---
-      - echo "Generating gradient logos..."
       # Convert SVG to PNG (transparent background)
       - svgexport logo-no-name-gradient.svg dist/logo-no-name-gradient.png
       - svgexport logo-with-name-gradient.svg dist/logo-with-name-gradient.png
@@ -70,42 +65,6 @@ tasks:
         convert dist/logo-with-name-gradient.png \
         -background black \
         -flatten dist/logo-with-name-gradient-black.jpeg
-
-      # --- Multicolor Text Versions ---
-      - echo "Generating multicolor text logos..."
-      # Convert SVG to PNG (transparent background)
-      - svgexport logo-with-name-gradient-multicolor-text.svg dist/logo-with-name-gradient-multicolor-text.png
-      - svgexport logo-with-name-nogradient-multicolor-text.svg dist/logo-with-name-nogradient-multicolor-text.png
-      # Convert SVG to JPEG (default white background)
-      - svgexport logo-with-name-gradient-multicolor-text.svg dist/logo-with-name-gradient-multicolor-text.jpeg
-      - svgexport logo-with-name-nogradient-multicolor-text.svg dist/logo-with-name-nogradient-multicolor-text.jpeg
-      # Convert PNG to JPEG (black background)
-      - |
-        convert dist/logo-with-name-gradient-multicolor-text.png \
-        -background black \
-        -flatten dist/logo-with-name-gradient-multicolor-text-black.jpeg
-      - |
-        convert dist/logo-with-name-nogradient-multicolor-text.png \
-        -background black \
-        -flatten dist/logo-with-name-nogradient-multicolor-text-black.jpeg
-
-      # --- Animated GIF ---
-      - echo "Generating animated GIFs..."
-      - |
-        convert -delay 100 logo-with-name-green.svg \
-        -delay 200 logo-with-name-orange.svg \
-        -delay 100 logo-with-name-red.svg \
-        -loop 0 dist/logo-animation.gif
-      - |
-        convert -background black -delay 100 logo-with-name-green.svg \
-        -delay 200 logo-with-name-orange.svg \
-        -delay 100 logo-with-name-red.svg \
-        -coalesce \
-        -alpha remove \
-        -loop 0 dist/logo-animation-black.gif
-
-      - echo "Successfully generated files:"
-      - tree dist
 
   clean:
     desc: "Remove all generated files"
