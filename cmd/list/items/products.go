@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/tree"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/tree"
 	"github.com/fatih/color"
 	"github.com/opt-nc/geol/utilities"
 	"github.com/phuslu/log"
@@ -15,7 +15,6 @@ import (
 )
 
 func init() {
-
 	ProductsCmd.Flags().BoolP("tree", "t", false, "List all products including aliases in a tree structure.")
 }
 
@@ -89,6 +88,5 @@ geol l p -t`,
 			log.Error().Err(err).Msg("Error writing product count to stdout")
 			os.Exit(1)
 		}
-
 	},
 }
