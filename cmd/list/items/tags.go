@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"github.com/fatih/color"
 	"github.com/opt-nc/geol/utilities"
 	"github.com/phuslu/log"
@@ -60,5 +60,4 @@ var TagsCmd = &cobra.Command{
 }
 
 func init() {
-
 }
