@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/table"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/table"
 	"github.com/charmbracelet/x/term"
 	"github.com/opt-nc/geol/utilities"
 	"github.com/phuslu/log"
@@ -18,7 +18,6 @@ import (
 
 func init() {
 	extendedCmd.Flags().IntP("number", "n", 10, "Number of latest versions to display (default: 10, 0 to show all)")
-
 }
 
 // extendedCmd represents the extended command
