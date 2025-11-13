@@ -1,0 +1,17 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Green (Top) -->
+  <path d="M 50,50 L 150,50" stroke="rgb(0,255,0)" stroke-width="20" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M 50,50 L 100,100" stroke="rgb(0,255,0)" stroke-width="20" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M 150,50 L 100,100" stroke="rgb(0,255,0)" stroke-width="20" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- Orange (Middle) -->
+  <path d="M 100,100 L 150,150" stroke="rgb(255,165,0)" stroke-width="20" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M 50,150 L 100,100" stroke="rgb(255,165,0)" stroke-width="20" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- Red (Bottom) -->
+  <path d="M 50,150 L 150,150" stroke="rgb(255,0,0)" stroke-width="20" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <text x="100" y="190" font-family="sans-serif" font-size="35" font-weight="bold" text-anchor="middle">
+    <tspan fill="rgb(0,255,0)">g</tspan><tspan fill="rgb(255,165,0)">eo</tspan><tspan fill="rgb(255,0,0)">l</tspan>
+  </text>
+</svg>
