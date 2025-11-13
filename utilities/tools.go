@@ -93,7 +93,7 @@ func GetAPIResponse(url string) (*http.Response, error) {
 
 func createDirectoryIfNotExists(path string) error {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return os.MkdirAll(path, 0755)
+		return os.MkdirAll(path, 0o755)
 	}
 	return nil
 }
@@ -123,7 +123,7 @@ func CreateDoNotEditFile() error {
 		return err
 	}
 	file := filepath.Join(configDir, "geol", "DO_NOT_EDIT_ANYTHING")
-	if err := os.WriteFile(file, []byte("This directory is managed by geol. Do not edit anything here."), 0644); err != nil {
+	if err := os.WriteFile(file, []byte("This directory is managed by geol. Do not edit anything here."), 0o644); err != nil {
 		return err
 	}
 	return nil

@@ -30,7 +30,7 @@ Its ambitions are to :
 | Person                                     | 🎯 Product Manager | 👩‍💻 Lead Dev | 📊 Data Scientist | 🛠️ Data Engineer | 🎤 Storyteller | 🧪 End-user & Tester |
 |--------------------------------------------|--------------------|---------------|-----------------|------------------|----------------|----------------------|
 | [@adriens](https://github.com/adriens)     |         ✅         |               |       ✅        |       ✅         |     ✅         |          ✅          |
-| [@supervinh](https://github.com/supervinh) |                    |       ✅      |                 |                  |                |                      |
+| [@supervinh](https://github.com/supervinh) |                    |       ✅      |                 |                  |                |          ✅          |
 | [@mbarre](https://github.com/mbarre)       |                    |               |                 |                  |                |           ✅         |
 | [@Draks898](https://github.com/Draks898)   |                    |               |                 |                  |                |           ✅         |
 
