@@ -6,15 +6,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/glamour"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/glamour/v2"
 	"github.com/opt-nc/geol/utilities"
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 )
 
 func init() {
-
 }
 
 // describeCmd represents the describe command
@@ -146,6 +145,5 @@ var describeCmd = &cobra.Command{
 			log.Error().Err(err).Msg("Error writing rendered markdown")
 			os.Exit(1)
 		}
-
 	},
 }

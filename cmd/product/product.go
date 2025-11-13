@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/charmbracelet/glamour"
+	"github.com/charmbracelet/glamour/v2"
 	"github.com/opt-nc/geol/utilities"
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
@@ -18,7 +18,6 @@ import (
 func init() {
 	ProductCmd.AddCommand(extendedCmd)
 	ProductCmd.AddCommand(describeCmd)
-
 }
 
 // ProductCmd represents the product command
@@ -123,7 +122,7 @@ geol product describe nodejs`,
 			}
 			results = append(results, productResult{
 				Name: apiResp.Result.Name,
-				//EolLabel:    apiResp.Result.Labels.Eol,
+				// EolLabel:    apiResp.Result.Labels.Eol,
 				ReleaseName: relName,
 				ReleaseDate: relDate,
 				EolFrom:     relEol,

@@ -21,7 +21,7 @@ func GenerateTemplate(outputPath string) {
 	}
 
 	log.Info().Msgf("Generating template file at %s", outputPath)
-	if err := os.WriteFile(outputPath, []byte(GeolTemplate), 0644); err != nil {
+	if err := os.WriteFile(outputPath, []byte(GeolTemplate), 0o644); err != nil {
 		log.Error().Msgf("failed to write template file: %v", err)
 		os.Exit(1)
 	}

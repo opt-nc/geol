@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/tree"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/tree"
 	"github.com/fatih/color"
 	"github.com/opt-nc/geol/utilities"
 	"github.com/spf13/cobra"
@@ -111,5 +111,4 @@ geol tag canonical`,
 
 func init() {
 	rootCmd.AddCommand(tagCmd)
-
 }
