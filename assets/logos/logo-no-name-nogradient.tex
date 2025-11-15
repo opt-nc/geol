@@ -1,0 +1,71 @@
+% ===================================================================
+% HOW TO EMBED THIS LOGO IN ANY LATEX DOCUMENT
+% ===================================================================
+%
+% To use the logo in your own LaTeX document, you need to do two things:
+%
+% 1. PREAMBLE: Copy everything from the line below that reads
+%    "--- BEGIN PREAMBLE CODE ---" down to the line that reads
+%    "--- END PREAMble CODE ---" into the preamble of your .tex file
+%    (that is, anywhere before \begin{document}).
+%
+% 2. DOCUMENT: Once the preamble code is in place, you can use the
+%    \geolLogo command anywhere in your document body.
+%    For example: \geolLogo[scale=0.1, baseline=-8pt]
+%
+% ===================================================================
+
+
+\documentclass{article}
+
+% --- BEGIN PREAMBLE CODE ---
+% STEP 1: Copy all of this section into your document's preamble.
+
+\usepackage{tikz}
+\usepackage{xcolor}
+
+% 1. Define the exact colors from your SVG logo
+\definecolor{logoGreen}{RGB}{0,255,0}
+\definecolor{logoOrange}{RGB}{255,165,0}
+\definecolor{logoRed}{RGB}{255,0,0}
+
+% 2. Create a reusable command for your logo
+% Usage: \geolLogo[scale=1]
+\newcommand{\geolLogo}[1][]{
+    \begin{tikzpicture}[#1]
+        % Common styles from your SVG
+        \tikzstyle{logo_line} = [
+            line width=20,      % Equivalent to stroke-width="20"
+            line cap=round,     % Equivalent to stroke-linecap="round"
+            line join=round     % Equivalent to stroke-linejoin="round"
+        ]
+
+        % Drawing commands, translated from SVG coordinates.
+        % We use a 'yshift' and 'yscale' to flip the coordinate system
+        % to match the SVG's top-left origin.
+        \begin{scope}[yshift=-200pt, yscale=-1]
+            % Green Paths
+            \draw[logo_line, logoGreen] (50,50) -- (150,50);
+            \draw[logo_line, logoGreen] (50,50) -- (100,100);
+            \draw[logo_line, logoGreen] (150,50) -- (100,100);
+
+            % Orange Paths
+            \draw[logo_line, logoOrange] (100,100) -- (150,150);
+            \draw[logo_line, logoOrange] (50,150) -- (100,100);
+
+            % Red Path
+            \draw[logo_line, logoRed] (50,150) -- (150,150);
+        \end{scope}
+    \end{tikzpicture}%
+}
+
+% --- END PREAMBLE CODE ---
+
+
+\begin{document}
+
+% STEP 2: Use the \geolLogo command in your document.
+% This is just an example of how to use it.
+And here it is inside a line of text: \geolLogo[scale=0.025, baseline=-2pt]
+
+\end{document}
