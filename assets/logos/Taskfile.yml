@@ -5,9 +5,11 @@ tasks:
     desc: "This Taskfile dynamically creates PNG and JPEG image assets from SVG source files. Run 'task generate' to create them."
     cmds:
       - task generate
+      - task generate-webp
+      - task optimize
 
   setup:
-    desc: "Check for required tools (svgexport and convert)"
+    desc: "Check for required tools (svgexport, convert, optipng, jpegoptim)"
     cmds:
       - |
         command -v svgexport >/dev/null || \
@@ -15,23 +17,114 @@ tasks:
       - |
         command -v convert >/dev/null || \
         (echo "convert (ImageMagick) not found. Please install ImageMagick (e.g., sudo apt install imagemagick)." && exit 1)
+      - |
+        command -v optipng >/dev/null || \
+        (echo "optipng not found. Please install it (e.g., sudo apt install optipng)." && exit 1)
+      - |
+        command -v jpegoptim >/dev/null || \
+        (echo "jpegoptim not found. Please install it (e.g., sudo apt install jpegoptim)." && exit 1)
+      - |
+        command -v cwebp >/dev/null || \
+        (echo "cwebp not found. Please install it (e.g., sudo apt install webp or libwebp-tools)." && exit 1)
 
   generate:
     desc: "Generate PNG and JPEG versions of the logos from SVG files"
     deps: [setup]
     cmds:
+      - mkdir -p dist
+      - echo "Generating PNG, JPEG, and GIF logo assets..."
+      - |
+        echo "WARNING: These files are automatically generated from SVG source files by 'task generate'.\nDO NOT MANUALLY EDIT ANY FILE IN THIS DIRECTORY. Your changes will be overwritten.\nEdit the source SVG files and run 'task' again." > dist/DO_NOT_MANUALLY_EDIT_ANY_FILE_HERE
+      # --- No Gradient Versions ---
+      - echo "Generating non-gradient logos..."
       # Convert SVG to PNG (transparent background)
-      - svgexport logo-no-name.svg logo-no-name.png
-      - svgexport logo-with-name.svg logo-with-name.png
+      - svgexport logo-no-name-nogradient.svg dist/logo-no-name-nogradient.png
+      - svgexport logo-with-name-nogradient.svg dist/logo-with-name-nogradient.png
       # Convert SVG to JPEG (default white background)
-      - svgexport logo-no-name.svg logo-no-name.jpeg
-      - svgexport logo-with-name.svg logo-with-name.jpeg
+      - svgexport logo-no-name-nogradient.svg dist/logo-no-name-nogradient.jpeg
+      - svgexport logo-with-name-nogradient.svg dist/logo-with-name-nogradient.jpeg
       # Convert PNG to JPEG (black background)
       - |
-        convert logo-no-name.png \
+        convert dist/logo-no-name-nogradient.png \
         -background black \
-        -flatten logo-no-name-black.jpeg
+        -flatten dist/logo-no-name-nogradient-black.jpeg
       - |
-        convert logo-with-name.png \
+        convert dist/logo-with-name-nogradient.png \
         -background black \
-        -flatten logo-with-name-black.jpeg
+        -flatten dist/logo-with-name-nogradient-black.jpeg
+
+      # --- Gradient Versions ---
+      - echo "Generating gradient logos..."
+      # Convert SVG to PNG (transparent background)
+      - svgexport logo-no-name-gradient.svg dist/logo-no-name-gradient.png
+      - svgexport logo-with-name-gradient.svg dist/logo-with-name-gradient.png
+      # Convert SVG to JPEG (default white background)
+      - svgexport logo-no-name-gradient.svg dist/logo-no-name-gradient.jpeg
+      - svgexport logo-with-name-gradient.svg dist/logo-with-name-gradient.jpeg
+      # Convert PNG to JPEG (black background)
+      - |
+        convert dist/logo-no-name-gradient.png \
+        -background black \
+        -flatten dist/logo-no-name-gradient-black.jpeg
+      - |
+        convert dist/logo-with-name-gradient.png \
+        -background black \
+        -flatten dist/logo-with-name-gradient-black.jpeg
+
+      # --- Multicolor Text Versions ---
+      - echo "Generating multicolor text logos..."
+      # Convert SVG to PNG (transparent background)
+      - svgexport logo-with-name-gradient-multicolor-text.svg dist/logo-with-name-gradient-multicolor-text.png
+      - svgexport logo-with-name-nogradient-multicolor-text.svg dist/logo-with-name-nogradient-multicolor-text.png
+      # Convert SVG to JPEG (default white background)
+      - svgexport logo-with-name-gradient-multicolor-text.svg dist/logo-with-name-gradient-multicolor-text.jpeg
+      - svgexport logo-with-name-nogradient-multicolor-text.svg dist/logo-with-name-nogradient-multicolor-text.jpeg
+      # Convert PNG to JPEG (black background)
+      - |
+        convert dist/logo-with-name-gradient-multicolor-text.png \
+        -background black \
+        -flatten dist/logo-with-name-gradient-multicolor-text-black.jpeg
+      - |
+        convert dist/logo-with-name-nogradient-multicolor-text.png \
+        -background black \
+        -flatten dist/logo-with-name-nogradient-multicolor-text-black.jpeg
+
+      # --- Animated GIF ---
+      - echo "Generating animated GIFs..."
+      - |
+        convert -delay 100 logo-with-name-green.svg \
+        -delay 200 logo-with-name-orange.svg \
+        -delay 100 logo-with-name-red.svg \
+        -loop 0 dist/logo-animation.gif
+      - |
+        convert -background black -delay 100 logo-with-name-green.svg \
+        -delay 200 logo-with-name-orange.svg \
+        -delay 100 logo-with-name-red.svg \
+        -coalesce \
+        -alpha remove \
+        -loop 0 dist/logo-animation-black.gif
+
+      - echo "Successfully generated files:"
+      - tree dist
+
+  clean:
+    desc: "Remove all generated files"
+    cmds:
+      - rm -rf dist
+
+  pdf-logo:
+    desc: "Compile the LaTeX logo into a PDF and clean up auxiliary files"
+    cmds:
+      - xelatex -output-directory=dist logo-no-name-nogradient.tex
+      - rm -f dist/*.aux dist/*.log
+
+  generate-webp:
+    desc: "Generate WebP versions of the logos from PNG files"
+    cmds:
+      - for f in dist/*.png; do cwebp "$f" -o "${f%.png}.webp"; done
+
+  optimize:
+    desc: "Optimize the size of generated PNG and JPEG files"
+    cmds:
+      - optipng -o7 dist/*.png
+      - jpegoptim --strip-all dist/*.jpeg

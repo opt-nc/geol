@@ -30,7 +30,7 @@ Its ambitions are to :
 | Person                                     | 🎯 Product Manager | 👩‍💻 Lead Dev | 📊 Data Scientist | 🛠️ Data Engineer | 🎤 Storyteller | 🧪 End-user & Tester |
 |--------------------------------------------|--------------------|---------------|-----------------|------------------|----------------|----------------------|
 | [@adriens](https://github.com/adriens)     |         ✅         |               |       ✅        |       ✅         |     ✅         |          ✅          |
-| [@supervinh](https://github.com/supervinh) |                    |       ✅      |                 |                  |                |                      |
+| [@supervinh](https://github.com/supervinh) |                    |       ✅      |                 |                  |                |          ✅          |
 | [@mbarre](https://github.com/mbarre)       |                    |               |                 |                  |                |           ✅         |
 | [@Draks898](https://github.com/Draks898)   |                    |               |                 |                  |                |           ✅         |
 
@@ -64,6 +64,11 @@ Or simply with `go`:
 
 ```sh
 go install github.com/opt-nc/geol@latest
+```
+Or with shell script:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/opt-nc/geol/main/install.sh | bash
 ```
 
 2. Update:

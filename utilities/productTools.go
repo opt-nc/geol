@@ -104,7 +104,7 @@ func FetchAndSaveProducts(cmd *cobra.Command) error {
 		return err
 	}
 	// Save to file
-	if err := os.WriteFile(productsPath, data, 0644); err != nil {
+	if err := os.WriteFile(productsPath, data, 0o644); err != nil {
 		log.Error().Err(err).Msg("Error writing file")
 		return err
 	}
