@@ -1,0 +1,162 @@
+% geol CLI commands cheatsheet
+% Version: __GEOL_VERSION__ | Commit: __GEOL_COMMIT__
+\documentclass[a4paper,10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{geometry}
+\usepackage{multicol}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\geometry{margin=1.5cm, landscape, top=0cm, bottom=0cm, left=0.5cm, right=0.5cm}
+\setlength{\columnsep}{1cm}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{\color{geoldark}\small Version: \_\_GEOL\_VERSION\_\_ \quad Commit: \_\_GEOL\_COMMIT\_\_}
+% Pictograms
+\usepackage{fontawesome5}
+% Color definitions
+\definecolor{geolblue}{HTML}{2563EB}
+\definecolor{geolgreen}{HTML}{059669}
+\definecolor{geolgray}{HTML}{F3F4F6}
+\definecolor{geoldark}{HTML}{1E293B}
+\definecolor{geolorange}{HTML}{F59E42}
+
+% --- BEGIN PREAMBLE CODE ---
+% STEP 1: Copy all of this section into your document's preamble.
+
+% 1. Define the exact colors from your SVG logo
+\definecolor{logoGreen}{RGB}{0,255,0}
+\definecolor{logoOrange}{RGB}{255,165,0}
+\definecolor{logoRed}{RGB}{255,0,0}
+
+% 2. Create a reusable command for your logo
+% Usage: \geolLogo[scale=1]
+\newcommand{\geolLogo}[1][]{
+    \begin{tikzpicture}[#1]
+        % Common styles from your SVG
+        \tikzstyle{logo_line} = [
+            line width=10,      % Equivalent to stroke-width="20"
+            line cap=round,     % Equivalent to stroke-linecap="round"
+            line join=round     % Equivalent to stroke-linejoin="round"
+        ]
+
+        % Drawing commands, translated from SVG coordinates.
+        % We use a 'yshift' and 'yscale' to flip the coordinate system
+        % to match the SVG's top-left origin.
+        \begin{scope}[yshift=-3.125pt, yscale=-1]
+            % Green Paths
+            \draw[logo_line, logoGreen] (50,50) -- (150,50);
+            \draw[logo_line, logoGreen] (50,50) -- (100,100);
+            \draw[logo_line, logoGreen] (150,50) -- (100,100);
+
+            % Orange Paths
+            \draw[logo_line, logoOrange] (100,100) -- (150,150);
+            \draw[logo_line, logoOrange] (50,150) -- (100,100);
+
+            % Red Path
+            \draw[logo_line, logoRed] (50,150) -- (150,150);
+        \end{scope}
+    \end{tikzpicture}%
+}
+
+% --- END PREAMBLE CODE ---
+% Title style
+\usepackage{sectsty}
+\sectionfont{\color{geolblue}}
+% Command style
+\newcommand{\cmd}[1]{\textcolor{geolgreen}{\texttt{#1}}}
+% Box style
+\newtcolorbox{geolbox}{colback=geolgray!80!white, colframe=geolblue, boxrule=0.8pt, arc=3pt, left=4pt, right=4pt, top=2pt, bottom=2pt}
+% Compact itemize for geolbox
+\newenvironment{geolitemize}{%
+  \begin{itemize}\setlength{\itemsep}{0.1em}\setlength{\parskip}{0pt}\setlength{\topsep}{0pt}
+}{\end{itemize}}
+% Title styled as a terminal command
+\usepackage{tikz}
+\newtcolorbox{terminaltitle}{colback=black!95!white, colframe=geolgreen, boxrule=1pt, arc=3pt, left=0pt, right=0pt, top=0pt, bottom=0pt}
+\renewcommand{\maketitle}{%
+    \begin{center}
+        \begin{terminaltitle}
+            \centering
+            \geolLogo[scale=0.02, baseline=-2.5pt] \\
+            {\textcolor{logoGreen}{\texttt{geol}}} \\
+            {\color{white}\href{https://github.com/opt-nc/geol}{opt-nc/geol}} \\
+            {\color{white}\large \textit{"Efficiently show end-of-life dates for a number of products in your terminal"}}
+        \end{terminaltitle}
+    \end{center}
+}
+\author{\href{https://github.com/opt-nc/geol}{opt-nc/geol}}
+
+
+\pagestyle{empty}
+\begin{document}
+
+
+
+\maketitle
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\footnotetext[1]{Document automatically generated with \texttt{XeLaTeX}.}
+
+
+% (presentation moved to the title)
+
+
+
+\begin{multicols}{2}
+
+\section*{\faDownload\ Get It}
+
+\begin{geolbox}
+\begin{geolitemize}
+  \item \cmd{brew install opt-nc/geol}
+  \item \cmd{go install github.com/opt-nc/geol@latest}
+  \item \cmd{geol help}
+\end{geolitemize}
+\end{geolbox}
+
+
+\section*{\faTerminal\ List commands}
+
+\begin{geolbox}
+\begin{geolitemize}
+  \item \cmd{geol help list} help about the \cmd{list} command
+  \item \cmd{geol list products} All products keys
+  \item \cmd{geol list products -t} All products keys and aliases in a tree view
+  \item \cmd{geol list categories} All categories keys
+  \item \cmd{geol list tags} All tags keys
+  \item \cmd{geol tag database} Show all products tagged as \cmd{database} 
+  \item \cmd{geol list products -t | grep sql}: Show products that have \cmd{sql} in their name
+\end{geolitemize}
+\end{geolbox}
+
+\section*{\faDatabase\ Cache}
+\begin{geolbox}
+\begin{geolitemize}
+  \item \cmd{geol cache status}: Show local cache status
+  \item \cmd{geol cache clear}: Clear the local cache
+  \item \cmd{geol cache refresh}: Refresh the local cache
+\end{geolitemize}
+\end{geolbox}
+
+\section*{\faLightbulb[regular]\ Tips}
+\begin{geolbox}
+\begin{geolitemize}
+  \item Use the \cmd{--help} option on each command for more information.
+  \item Completions are available for bash, zsh, fish in the \cmd{completions/} folder.
+\end{geolitemize}
+\end{geolbox}
+
+\section*{\faListUl\ Examples}
+\begin{geolbox}
+\begin{geolitemize}
+  \item \cmd{geol list}
+  \item \cmd{geol cache refresh}
+  \item \cmd{geol about}
+\end{geolitemize}
+\end{geolbox}
+
+\end{multicols}
+\end{document}
