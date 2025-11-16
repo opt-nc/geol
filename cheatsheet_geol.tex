@@ -78,15 +78,15 @@
 \usepackage{tikz}
 \newtcolorbox{terminaltitle}{colback=black!95!white, colframe=geolgreen, boxrule=1pt, arc=3pt, left=0pt, right=0pt, top=0pt, bottom=0pt}
 \renewcommand{\maketitle}{%
-  \begin{center}
-    \begin{terminaltitle}
-      \centering
-      \geolLogo[scale=0.02, baseline=-2.5pt] \\
-      {\textcolor{geolgreen}{\texttt{geol}}} \\
-      {\color{white}\href{https://github.com/opt-nc/geol}{opt-nc/geol}} \\
-  {\color{white}\large \textit{"Efficiently show end-of-life dates for a number of products in your terminal"}}
-    \end{terminaltitle}
-  \end{center}
+    \begin{center}
+        \begin{terminaltitle}
+            \centering
+            \geolLogo[scale=0.02, baseline=-2.5pt] \\
+            {\textcolor{logoGreen}{\texttt{geol}}} \\
+            {\color{white}\href{https://github.com/opt-nc/geol}{opt-nc/geol}} \\
+            {\color{white}\large \textit{"Efficiently show end-of-life dates for a number of products in your terminal"}}
+        \end{terminaltitle}
+    \end{center}
 }
 \author{\href{https://github.com/opt-nc/geol}{opt-nc/geol}}
 
@@ -113,17 +113,22 @@
 \begin{geolitemize}
   \item \cmd{brew install opt-nc/geol}
   \item \cmd{go install github.com/opt-nc/geol@latest}
-  \item \cmd{geol about}
   \item \cmd{geol help}
 \end{geolitemize}
 \end{geolbox}
 
 
-\section*{\faTerminal\ Main commands}
+\section*{\faTerminal\ List commands}
 
 \begin{geolbox}
 \begin{geolitemize}
-  \item \cmd{geol list}: List available products
+  \item \cmd{geol help list} help about the \cmd{list} command
+  \item \cmd{geol list products} All products keys
+  \item \cmd{geol list products -t} All products keys and aliases in a tree view
+  \item \cmd{geol list categories} All categories keys
+  \item \cmd{geol list tags} All tags keys
+  \item \cmd{geol tag database} Show all products tagged as \cmd{database} 
+  \item \cmd{geol list products -t | grep sql}: Show products that have \cmd{sql} in their name
 \end{geolitemize}
 \end{geolbox}
 
