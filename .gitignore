@@ -42,3 +42,4 @@ manpages/
 # Ignore local package manager files within assets/logos
 /assets/logos/package.json
 /assets/logos/package-lock.json
+/assets/cheatsheet/.task/
