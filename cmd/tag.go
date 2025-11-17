@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/lipgloss/tree"
+	"charm.land/lipgloss/v2"
+	"charm.land/lipgloss/v2/tree"
 	"github.com/fatih/color"
 	"github.com/opt-nc/geol/utilities"
 	"github.com/spf13/cobra"
@@ -19,9 +19,10 @@ import (
 
 // tagCmd represents the tag command
 var tagCmd = &cobra.Command{
-	Use:   "tag",
-	Short: "Display all products associated with a tag.",
-	Long:  `Show all products associated with a given tag. The tag must exist in the cache. Results are displayed in a tree structure.`,
+	Use:     "tag",
+	Aliases: []string{"t"},
+	Short:   "Display all products associated with a tag.",
+	Long:    `Show all products associated with a given tag. The tag must exist in the cache. Results are displayed in a tree structure.`,
 	Example: `geol tag os
 geol tag canonical`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -35,7 +36,6 @@ geol tag canonical`,
 		}
 		tag := args[0]
 
-		// Vérifier le cache des tags
 		utilities.AnalyzeCacheProductsValidity(cmd)
 		tagsPath, err := utilities.GetTagsPath()
 		if err != nil {
@@ -111,5 +111,4 @@ geol tag canonical`,
 
 func init() {
 	rootCmd.AddCommand(tagCmd)
-
 }

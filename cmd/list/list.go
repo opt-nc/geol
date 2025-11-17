@@ -9,11 +9,9 @@ import (
 )
 
 func init() {
-
 	ListCmd.AddCommand(items.ProductsCmd)
 	ListCmd.AddCommand(items.CategoriesCmd)
 	ListCmd.AddCommand(items.TagsCmd)
-
 }
 
 // ListCmd represents the list command

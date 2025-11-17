@@ -9,7 +9,6 @@ import (
 )
 
 func init() {
-
 }
 
 // StatusCmd represents the status command
@@ -29,7 +28,7 @@ This command prints the last update date and the number of products currently ca
 			}
 		}
 		utilities.AnalyzeCacheProductsValidity(cmd)
-		var errorOccurred = false
+		errorOccurred := false
 
 		products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {

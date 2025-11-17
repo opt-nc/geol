@@ -14,12 +14,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493
+        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
 
       - name: Set up Go
         uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00
         with:
-            go-version: 1.25.3
+            go-version: 1.25.4
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@4afd733a84b1f43292c63897423277bb7f4313a9
+        uses: golangci/golangci-lint-action@0a35821d5c230e903fcfe077583637dea1b27b47

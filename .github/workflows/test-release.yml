@@ -17,10 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493
+        uses: actions/checkout@71cf2267d89c5cb81562390fa70a37fa40b1305e
       - name: 📦 Semantic Release
         id: release
-        uses: cycjimmy/semantic-release-action@ba330626c4750c19d8299de843f05c7aa5574f62
+        uses: cycjimmy/semantic-release-action@b12c8f6015dc215fe37bc154d4ad456dd3833c90
         with:
           extra_plugins: |
             @semantic-release/exec

@@ -11,12 +11,14 @@ newIssueWelcomeComment: >
 
 # Comment to be posted to on PRs from first time contributors in your repository
 newPRWelcomeComment: >
-  Thanks for opening this pull request! ![You sure about that ?](https://media1.tenor.com/m/kmaH_jidTt0AAAAC/you-sure-about-that-i-think-you-should-leave-with-tim-robinson.gif)
+  Thanks for opening this pull request! 
+  ![You sure about that ?](https://media1.tenor.com/m/kmaH_jidTt0AAAAC/you-sure-about-that-i-think-you-should-leave-with-tim-robinson.gif)
 
 # Configuration for first-pr-merge - https://github.com/behaviorbot/first-pr-merge
 
 # Comment to be posted to on pull requests merged by a first time user
 firstPRMergeComment: >
-  Congrats on merging your first pull request! ![Welcome to the dark side](https://media1.tenor.com/m/k72QHWNyPogAAAAC/darth-vader-storm-troopers.gif)
+  Congrats on merging your first pull request! 
+  ![Welcome to the dark side](https://media1.tenor.com/m/k72QHWNyPogAAAAC/darth-vader-storm-troopers.gif)
 
 # It is recommend to include as many gifs and emojis as possible
