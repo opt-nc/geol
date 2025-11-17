@@ -11,6 +11,7 @@
 [![GoDoc](https://godoc.org/github.com/opt-nc/geol?status.svg)](https://pkg.go.dev/github.com/opt-nc/geol)
 [![lint-workflow](https://github.com/opt-nc/geol/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/opt-nc/geol/actions/workflows/golangci-lint.yml)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11239/badge)](https://www.bestpractices.dev/projects/11239)
+[![📊 OSS Insights](https://img.shields.io/badge/OSS%20Insights-%F0%9F%93%8A-blue)](https://ossinsight.io/analyze/opt-nc/geol#overview)
 
 # ❔ About
 
@@ -64,6 +65,11 @@ Or simply with `go`:
 
 ```sh
 go install github.com/opt-nc/geol@latest
+```
+Or with shell script:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/opt-nc/geol/main/install.sh | bash
 ```
 
 2. Update:
@@ -131,3 +137,7 @@ go build -o geol ./cmd/geol
 - Official [`endoflife.date` Known users](https://github.com/endoflife-date/endoflife.date/wiki/Known-Users)
 - [`hugovk/norwegianblue`](https://github.com/hugovk/norwegianblue)
 - [`xeol`](https://github.com/xeol-io/xeol) _"A scanner for end-of-life (EOL) software and dependencies in container images, filesystems, and SBOMs"_
+
+# 📈 Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=opt-nc/geol&type=date&legend=top-left)](https://www.star-history.com/#opt-nc/geol&type=date&legend=top-left)
