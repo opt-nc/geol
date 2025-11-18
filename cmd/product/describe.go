@@ -124,6 +124,9 @@ var describeCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
+		// Add iCalendar feed information
+		desc += "\n\nYou can subscribe to the iCalendar feed at `webcal://endoflife.date/calendar/" + mainName + ".ics`"
+
 		// Add A JSON version of this page is available at /api/v1/products/neo4j/
 		desc += "\n\nA JSON version of this page is available at `https://endoflife.date/api/v1/products/" + mainName + "`"
 
