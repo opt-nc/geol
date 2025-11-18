@@ -67,7 +67,7 @@ var describeCmd = &cobra.Command{
 			}
 		}
 		if !found {
-			log.Error().Msgf("Product '%s' not found in cache.", prodArg)
+			log.Error().Msgf("Product '%s' not found in the API.", prodArg)
 			os.Exit(1)
 		}
 
@@ -77,7 +77,7 @@ var describeCmd = &cobra.Command{
 		// Retrieve the Markdown content
 		resp, err := http.Get(mdUrl)
 		if err != nil {
-			log.Error().Err(err).Msg("Error fetching markdown")
+			log.Error().Err(err).Msg("Error fetching markdown of the product " + mainName)
 			os.Exit(1)
 		}
 		defer func() {
@@ -123,6 +123,9 @@ var describeCmd = &cobra.Command{
 			log.Error().Msg("No description found in markdown.")
 			os.Exit(1)
 		}
+
+		// Add A JSON version of this page is available at /api/v1/products/neo4j/
+		desc += "\n\nA JSON version of this page is available at `https://endoflife.date/api/v1/products/" + mainName + "`"
 
 		// Print a product title as in extended: # ProductName, with color and background
 		styledTitle := lipgloss.NewStyle().
