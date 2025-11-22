@@ -1,4 +1,5 @@
 geolVersion: "1"
+# cuelang file : https://github.com/opt-nc/geol/blob/main/geol_stack.cue
 app_name: MySuperApp
 
 stack:

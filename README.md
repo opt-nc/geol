@@ -137,3 +137,7 @@ go build -o geol ./cmd/geol
 - Official [`endoflife.date` Known users](https://github.com/endoflife-date/endoflife.date/wiki/Known-Users)
 - [`hugovk/norwegianblue`](https://github.com/hugovk/norwegianblue)
 - [`xeol`](https://github.com/xeol-io/xeol) _"A scanner for end-of-life (EOL) software and dependencies in container images, filesystems, and SBOMs"_
+
+# 📈 Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=opt-nc/geol&type=date&legend=top-left)](https://www.star-history.com/#opt-nc/geol&type=date&legend=top-left)

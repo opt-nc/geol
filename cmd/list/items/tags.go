@@ -19,7 +19,8 @@ var TagsCmd = &cobra.Command{
 	Aliases: []string{"t"},
 	Short:   "List all cached tag names.",
 	Long:    `Displays the list of all tag names currently available in the cache.`,
-	Example: `geol list tags\ngeol l t`,
+	Example: `geol list tags
+geol l t`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// List the cached tags
 		utilities.AnalyzeCacheProductsValidity(cmd)

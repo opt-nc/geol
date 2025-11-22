@@ -19,7 +19,8 @@ var CategoriesCmd = &cobra.Command{
 	Aliases: []string{"c"},
 	Short:   "List all cached category names.",
 	Long:    `Displays the list of all category names currently available in the cache.`,
-	Example: `geol list categories\ngeol l c`,
+	Example: `geol list categories
+geol l c`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// List the cached categories
 		utilities.AnalyzeCacheProductsValidity(cmd)
