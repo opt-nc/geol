@@ -114,11 +114,12 @@
   \item \cmd{brew install opt-nc/geol}
   \item \cmd{go install github.com/opt-nc/geol@latest}
   \item \cmd{geol help}
+  \item \cmd{geol about}
 \end{geolitemize}
 \end{geolbox}
 
 
-\section*{\faTerminal\ List commands}
+\section*{\faTags\ List commands}
 
 \begin{geolbox}
 \begin{geolitemize}
@@ -132,15 +133,6 @@
 \end{geolitemize}
 \end{geolbox}
 
-\section*{\faDatabase\ Cache}
-\begin{geolbox}
-\begin{geolitemize}
-  \item \cmd{geol cache status}: Show local cache status
-  \item \cmd{geol cache clear}: Clear the local cache
-  \item \cmd{geol cache refresh}: Refresh the local cache
-\end{geolitemize}
-\end{geolbox}
-
 \section*{\faLightbulb[regular]\ Tips}
 \begin{geolbox}
 \begin{geolitemize}
@@ -149,12 +141,28 @@
 \end{geolitemize}
 \end{geolbox}
 
-\section*{\faListUl\ Examples}
+
+\section*{\faEye\ Stack survey}
 \begin{geolbox}
 \begin{geolitemize}
-  \item \cmd{geol list}
-  \item \cmd{geol cache refresh}
-  \item \cmd{geol about}
+  \item \cmd{geol help check}: Get help about the \cmd{check} command
+  \item \cmd{geol init}: Create a valid \cmd{.geol.yaml} check file
+  \item \cmd{geol check}: Run the check based on default \cmd{.geol.yaml} file
+  \item \cmd{geol check -s}: Run the check but exists with code 1 if any product is EOL
+\end{geolitemize}
+\end{geolbox}
+
+
+
+\section*{\faCubes\ Products}
+\begin{geolbox}
+\begin{geolitemize}
+  \item \cmd{geol product describe psql} : Describe PostgreSQL product
+  \item \cmd{geol product describe psql > psql.md} : Get PostgreSQL description in a markdown file
+  \item \cmd{geol product extended psql} : Get PostgreSQL versions and EOL dates
+  \item \cmd{geol product extended psql -n10} : Get PostgreSQL versions and 10 latest EOL dates
+  \item \cmd{geol product extended psql > psql.md} : Get PostgreSQL versions and EOL dates in a valid markdown
+  \item \cmd{geol product extended psql quarkus temurin maven > java-stack.md} : Get a collection of products in a single markdown
 \end{geolitemize}
 \end{geolbox}
 
