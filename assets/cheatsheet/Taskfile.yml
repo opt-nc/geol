@@ -1,0 +1,53 @@
+version: "3"
+
+vars:
+  OUTPUT_DIR: dist
+  BASENAME: cheatsheet_geol
+
+tasks:
+  build:
+    aliases: [default]
+    desc: Build the PDF cheatsheet
+    vars:
+      COMMIT:
+        sh: git rev-parse --short HEAD
+      BRANCH:
+        sh: git rev-parse --abbrev-ref HEAD
+    sources:
+      - "{{.BASENAME}}.tex"
+    generates:
+      - "{{.OUTPUT_DIR}}/{{.BASENAME}}.pdf"
+      - "{{.OUTPUT_DIR}}/{{.BASENAME}}.png"
+      - "{{.OUTPUT_DIR}}/{{.BASENAME}}.jpeg"
+      - "{{.OUTPUT_DIR}}/{{.BASENAME}}.webp"
+    preconditions:
+      - sh: "command -v git"
+        msg: "git is not installed"
+      - sh: "command -v xelatex"
+        msg: "xelatex is not installed"
+      - sh: "command -v convert"
+        msg: "ImageMagick (for convert) is not installed"
+
+    cmds:
+      - mkdir -p {{.OUTPUT_DIR}}
+      - sed -e "s/__GEOL_COMMIT__/{{.COMMIT}}/g" -e "s/__GEOL_BRANCH__/{{.BRANCH}}/g" {{.BASENAME}}.tex > {{.OUTPUT_DIR}}/.{{.BASENAME}}_tmp.tex
+      - xelatex -interaction=batchmode -jobname={{.BASENAME}} -output-directory={{.OUTPUT_DIR}} {{.OUTPUT_DIR}}/.{{.BASENAME}}_tmp.tex
+      - rm {{.OUTPUT_DIR}}/.{{.BASENAME}}_tmp.tex
+      - |
+        for ext in png jpeg webp; do
+          convert -density 300 {{.OUTPUT_DIR}}/{{.BASENAME}}.pdf {{.OUTPUT_DIR}}/{{.BASENAME}}.$ext
+        done
+      - rm {{.OUTPUT_DIR}}/{{.BASENAME}}.aux {{.OUTPUT_DIR}}/{{.BASENAME}}.log {{.OUTPUT_DIR}}/{{.BASENAME}}.out
+      - ls -R {{.OUTPUT_DIR}}
+      - echo "This directory contains dynamically generated files. Do not edit them manually." > {{.OUTPUT_DIR}}/DO_NOT_MANUALLY_EDIT_ANY_FILE
+  clean:
+    desc: Remove all the built files
+    cmds:
+    - rm -rf {{.OUTPUT_DIR}}
+
+  rebuild:
+    desc: Clean and then build the project
+    cmds:
+      - task: clean
+      - task: build
+
