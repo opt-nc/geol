@@ -142,14 +142,14 @@ geol product extended quarkus > quarkus-eol.md`,
 			Bold(true).Foreground(lipgloss.Color("#FFFF88")).
 			Background(lipgloss.Color("#5F5FFF")).
 			Render("# Products")
-		fmt.Println(styledTitle)
+		_, _ = lipgloss.Println(styledTitle)
 
 		// Lipgloss table rendering with lipgloss/table
 		for _, prod := range allProducts {
 			styledTitle := lipgloss.NewStyle().
 				Bold(true).Foreground(lipgloss.Color("#00AFF8")).
 				Render("\n## " + prod.Name + "\n")
-			fmt.Println(styledTitle)
+			_, _ = lipgloss.Println(styledTitle)
 
 			// Determine which columns have at least one value
 			showName, showReleaseDate, showLatestName, showLatestDate, showEoasFrom, showEolFrom := false, false, false, false, false, false
@@ -195,7 +195,7 @@ geol product extended quarkus > quarkus-eol.md`,
 			}
 
 			if len(columns) == 0 {
-				fmt.Println(lipgloss.NewStyle().Italic(true).Foreground(lipgloss.Color("244")).Render("No release data available."))
+				_, _ = lipgloss.Println(lipgloss.NewStyle().Italic(true).Foreground(lipgloss.Color("244")).Render("No release data available."))
 				continue
 			}
 
@@ -299,7 +299,7 @@ geol product extended quarkus > quarkus-eol.md`,
 				return lipgloss.NewStyle().Foreground(lipgloss.Color("252")).Align(lipgloss.Left).Padding(0, padding)
 			})
 			renderedTable := t.Render()
-			fmt.Println(renderedTable)
+			_, _ = lipgloss.Println(renderedTable)
 			// Always show a summary line below the table
 			tableLines := strings.Split(renderedTable, "\n")
 			maxLen := 0
@@ -309,7 +309,7 @@ geol product extended quarkus > quarkus-eol.md`,
 				}
 			}
 			summary := fmt.Sprintf("%d rows (%d shown)", len(prod.Releases), displayCount)
-			fmt.Printf("%s\n", summary)
+			_, _ = lipgloss.Println(summary)
 		}
 	},
 }

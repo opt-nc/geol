@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/glamour/v2"
 	"github.com/opt-nc/geol/utilities"
 	"github.com/phuslu/log"
@@ -150,7 +151,8 @@ geol product describe nodejs`,
 		if err != nil {
 			fmt.Print(buf.String()) // raw fallback
 		} else {
-			fmt.Print(out)
+			// Use lipgloss print to handle NoTTY and color downsampling.
+			_, _ = lipgloss.Print(out)
 		}
 	},
 }

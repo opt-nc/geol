@@ -332,8 +332,8 @@ geol check --file stack.yaml`,
 			Bold(true).Foreground(lipgloss.Color("#FFFF88")).
 			Background(lipgloss.Color("#5F5FFF")).
 			Render("# " + config.AppName)
-		fmt.Println(styledTitle)
-		fmt.Println(tableStr)
+		_, _ = lipgloss.Println(styledTitle)
+		_, _ = lipgloss.Println(tableStr)
 		if errorOut && strict {
 			os.Exit(1)
 		}

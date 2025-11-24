@@ -1,13 +1,11 @@
 package items
 
 import (
-	"fmt"
 	"os"
 	"sort"
 	"strconv"
 
 	"charm.land/lipgloss/v2"
-	"github.com/fatih/color"
 	"github.com/opt-nc/geol/utilities"
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
@@ -41,11 +39,10 @@ geol l t`,
 			names = append(names, name)
 		}
 		sort.Strings(names)
-		tagColor := color.New(color.Bold)
 
 		plusStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("2")).Render("+")
 		for _, name := range names {
-			if _, err := fmt.Fprintf(os.Stdout, "%s %s\n", plusStyle, tagColor.Sprint(name)); err != nil {
+			if _, err := lipgloss.Printf("%s %s\n", plusStyle, boldStyle.Render(name)); err != nil {
 				log.Error().Err(err).Msg("Error writing tag name to stdout")
 				os.Exit(1)
 			}
@@ -53,7 +50,7 @@ geol l t`,
 
 		nbTags := strconv.Itoa(len(names))
 		nbTagsStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("2"))
-		if _, err := fmt.Fprintf(os.Stdout, "\n%s tags listed\n", nbTagsStyle.Render(nbTags)); err != nil {
+		if _, err := lipgloss.Printf("\n%s tags listed\n", nbTagsStyle.Render(nbTags)); err != nil {
 			log.Error().Err(err).Msg("Error writing tag count to stdout")
 			os.Exit(1)
 		}

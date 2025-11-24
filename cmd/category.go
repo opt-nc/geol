@@ -9,7 +9,6 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/tree"
-	"github.com/fatih/color"
 	"github.com/opt-nc/geol/utilities"
 	"github.com/spf13/cobra"
 )
@@ -85,21 +84,19 @@ geol category cloud`,
 			os.Exit(1)
 		}
 
-		categoryColor := color.New(color.Bold)
-		productColor := color.New(color.Bold)
 		treeRoot := tree.Root(".")
-		categoryNode := tree.New().Root(categoryColor.Sprint(category))
+		categoryNode := tree.New().Root(boldStyle.Render(category))
 		for _, prod := range apiResp.Result {
-			categoryNode.Child(productColor.Sprint(prod.Name))
+			categoryNode.Child(boldStyle.Render(prod.Name))
 		}
 		treeRoot.Child(categoryNode)
-		if _, err := fmt.Fprintln(os.Stdout, treeRoot.String()); err != nil {
+		if _, err := lipgloss.Println(treeRoot.String()); err != nil {
 			fmt.Printf("Error printing tree for category '%s': %v\n", category, err)
 			os.Exit(1)
 		}
 		nbProducts := len(apiResp.Result)
 		nbProductsStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("2"))
-		if _, err := fmt.Fprintf(os.Stdout, "\n%s products listed for category '%s'\n", nbProductsStyle.Render(fmt.Sprintf("%d", nbProducts)), category); err != nil {
+		if _, err := lipgloss.Printf("\n%s products listed for category '%s'\n", nbProductsStyle.Render(fmt.Sprintf("%d", nbProducts)), category); err != nil {
 			fmt.Printf("Error printing product count for category '%s': %v\n", category, err)
 			os.Exit(1)
 		}
