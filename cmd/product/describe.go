@@ -130,7 +130,7 @@ var describeCmd = &cobra.Command{
 			Foreground(lipgloss.Color("#FFFF88")).
 			Background(lipgloss.Color("#5F5FFF")).
 			Render("# " + mainName)
-		if _, err := os.Stdout.Write([]byte(styledTitle)); err != nil {
+		if _, err := lipgloss.Print(styledTitle); err != nil {
 			log.Error().Err(err).Msg("Error writing styled title")
 			os.Exit(1)
 		}
@@ -141,7 +141,7 @@ var describeCmd = &cobra.Command{
 			log.Error().Err(err).Msg("Error rendering markdown")
 			os.Exit(1)
 		}
-		if _, err := os.Stdout.Write([]byte(out)); err != nil {
+		if _, err := lipgloss.Print(out); err != nil {
 			log.Error().Err(err).Msg("Error writing rendered markdown")
 			os.Exit(1)
 		}
