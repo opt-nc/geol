@@ -39,3 +39,14 @@ type ApiRespExtended struct {
 		} `json:"releases"`
 	}
 }
+
+type ApiRestDescribe struct {
+	Result struct {
+		Name           string `json:"name"`
+		VersionCommand string `json:"versionCommand"`
+		Identifiers    []struct {
+			Type string `json:"type"`
+			Id   string `json:"id"`
+		} `json:"identifiers"`
+	}
+}

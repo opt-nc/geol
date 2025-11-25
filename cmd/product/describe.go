@@ -1,6 +1,7 @@
 package product
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"os"
@@ -67,7 +68,7 @@ var describeCmd = &cobra.Command{
 			}
 		}
 		if !found {
-			log.Error().Msgf("Product '%s' not found in cache.", prodArg)
+			log.Error().Msgf("Product '%s' not found in the API.", prodArg)
 			os.Exit(1)
 		}
 
@@ -77,7 +78,7 @@ var describeCmd = &cobra.Command{
 		// Retrieve the Markdown content
 		resp, err := http.Get(mdUrl)
 		if err != nil {
-			log.Error().Err(err).Msg("Error fetching markdown")
+			log.Error().Err(err).Msg("Error fetching markdown of the product " + mainName)
 			os.Exit(1)
 		}
 		defer func() {
@@ -123,6 +124,59 @@ var describeCmd = &cobra.Command{
 			log.Error().Msg("No description found in markdown.")
 			os.Exit(1)
 		}
+
+		url := utilities.ApiUrl + "products/" + mainName
+		resp, err = http.Get(url)
+		if err != nil {
+			log.Error().Err(err).Msgf("Error requesting %s", mainName)
+			os.Exit(1)
+		}
+		body, err := io.ReadAll(resp.Body)
+		if cerr := resp.Body.Close(); cerr != nil {
+			log.Error().Err(cerr).Msgf("Error closing HTTP body for %s", mainName)
+			os.Exit(1)
+		}
+		if err != nil {
+			log.Error().Err(err).Msgf("Error reading response for %s", mainName)
+			os.Exit(1)
+		}
+		if resp.StatusCode != 200 {
+			log.Error().Msgf("Product %s not found on the API.", mainName)
+			os.Exit(1)
+		}
+
+		var apiResp ApiRestDescribe
+		if err := json.Unmarshal(body, &apiResp); err != nil {
+			log.Error().Err(err).Msgf("Error decoding JSON for %s", mainName)
+			os.Exit(1)
+		}
+
+		// Get version
+		versionCommand := apiResp.Result.VersionCommand
+		desc += "\n\n### Version command\n\nYou can get the version information by running the following command:\n\n```bash\n" + versionCommand + "\n```"
+
+		// Identifiers
+		identifiers := apiResp.Result.Identifiers
+
+		if len(identifiers) > 0 {
+			desc += "\n\n### Identifiers\n\nThe identifiers are used to uniquely identify the product in various systems. They include:"
+			for _, id := range identifiers {
+				if id.Type == "repology" {
+					desc += "\n- repology: `https://repology.org/project/" + id.Id + "`"
+				} else {
+					desc += "\n- " + id.Type + ": `" + id.Id + "`"
+				}
+			}
+		} else {
+			desc += "\n\n**Identifiers:** None"
+		}
+
+		// Add iCalendar feed information
+		desc += "\n\n### iCalendar Feed\n\nThe iCalendar feed allows you to stay updated with the latest end-of-life dates for this product."
+		desc += "\n\nYou can subscribe to the iCalendar feed at `webcal://endoflife.date/calendar/" + mainName + ".ics`"
+
+		// Add A JSON version of this page is available at /api/v1/products/neo4j/
+		desc += "\n\n### JSON Version\n\nA JSON version of this page is available at `https://endoflife.date/api/v1/products/" + mainName + "`"
 
 		// Print a product title as in extended: # ProductName, with color and background
 		styledTitle := lipgloss.NewStyle().
