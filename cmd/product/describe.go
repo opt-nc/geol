@@ -153,13 +153,13 @@ var describeCmd = &cobra.Command{
 
 		// Get version
 		versionCommand := apiResp.Result.VersionCommand
-		desc += "\n\n**Version command:** `" + versionCommand + "`"
+		desc += "\n\n### Version command\n\nYou can get the version information by running the following command:\n\n```bash\n" + versionCommand + "\n```"
 
 		// Identifiers
 		identifiers := apiResp.Result.Identifiers
 
 		if len(identifiers) > 0 {
-			desc += "\n\n**Identifiers:**"
+			desc += "\n\n### Identifiers\n\nThe identifiers are used to uniquely identify the product in various systems. They include:"
 			for _, id := range identifiers {
 				if id.Type == "repology" {
 					desc += "\n- repology: `https://repology.org/project/" + id.Id + "`"
@@ -172,10 +172,11 @@ var describeCmd = &cobra.Command{
 		}
 
 		// Add iCalendar feed information
+		desc += "\n\n### iCalendar Feed\n\nThe iCalendar feed allows you to stay updated with the latest end-of-life dates for this product."
 		desc += "\n\nYou can subscribe to the iCalendar feed at `webcal://endoflife.date/calendar/" + mainName + ".ics`"
 
 		// Add A JSON version of this page is available at /api/v1/products/neo4j/
-		desc += "\n\nA JSON version of this page is available at `https://endoflife.date/api/v1/products/" + mainName + "`"
+		desc += "\n\n### JSON Version\n\nA JSON version of this page is available at `https://endoflife.date/api/v1/products/" + mainName + "`"
 
 		// Print a product title as in extended: # ProductName, with color and background
 		styledTitle := lipgloss.NewStyle().
