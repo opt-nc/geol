@@ -8,11 +8,12 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/tree"
-	"github.com/fatih/color"
 	"github.com/opt-nc/geol/utilities"
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 )
+
+var boldStyle = lipgloss.NewStyle().Bold(true)
 
 func init() {
 	ProductsCmd.Flags().BoolP("tree", "t", false, "List all products including aliases in a tree structure.")
@@ -49,7 +50,6 @@ geol l p -t`,
 			names = append(names, name)
 		}
 		sort.Strings(names)
-		productColor := color.New(color.Bold)
 
 		if treeFlag {
 			// Print the list of products with aliases in a tree structure using lipgloss
@@ -61,7 +61,7 @@ geol l p -t`,
 					aliases = aliases[1:]
 				}
 				sort.Strings(aliases)
-				t := tree.New().Root(productColor.Sprint(name))
+				t := tree.New().Root(boldStyle.Render(name))
 				for _, item := range aliases {
 					t.Child(item)
 				}
@@ -75,7 +75,7 @@ geol l p -t`,
 			// Print the list of products with a green '+ product' prefix using lipgloss
 			plusStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("2")).Render("+")
 			for _, name := range names {
-				if _, err := fmt.Fprintf(os.Stdout, "%s %s\n", plusStyle, productColor.Sprint(name)); err != nil {
+				if _, err := lipgloss.Printf("%s %s\n", plusStyle, boldStyle.Render(name)); err != nil {
 					log.Error().Err(err).Msg("Error writing product name to stdout")
 					os.Exit(1)
 				}
@@ -84,7 +84,7 @@ geol l p -t`,
 
 		nbProducts := strconv.Itoa(len(names))
 		nbProductsStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("2"))
-		if _, err := fmt.Fprintf(os.Stdout, "\n%s products listed\n", nbProductsStyle.Render(nbProducts)); err != nil {
+		if _, err := lipgloss.Printf("\n%s products listed\n", nbProductsStyle.Render(nbProducts)); err != nil {
 			log.Error().Err(err).Msg("Error writing product count to stdout")
 			os.Exit(1)
 		}
