@@ -12,10 +12,11 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/tree"
-	"github.com/fatih/color"
 	"github.com/opt-nc/geol/utilities"
 	"github.com/spf13/cobra"
 )
+
+var boldStyle = lipgloss.NewStyle().Bold(true)
 
 // tagCmd represents the tag command
 var tagCmd = &cobra.Command{
@@ -88,21 +89,19 @@ geol tag canonical`,
 			os.Exit(1)
 		}
 
-		tagColor := color.New(color.Bold)
-		productColor := color.New(color.Bold)
 		treeRoot := tree.Root(".")
-		tagNode := tree.New().Root(tagColor.Sprint(tag))
+		tagNode := tree.New().Root(boldStyle.Render(tag))
 		for _, prod := range apiResp.Result {
-			tagNode.Child(productColor.Sprint(prod.Name))
+			tagNode.Child(boldStyle.Render(prod.Name))
 		}
 		treeRoot.Child(tagNode)
-		if _, err := fmt.Fprintln(os.Stdout, treeRoot.String()); err != nil {
+		if _, err := lipgloss.Println(treeRoot.String()); err != nil {
 			fmt.Printf("Error printing tree for tag '%s': %v\n", tag, err)
 			os.Exit(1)
 		}
 		nbProducts := len(apiResp.Result)
 		nbProductsStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("2"))
-		if _, err := fmt.Fprintf(os.Stdout, "\n%s products listed for tag '%s'\n", nbProductsStyle.Render(fmt.Sprintf("%d", nbProducts)), tag); err != nil {
+		if _, err := lipgloss.Printf("\n%s products listed for tag '%s'\n", nbProductsStyle.Render(fmt.Sprintf("%d", nbProducts)), tag); err != nil {
 			fmt.Printf("Error printing product count for tag '%s': %v\n", tag, err)
 			os.Exit(1)
 		}
