@@ -23,14 +23,13 @@ import (
 func init() {
 	rootCmd.AddCommand(checkCmd)
 	checkCmd.Flags().StringP("file", "f", ".geol.yaml", "File to check (default .geol.yaml)")
-	checkCmd.Flags().BoolP("strict", "s", false, "Exit with error if any critical software is EOL")
+	checkCmd.Flags().BoolP("strict", "s", false, "Exit with error if any product is EOL")
 }
 
 type stackItem struct {
-	Name     string `yaml:"name"`
-	Version  string `yaml:"version"`
-	IdEol    string `yaml:"id_eol"`
-	Critical bool   `yaml:"critical"`
+	Name    string `yaml:"name"`
+	Version string `yaml:"version"`
+	IdEol   string `yaml:"id_eol"`
 }
 type geolConfig struct {
 	AppName string      `yaml:"app_name"`
@@ -60,27 +59,19 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			eolT, _ = time.Parse("2006-01-02", eolDate)
 			daysInt = int(eolT.Sub(today).Hours() / 24)
 			daysStr = fmt.Sprintf("%d", daysInt)
-			if item.Critical {
-				if daysInt < 0 {
-					status = "EOL"
-					errorOut = true
-					log.Error().Msgf("Critical software %s version %s is EOL since %s", item.Name, item.Version, eolDate)
-				} else if daysInt < 30 {
-					status = "WARN"
-					log.Warn().Msgf("Critical software %s version %s is nearing EOL on %s (%d days left)", item.Name, item.Version, eolDate, daysInt)
-				} else {
-					status = "OK"
-				}
+			if daysInt < 0 {
+				status = "EOL"
+				errorOut = true
+				log.Error().Msgf("Software %s version %s is EOL since %s", item.Name, item.Version, eolDate)
+			} else if daysInt < 30 {
+				status = "WARN"
+				log.Warn().Msgf("Software %s version %s is nearing EOL on %s (%d days left)", item.Name, item.Version, eolDate, daysInt)
 			} else {
-				status = "INFO"
+				status = "OK"
 			}
 		} else {
 			daysStr = "-"
-			if item.Critical {
-				status = "OK"
-			} else {
-				status = "INFO"
-			}
+			status = "OK"
 		}
 		rows = append(rows, stackTableRow{
 			Software: item.Name,
@@ -91,7 +82,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 		})
 	}
 	// Sort rows by Status: EOL, WARN, OK, INFO, then by Days (from smallest to largest)
-	statusOrder := map[string]int{"EOL": 0, "WARN": 1, "OK": 2, "INFO": 3}
+	statusOrder := map[string]int{"EOL": 0, "WARN": 1, "OK": 2}
 	sort.SliceStable(rows, func(i, j int) bool {
 		orderI, okI := statusOrder[rows[i].Status]
 		orderJ, okJ := statusOrder[rows[j].Status]
@@ -278,10 +269,6 @@ func checkRequiredKeys(config geolConfig) []string {
 		}
 		if item.IdEol == "" {
 			missing = append(missing, fmt.Sprintf("stack[%d].id_eol", i))
-		}
-		// Check if 'critical' key is present (must be true or false, not omitted)
-		if fmt.Sprintf("%v", item.Critical) != "true" && fmt.Sprintf("%v", item.Critical) != "false" {
-			missing = append(missing, fmt.Sprintf("stack[%d].critical", i))
 		}
 	}
 	return missing
