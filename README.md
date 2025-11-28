@@ -28,12 +28,13 @@ Its ambitions are to :
 
 # 🧑‍🤝‍🧑 Core team and roles
 
-| Person                                     | 🎯 Product Manager | 👩‍💻 Lead Dev | 📊 Data Scientist | 🛠️ Data Engineer | 🎤 Storyteller | 🧪 End-user & Tester |
-|--------------------------------------------|--------------------|---------------|-----------------|------------------|----------------|----------------------|
-| [@adriens](https://github.com/adriens)     |         ✅         |               |       ✅        |       ✅         |     ✅         |          ✅          |
-| [@supervinh](https://github.com/supervinh) |                    |       ✅      |                 |                  |                |          ✅          |
-| [@mbarre](https://github.com/mbarre)       |                    |               |                 |                  |                |           ✅         |
-| [@Draks898](https://github.com/Draks898)   |                    |               |                 |                  |                |           ✅         |
+| Person                                     | 🎯 Product Manager | 👩‍💻 Lead Dev | 📊 Data Scientist | 🛠️ Data Engineer | 🎤 Storyteller | 🧪 End-user & Tester | 🧑‍🤝‍🧑 Other role |
+|--------------------------------------------|--------------------|---------------|-----------------|------------------|----------------|-----------------------|---------------|
+| [@adriens](https://github.com/adriens)     |         ✅         |               |       ✅        |       ✅         |     ✅         |          ✅          |                |
+| [@supervinh](https://github.com/supervinh) |                    |       ✅      |                 |                  |                |          ✅          |                |
+| [@mbarre](https://github.com/mbarre)       |                    |               |                 |                  |                |           ✅         |                |
+| [@Draks898](https://github.com/Draks898)   |                    |               |                 |                  |                |           ✅         |                |
+| [@aymanbagabas](https://github.com/aymanbagabas) |              |               |                 |                  |                |                      | [`charmbracelet`](https://github.com/charmbracelet/) expert
 
 
 # 📑 Resources

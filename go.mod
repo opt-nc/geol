@@ -19,9 +19,9 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/colorprofile v0.3.3 // indirect
 	github.com/charmbracelet/ultraviolet v0.0.0-20251124142205-05635edc50ab // indirect
-	github.com/charmbracelet/x/ansi v0.11.1 // indirect
-	github.com/charmbracelet/x/exp/charmtone v0.0.0-20251124184241-1dbcd821cc13 // indirect
-	github.com/charmbracelet/x/exp/slice v0.0.0-20251124184241-1dbcd821cc13 // indirect
+	github.com/charmbracelet/x/ansi v0.11.2 // indirect
+	github.com/charmbracelet/x/exp/charmtone v0.0.0-20251126160633-0b68cdcd21da // indirect
+	github.com/charmbracelet/x/exp/slice v0.0.0-20251126160633-0b68cdcd21da // indirect
 	github.com/charmbracelet/x/termios v0.1.1 // indirect
 	github.com/charmbracelet/x/windows v0.2.2 // indirect
 	github.com/clipperhouse/displaywidth v0.6.0 // indirect
