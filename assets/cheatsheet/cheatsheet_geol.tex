@@ -23,6 +23,7 @@
 \fancyfoot[C]{\color{geoldark}\small Version: \_\_GEOL\_VERSION\_\_ \quad Commit: \_\_GEOL\_COMMIT\_\_}
 % Pictograms
 \usepackage{fontawesome5}
+\usepackage{qrcode}
 % Color definitions
 \definecolor{geolblue}{HTML}{2563EB}
 \definecolor{geolgreen}{HTML}{059669}
@@ -196,10 +197,16 @@
 
 \section*{\faLink\ Related contents}
 \begin{geolbox}
+\begin{minipage}[c]{0.7\linewidth}
 \begin{geolitemize}
   \item \href{https://bit.ly/48sUBdf}{⏳geol, the cli to efficiently manage EOLs like a boss} : bit.ly/48sUBdf
   \item \href{https://bit.ly/3XWu0QI}{Dedicated Youtube playlist} : bit.ly/3XWu0QI
 \end{geolitemize}
+\end{minipage}%
+\begin{minipage}[c]{0.3\linewidth}
+\centering
+\qrcode[height=1.5cm]{bit.ly/4irKyJX}
+\end{minipage}
 \end{geolbox}
 
 \end{multicols}
