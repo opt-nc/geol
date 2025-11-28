@@ -62,10 +62,20 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			if daysInt < 0 {
 				status = "EOL"
 				errorOut = true
-				log.Error().Msgf("Software %s version %s is EOL since %s", item.Name, item.Version, eolDate)
+				// Calculer la durée écoulée depuis EOL
+				years := -daysInt / 365
+				months := (-daysInt % 365) / 30
+				days := (-daysInt % 365) % 30
+				log.Error().Msgf(
+					"%s %s (%s) is %dy %dm %dd past EOL (EOL: %s)",
+					item.Name, item.Version, item.Name, years, months, days, eolDate,
+				)
 			} else if daysInt < 30 {
 				status = "WARN"
-				log.Warn().Msgf("Software %s version %s is nearing EOL on %s (%d days left)", item.Name, item.Version, eolDate, daysInt)
+				log.Warn().Msgf(
+					"%s %s (%s) is nearing EOL in %dd (EOL: %s)",
+					item.Name, item.Version, item.Name, daysInt, eolDate,
+				)
 			} else {
 				status = "OK"
 			}
