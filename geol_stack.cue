@@ -22,9 +22,4 @@ stack: [...{
     // endoflife.date (see https://endoflife.date)
     // https://endoflife.date/{id_eol} needs to exist
     id_eol: string
-
-    // critical: causes the geol execution to exit
-    // with an error code if the product is in an
-    // end of life status, ex: true/false, default is false is not set
-    critical?: bool
 }]
