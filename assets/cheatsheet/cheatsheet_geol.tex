@@ -100,6 +100,25 @@
 \pagestyle{empty}
 \begin{document}
 
+\begin{tikzpicture}[remember picture, overlay]
+    \draw[logoGreen, line width=10pt, line cap=butt]
+        ([yshift=-0.333\paperheight]current page.north west) --
+        (current page.north west) --
+        (current page.north east) --
+        ([yshift=-0.333\paperheight]current page.north east);
+    \draw[logoOrange, line width=10pt, line cap=butt]
+        ([yshift=-0.333\paperheight]current page.north west) --
+        ([yshift=-0.666\paperheight]current page.north west);
+    \draw[logoOrange, line width=10pt, line cap=butt]
+        ([yshift=-0.333\paperheight]current page.north east) --
+        ([yshift=-0.666\paperheight]current page.north east);
+    \draw[logoRed, line width=10pt, line cap=butt]
+        ([yshift=-0.666\paperheight]current page.north west) --
+        (current page.south west) --
+        (current page.south east) --
+        ([yshift=-0.666\paperheight]current page.north east);
+\end{tikzpicture}
+
 
 
 \maketitle
