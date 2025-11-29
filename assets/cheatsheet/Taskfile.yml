@@ -36,9 +36,11 @@ tasks:
       - xelatex -interaction=batchmode -jobname={{.BASENAME}} -output-directory={{.OUTPUT_DIR}} {{.OUTPUT_DIR}}/.{{.BASENAME}}_tmp.tex
       # - rm {{.OUTPUT_DIR}}/.{{.BASENAME}}_tmp.tex
       - |
-        for ext in png jpeg webp; do
+        for ext in png jpeg; do
           convert -density 300 {{.OUTPUT_DIR}}/{{.BASENAME}}.pdf {{.OUTPUT_DIR}}/{{.BASENAME}}.$ext
         done
+        # webp with white background
+        convert -density 300 -background white -alpha remove -alpha off {{.OUTPUT_DIR}}/{{.BASENAME}}.pdf {{.OUTPUT_DIR}}/{{.BASENAME}}.webp
       - rm {{.OUTPUT_DIR}}/{{.BASENAME}}.aux {{.OUTPUT_DIR}}/{{.BASENAME}}.log {{.OUTPUT_DIR}}/{{.BASENAME}}.out
       - ls -R {{.OUTPUT_DIR}}
       - echo "This directory contains dynamically generated files. Do not edit them manually." > {{.OUTPUT_DIR}}/DO_NOT_MANUALLY_EDIT_ANY_FILE
