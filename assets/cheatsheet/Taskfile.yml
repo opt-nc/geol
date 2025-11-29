@@ -13,6 +13,8 @@ tasks:
         sh: git rev-parse --short HEAD
       BRANCH:
         sh: git rev-parse --abbrev-ref HEAD
+      VERSION:
+        sh: git describe --tags --abbrev=0
     sources:
       - "{{.BASENAME}}.tex"
     generates:
@@ -30,9 +32,9 @@ tasks:
 
     cmds:
       - mkdir -p {{.OUTPUT_DIR}}
-      - sed -e "s/__GEOL_COMMIT__/{{.COMMIT}}/g" -e "s/__GEOL_BRANCH__/{{.BRANCH}}/g" {{.BASENAME}}.tex > {{.OUTPUT_DIR}}/.{{.BASENAME}}_tmp.tex
+      - sed -e "s/__GEOL_COMMIT__/{{.COMMIT}}/g" -e "s/__GEOL_BRANCH__/{{.BRANCH}}/g" -e "s/__GEOL_VERSION__/{{.VERSION}}/g" {{.BASENAME}}.tex > {{.OUTPUT_DIR}}/.{{.BASENAME}}_tmp.tex
       - xelatex -interaction=batchmode -jobname={{.BASENAME}} -output-directory={{.OUTPUT_DIR}} {{.OUTPUT_DIR}}/.{{.BASENAME}}_tmp.tex
-      - rm {{.OUTPUT_DIR}}/.{{.BASENAME}}_tmp.tex
+      # - rm {{.OUTPUT_DIR}}/.{{.BASENAME}}_tmp.tex
       - |
         for ext in png jpeg webp; do
           convert -density 300 {{.OUTPUT_DIR}}/{{.BASENAME}}.pdf {{.OUTPUT_DIR}}/{{.BASENAME}}.$ext
