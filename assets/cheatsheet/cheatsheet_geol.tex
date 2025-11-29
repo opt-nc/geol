@@ -8,7 +8,7 @@
 \usepackage{multicol}
 \usepackage{xcolor}
 \usepackage{tcolorbox}
-\geometry{margin=1.5cm, landscape, top=0cm, bottom=0cm, left=0.5cm, right=0.5cm}
+\geometry{margin=1.5cm, landscape, top=0cm, bottom=1cm, left=0.5cm, right=0.5cm}
 \setlength{\columnsep}{1cm}
 \usepackage{hyperref}
 \hypersetup{
@@ -20,10 +20,11 @@
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancyhf{}
-\fancyfoot[C]{\color{geoldark}\small Version: \_\_GEOL\_VERSION\_\_ \quad Commit: \_\_GEOL\_COMMIT\_\_}
+\fancyfoot[C]{\color{geoldark}\small Version: \_\_GEOL\_VERSION\_\_ \quad Commit: \_\_GEOL\_COMMIT\_\_ \quad Branch: \_\_GEOL\_BRANCH\_\_}
 % Pictograms
 \usepackage{fontawesome5}
 \usepackage{qrcode}
+\usepackage{eso-pic}
 % Color definitions
 \definecolor{geolblue}{HTML}{2563EB}
 \definecolor{geolgreen}{HTML}{059669}
@@ -98,9 +99,9 @@
 \author{\href{https://github.com/opt-nc/geol}{opt-nc/geol}}
 
 
-\pagestyle{empty}
 \begin{document}
 
+\AddToShipoutPictureFG*{%
 \begin{tikzpicture}[remember picture, overlay]
     \draw[logoGreen, line width=10pt, line cap=butt]
         ([yshift=-0.333\paperheight]current page.north west) --
@@ -118,13 +119,14 @@
         (current page.south west) --
         (current page.south east) --
         ([yshift=-0.666\paperheight]current page.north east);
-\end{tikzpicture}
+\end{tikzpicture}}
 
 
 
 \maketitle
+\thispagestyle{fancy}
 \renewcommand{\thefootnote}{\fnsymbol{footnote}}
-\footnotetext[1]{Proudly brought to you with <3 with \texttt{XeLaTeX}.}
+\footnotetext[1]{Proudly brought to you with \faHeart \ \& \texttt{XeLaTeX}. | geol - Version: __GEOL_VERSION__ | Commit: __GEOL_COMMIT__ | Branch: __GEOL_BRANCH__}
 
 
 % (presentation moved to the title)
@@ -195,7 +197,7 @@
 \end{geolitemize}
 \end{geolbox}
 
-\section*{\faLink\ Related contents}
+\section*{\faBookmark\ Related contents}
 \begin{geolbox}
 \begin{minipage}[c]{0.7\linewidth}
 \begin{geolitemize}
