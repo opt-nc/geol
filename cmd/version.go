@@ -45,7 +45,11 @@ func getLatestVersionFromGitHub() string {
 	if err != nil {
 		return ""
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Warn().Err(err).Msg("Error closing response body in getLatestVersionFromGitHub")
+		}
+	}()
 
 	var result struct {
 		TagName string `json:"tag_name"`
