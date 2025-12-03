@@ -1,15 +1,19 @@
 package utilities
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 )
+
+var Version string = "dev"
 
 // CheckCacheTimeAndUpdateGeneric logs the cache mod time and updates the cache if older than maxAge using RefreshAllCaches.
 func CheckCacheTimeAndUpdateGeneric(modTime time.Time, maxAge time.Duration, cmd *cobra.Command) {
@@ -114,6 +118,22 @@ func RefreshAllCaches(cmd *cobra.Command) {
 		log.Error().Err(err).Msg("Error creating DO_NOT_EDIT_ANYTHING file")
 		os.Exit(1)
 	}
+
+	latestVersion := GetLatestVersionFromGitHub()
+
+	if latestVersion == "" {
+		log.Warn().Msg("Could not check the latest version from GitHub")
+		return
+	}
+
+	println("Current version:", Version)
+	println("Latest version:", latestVersion)
+
+	if latestVersion != Version {
+		log.Warn().Msg("There is a new geol version available ! Latest version: " + latestVersion + ", you have: " + Version)
+	} else {
+		log.Info().Msg("You have the latest geol version !")
+	}
 }
 
 // CreateDoNotEditFile creates a DO_NOT_EDIT_ANYTHING file in the geol config directory to warn users not to edit anything there.
@@ -127,4 +147,29 @@ func CreateDoNotEditFile() error {
 		return err
 	}
 	return nil
+}
+
+// GetLatestVersionFromGitHub fetches the latest release tag from GitHub
+func GetLatestVersionFromGitHub() string {
+	resp, err := http.Get("https://api.github.com/repos/opt-nc/geol/releases/latest")
+	if err != nil {
+		return ""
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Warn().Err(err).Msg("Error closing response body from GitHub")
+		}
+	}()
+
+	var result struct {
+		TagName string `json:"tag_name"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return ""
+	}
+	tag := result.TagName
+	if strings.HasPrefix(tag, "v") {
+		return tag[1:]
+	}
+	return tag
 }
