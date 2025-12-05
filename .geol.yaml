@@ -1,0 +1,8 @@
+geolVersion: "2"
+# cuelang file : https://github.com/opt-nc/geol/blob/main/geol_stack.cue
+app_name: geol stack
+
+stack:
+  - name: Go
+    version: "1.25"
+    id_eol: go

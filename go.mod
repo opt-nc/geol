@@ -1,6 +1,6 @@
 module github.com/opt-nc/geol
 
-go 1.25.4
+go 1.25.5
 
 require (
 	charm.land/lipgloss/v2 v2.0.0-beta.3.0.20251106193318-19329a3e8410
@@ -9,7 +9,7 @@ require (
 	github.com/charmbracelet/x/term v0.2.2
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
 	github.com/phuslu/log v1.0.120
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	golang.org/x/term v0.37.0
 	gopkg.in/yaml.v3 v3.0.1
 )
