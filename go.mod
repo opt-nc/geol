@@ -1,6 +1,6 @@
 module github.com/opt-nc/geol
 
-go 1.25.4
+go 1.25.5
 
 require (
 	charm.land/lipgloss/v2 v2.0.0-beta.3.0.20251106193318-19329a3e8410
@@ -9,7 +9,7 @@ require (
 	github.com/charmbracelet/x/term v0.2.2
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
 	github.com/phuslu/log v1.0.120
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	golang.org/x/term v0.37.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -18,13 +18,13 @@ require (
 	github.com/alecthomas/chroma/v2 v2.20.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/colorprofile v0.3.3 // indirect
-	github.com/charmbracelet/ultraviolet v0.0.0-20251124142205-05635edc50ab // indirect
+	github.com/charmbracelet/ultraviolet v0.0.0-20251202162030-ecc8c1ae4b2b // indirect
 	github.com/charmbracelet/x/ansi v0.11.2 // indirect
-	github.com/charmbracelet/x/exp/charmtone v0.0.0-20251126160633-0b68cdcd21da // indirect
-	github.com/charmbracelet/x/exp/slice v0.0.0-20251126160633-0b68cdcd21da // indirect
+	github.com/charmbracelet/x/exp/charmtone v0.0.0-20251201173703-9f73bfd934ff // indirect
+	github.com/charmbracelet/x/exp/slice v0.0.0-20251201173703-9f73bfd934ff // indirect
 	github.com/charmbracelet/x/termios v0.1.1 // indirect
 	github.com/charmbracelet/x/windows v0.2.2 // indirect
-	github.com/clipperhouse/displaywidth v0.6.0 // indirect
+	github.com/clipperhouse/displaywidth v0.6.1 // indirect
 	github.com/clipperhouse/stringish v0.1.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.3.0 // indirect
 	github.com/dlclark/regexp2 v1.11.5 // indirect

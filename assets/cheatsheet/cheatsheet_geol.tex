@@ -1,0 +1,213 @@
+% geol CLI commands cheatsheet
+% Version: __GEOL_VERSION__ | Commit: __GEOL_COMMIT__
+\documentclass[a4paper,10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[english]{babel}
+\usepackage{geometry}
+\usepackage{multicol}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\geometry{margin=1.5cm, landscape, top=0cm, bottom=1cm, left=0.5cm, right=0.5cm}
+\setlength{\columnsep}{1cm}
+\usepackage{hyperref}
+\hypersetup{
+  pdftitle={opt-nc/geol CLI commands cheatsheet},
+  pdfauthor={Adrien SALES, x.com/rastadidi},
+  pdfsubject={Cheatsheet for geol CLI usage},
+  pdfkeywords={geol, CLI, cheatsheet, EOL, endoflife.date, tips, cli, DEVOPS, DevSecOps}
+}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{\color{geoldark}\small Version: \_\_GEOL\_VERSION\_\_ \quad Commit: \_\_GEOL\_COMMIT\_\_ \quad Branch: \_\_GEOL\_BRANCH\_\_}
+% Pictograms
+\usepackage{fontawesome5}
+\usepackage{qrcode}
+\usepackage{eso-pic}
+% Color definitions
+\definecolor{geolblue}{HTML}{2563EB}
+\definecolor{geolgreen}{HTML}{059669}
+\definecolor{geolgray}{HTML}{F3F4F6}
+\definecolor{geoldark}{HTML}{1E293B}
+\definecolor{geolorange}{HTML}{F59E42}
+
+% --- BEGIN PREAMBLE CODE ---
+% STEP 1: Copy all of this section into your document's preamble.
+
+% 1. Define the exact colors from your SVG logo
+\definecolor{logoGreen}{RGB}{0,255,0}
+\definecolor{logoOrange}{RGB}{255,165,0}
+\definecolor{logoRed}{RGB}{255,0,0}
+
+% 2. Create a reusable command for your logo
+% Usage: \geolLogo[scale=1]
+\newcommand{\geolLogo}[1][]{
+    \begin{tikzpicture}[#1]
+        % Common styles from your SVG
+        \tikzstyle{logo_line} = [
+            line width=10,      % Equivalent to stroke-width="20"
+            line cap=round,     % Equivalent to stroke-linecap="round"
+            line join=round     % Equivalent to stroke-linejoin="round"
+        ]
+
+        % Drawing commands, translated from SVG coordinates.
+        % We use a 'yshift' and 'yscale' to flip the coordinate system
+        % to match the SVG's top-left origin.
+        \begin{scope}[yshift=-3.125pt, yscale=-1]
+            % Green Paths
+            \draw[logo_line, logoGreen] (50,50) -- (150,50);
+            \draw[logo_line, logoGreen] (50,50) -- (100,100);
+            \draw[logo_line, logoGreen] (150,50) -- (100,100);
+
+            % Orange Paths
+            \draw[logo_line, logoOrange] (100,100) -- (150,150);
+            \draw[logo_line, logoOrange] (50,150) -- (100,100);
+
+            % Red Path
+            \draw[logo_line, logoRed] (50,150) -- (150,150);
+        \end{scope}
+    \end{tikzpicture}%
+}
+
+% --- END PREAMBLE CODE ---
+% Title style
+\usepackage{sectsty}
+\sectionfont{\color{geolblue}}
+% Command style
+\newcommand{\cmd}[1]{\textcolor{geolgreen}{\texttt{#1}}}
+% Box style
+\newtcolorbox{geolbox}{colback=geolgray!80!white, colframe=geolblue, boxrule=0.8pt, arc=3pt, left=4pt, right=4pt, top=2pt, bottom=2pt}
+% Compact itemize for geolbox
+\newenvironment{geolitemize}{%
+  \begin{itemize}\setlength{\itemsep}{0.1em}\setlength{\parskip}{0pt}\setlength{\topsep}{0pt}
+}{\end{itemize}}
+% Title styled as a terminal command
+\usepackage{tikz}
+\newtcolorbox{terminaltitle}{colback=black!95!white, colframe=geolgreen, boxrule=1pt, arc=3pt, left=0pt, right=0pt, top=0pt, bottom=0pt}
+\renewcommand{\maketitle}{%
+    \begin{center}
+        \begin{terminaltitle}
+            \centering
+            \geolLogo[scale=0.02, baseline=-20pt] \\
+            {\textcolor{logoGreen}{\texttt{geol}}} \\
+            {\color{white}\href{https://github.com/opt-nc/geol}{opt-nc/geol}} \\
+            {\color{white}\large \textit{"\textcolor{logoGreen}{\texttt{geol}}, because software End of Life management is too serious to be boring"}}
+        \end{terminaltitle}
+    \end{center}
+}
+\author{\href{https://github.com/opt-nc/geol}{opt-nc/geol}}
+
+
+\begin{document}
+
+\AddToShipoutPictureFG*{%
+\begin{tikzpicture}[remember picture, overlay]
+    \draw[logoGreen, line width=10pt, line cap=butt]
+        ([yshift=-0.333\paperheight]current page.north west) --
+        (current page.north west) --
+        (current page.north east) --
+        ([yshift=-0.333\paperheight]current page.north east);
+    \draw[logoOrange, line width=10pt, line cap=butt]
+        ([yshift=-0.333\paperheight]current page.north west) --
+        ([yshift=-0.666\paperheight]current page.north west);
+    \draw[logoOrange, line width=10pt, line cap=butt]
+        ([yshift=-0.333\paperheight]current page.north east) --
+        ([yshift=-0.666\paperheight]current page.north east);
+    \draw[logoRed, line width=10pt, line cap=butt]
+        ([yshift=-0.666\paperheight]current page.north west) --
+        (current page.south west) --
+        (current page.south east) --
+        ([yshift=-0.666\paperheight]current page.north east);
+\end{tikzpicture}}
+
+
+
+\maketitle
+\thispagestyle{fancy}
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+\footnotetext[1]{Proudly brought to you with \faHeart \ \& \texttt{XeLaTeX}. | geol - Version: __GEOL_VERSION__ | Commit: __GEOL_COMMIT__ | Branch: __GEOL_BRANCH__}
+
+
+% (presentation moved to the title)
+
+
+
+\begin{multicols}{2}
+
+\section*{\faTerminal\ Get It}
+
+\begin{geolbox}
+\begin{geolitemize}
+  \item \cmd{brew install -{}-cask opt-nc/homebrew-tap/geol}
+  \item \cmd{go install github.com/opt-nc/geol@latest}
+  \item \cmd{geol help}
+  \item \cmd{geol about}
+\end{geolitemize}
+\end{geolbox}
+
+
+\section*{\faTags\ products, tags \& categories}
+
+\begin{geolbox}
+\begin{geolitemize}
+  \item \cmd{geol list products} All products keys
+  \item \cmd{geol list products -t} All products keys and aliases in a tree view
+  \item \cmd{geol list categories} All categories keys
+  \item \cmd{geol list tags} All tags keys
+  \item \cmd{geol tag database} Show all products tagged as \cmd{database} 
+  \item \cmd{geol list products -t | grep sql}: Show products that have \cmd{sql} in their name
+\end{geolitemize}
+\end{geolbox}
+
+\section*{\faShareSquare\ Reporting}
+\begin{geolbox}
+\begin{geolitemize}
+  \item \cmd{geol product extended temurin quarkus psql -n15 > geol-report.md} to export a report in \cmd{markdown} format 
+  \item \cmd{pandoc geol-report.md -o geol-report.pdf --pdf-engine=xelatex} to convert the \cmd{markdown} report to PDF
+  \item \cmd{pandoc geol-report.md -f markdown -t asciidoc -o geol-report.adoc} to convert the markdown report to \cmd{asciidoc}
+  \item \cmd{asciidoctor -a toc -a toclevels=4 geol-report.adoc} to convert the \cmd{asciidoc} report to HTML
+  \item \cmd{asciidoctor-pdf -a toc -a toclevels=4 geol-report.adoc} to convert the \cmd{asciidoc} report to PDF
+\end{geolitemize}
+\end{geolbox}
+
+
+\section*{\faSearch\ Stack survey}
+\begin{geolbox}
+\begin{geolitemize}
+  \item \cmd{geol check init}: Create a valid \cmd{.geol.yaml} check file
+  \item \cmd{geol check}: Run the check based on default \cmd{.geol.yaml} file
+  \item \cmd{geol check -s}: Run the check but exists with code 1 if any product is EOL
+\end{geolitemize}
+\end{geolbox}
+
+
+
+\section*{\faBoxOpen\ Products}
+\begin{geolbox}
+\begin{geolitemize}
+  \item \cmd{geol product describe psql} : Describe PostgreSQL product
+  \item \cmd{geol product describe psql > psql.md} : Get PostgreSQL description in a markdown file
+  \item \cmd{geol product extended psql} : Get PostgreSQL versions and EOL dates
+  \item \cmd{geol product extended psql -n10} : Get PostgreSQL versions and 10 latest EOL dates
+  \item \cmd{geol product extended psql > psql.md} : Get PostgreSQL versions and EOL dates in a valid markdown
+  \item \cmd{geol product extended psql quarkus temurin maven > java-stack.md} : Get a collection of products in a single markdown
+\end{geolitemize}
+\end{geolbox}
+
+\section*{\faBookmark\ Related contents}
+\begin{geolbox}
+\begin{minipage}[c]{0.7\linewidth}
+\begin{geolitemize}
+  \item \href{https://bit.ly/48sUBdf}{⏳geol, the cli to efficiently manage EOLs like a boss} : bit.ly/48sUBdf
+  \item \href{https://bit.ly/3XWu0QI}{Dedicated Youtube playlist} : bit.ly/3XWu0QI
+\end{geolitemize}
+\end{minipage}%
+\begin{minipage}[c]{0.3\linewidth}
+\centering
+\qrcode[height=1.5cm]{bit.ly/4irKyJX}
+\end{minipage}
+\end{geolbox}
+
+\end{multicols}
+\end{document}
