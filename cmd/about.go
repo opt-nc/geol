@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+	"github.com/opt-nc/geol/utilities"
 	"github.com/phuslu/log"
 
 	"github.com/common-nighthawk/go-figure"
@@ -63,7 +64,7 @@ var aboutCmd = &cobra.Command{
 		if _, err := lipgloss.Printf("%-20s ", "GitVersion:"); err != nil {
 			log.Error().Err(err).Msg("Error printing GitVersion label")
 		}
-		if _, err := lipgloss.Println(Version); err != nil {
+		if _, err := lipgloss.Println(utilities.Version); err != nil {
 			log.Error().Err(err).Msg("Error printing GitVersion value")
 		}
 

@@ -24,7 +24,7 @@ builds:
       - darwin
     binary: geol
     ldflags:
-      - "-X 'github.com/opt-nc/geol/cmd.Version={{.Version}}'"
+      - "-X 'github.com/opt-nc/geol/utilities.Version={{.Version}}'"
       - "-X 'github.com/opt-nc/geol/cmd.Commit={{.Commit}}'"
       - "-X 'github.com/opt-nc/geol/cmd.Date={{.Date}}'"
 
