@@ -29,7 +29,7 @@ jobs:
             conventional-changelog-conventionalcommits
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: anchore/sbom-action/download-syft@fbfd9c6c189226748411491745178e0c2017392d # installs syft
+      - uses: anchore/sbom-action/download-syft@43a17d6e7add2b5535efe4dcae9952337c479a93 # installs syft
       - name: Run GoReleaser
         if: steps.release.outputs.new_release_published == 'true' # Run only if a new release was published
         uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a
