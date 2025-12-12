@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -13,7 +14,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var Version string = "dev"
+// Variables injected at build time with ldflags
+var (
+	Commit       = "none"
+	Date         = "unknown"
+	BuiltBy      = "GoReleaser"
+	GoVersion    = runtime.Version()
+	Version      = "dev"
+	PlatformOs   = runtime.GOOS
+	PlatformArch = runtime.GOARCH
+)
 
 // CheckCacheTimeAndUpdateGeneric logs the cache mod time and updates the cache if older than maxAge using RefreshAllCaches.
 func CheckCacheTimeAndUpdateGeneric(modTime time.Time, maxAge time.Duration, cmd *cobra.Command) {
@@ -125,9 +135,6 @@ func RefreshAllCaches(cmd *cobra.Command) {
 		log.Warn().Msg("Could not check the latest version from GitHub")
 		return
 	}
-
-	println("Current version:", Version)
-	println("Latest version:", latestVersion)
 
 	if latestVersion != Version {
 		log.Warn().Msg("There is a new geol version available ! Latest version: " + latestVersion + ", you have: " + Version)
