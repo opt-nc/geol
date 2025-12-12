@@ -1,0 +1,121 @@
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
+
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+    - ./scripts/completions.sh
+    - ./scripts/manpages.sh
+builds:
+  - main: main.go
+    env:
+      - CGO_ENABLED=1
+    goos:
+      - darwin
+    binary: geol
+    ldflags:
+      - "-X 'github.com/opt-nc/geol/utilities.Version={{.Version}}'"
+      - "-X 'github.com/opt-nc/geol/utilities.Commit={{.Commit}}'"
+      - "-X 'github.com/opt-nc/geol/utilities.Date={{.Date}}'"
+
+archives:
+  - # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      geol_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    files:
+      - src: completions/*
+      - src: manpages/*
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  footer: >-
+
+    ---
+
+    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
+
+checksum:
+  name_template: 'checksums.txt'
+
+sboms:
+  - id: geol-source
+    artifacts: archive
+
+homebrew_casks:
+  - # Name of the recipe
+    name: geol
+
+    # Your app's description.
+    description: "geol, the cli to efficiently display product end-of-life dates in your terminal using the endoflife.date API."
+
+    # Homepage is the link to the project page of the formula.
+    homepage: https://github.com/opt-nc/geol
+
+    # Repository to push the generated files to.
+    repository:
+      owner: opt-nc
+      name: homebrew-tap
+      token: "{{ .Env.PUBLIC_HOMEBREW_TAP_TOKEN }}"
+
+    manpages:
+      - "manpages/geol.1.gz"
+
+    # Completions for different shells
+    #
+    # Templates: allowed.  
+    completions:
+      bash: "completions/geol.bash"
+      zsh: "completions/geol.zsh"
+      fish: "completions/geol.fish"
+
+    # Git author used to commit to the repository.
+    commit_author:
+      name: goreleaserbot
+      email: goreleaserbot@opt.nc
+
+    # The project name and current git tag are used in the format string.
+    #
+    # Templates: allowed
+    commit_msg_template: "Brew formula update for {{ .ProjectName }} version {{ .Tag }}"
+    
+    # Directory inside the repository to put the formula.
+    directory: Casks
+
+    # The formula license.
+    license: Apache-2.0
+
+    skip_upload: auto
+
+    # This information will be used to build the URL section of your Cask.
+    #
+    # You can set the template, as well as additional parameters.
+    # These parameters can be used to provide extra headers, cookies, or other
+    # download requirements for your application.
+    # See https://docs.brew.sh/Cask-Cookbook#additional-url-parameters for more details.
+    #
+    # All fields are optional.
+    url:
+      template: "https://github.com/opt-nc/geol/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+      # Download strategy or format specification
+      # See official Cask Cookbook for allowed values.
+      # Templates: allowed.
+      using: ":homebrew_curl"

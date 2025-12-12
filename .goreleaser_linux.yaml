@@ -17,16 +17,29 @@ before:
 builds:
   - main: main.go
     env:
-      - CGO_ENABLED=0
+      - CGO_ENABLED=1
     goos:
       - linux
-      - windows
-      - darwin
+    goarch:
+      - amd64
+      - arm64
+    overrides:
+      - goos: linux
+        goarch: amd64
+        env:
+          - CC=gcc
+      - goos: linux
+        goarch: arm64
+        env:
+          - CC=aarch64-linux-gnu-gcc
+    ignore:
+      - goos: linux
+        goarch: "386"
     binary: geol
     ldflags:
       - "-X 'github.com/opt-nc/geol/utilities.Version={{.Version}}'"
-      - "-X 'github.com/opt-nc/geol/cmd.Commit={{.Commit}}'"
-      - "-X 'github.com/opt-nc/geol/cmd.Date={{.Date}}'"
+      - "-X 'github.com/opt-nc/geol/utilities.Commit={{.Commit}}'"
+      - "-X 'github.com/opt-nc/geol/utilities.Date={{.Date}}'"
 
 archives:
   - # this name template makes the OS and Arch compatible with the results of `uname`.
@@ -37,10 +50,7 @@ archives:
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
-    # use zip for windows archives
     format_overrides:
-      - goos: windows
-        formats: [zip]
       - goos: linux
         formats: [tar.gz]
     files:
