@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/opt-nc/geol/cmd/cache"
+	"github.com/opt-nc/geol/cmd/exports"
 	"github.com/opt-nc/geol/cmd/list"
 	"github.com/opt-nc/geol/cmd/product"
 	"github.com/opt-nc/geol/utilities"
@@ -38,6 +39,7 @@ func init() {
 	rootCmd.AddCommand(cache.CacheCmd)
 	rootCmd.AddCommand(product.ProductCmd)
 	rootCmd.AddCommand(list.ListCmd)
+	rootCmd.AddCommand(exports.ExportCmd)
 
 	rootCmd.PersistentFlags().StringP("log-level", "l", "info", "Logging level, default info (debug, info, warn, error)")
 	logLevel, _ := rootCmd.PersistentFlags().GetString("log-level")
