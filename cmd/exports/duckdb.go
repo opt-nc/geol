@@ -27,29 +27,32 @@ to quickly create a Cobra application.`,
 		if err != nil {
 			log.Fatalf("Error while creating DuckDB database: %v", err)
 		}
-		defer db.Close()
+		defer func() {
+			if err := db.Close(); err != nil {
+				log.Fatalf("Error closing DuckDB database: %v", err)
+			}
+		}()
 
 		// Create 'about' table if not exists
 		_, err = db.Exec(`CREATE TABLE IF NOT EXISTS about (
 				gitVersion TEXT,
 				gitCommit TEXT,
 				goVersion TEXT,
-				platform TEXT
+				platform TEXT,
+				githubURL TEXT,
+				generatedAt TIMESTAMP DEFAULT (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::TIMESTAMP,
+				generatedAtTZ TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 			)`)
 		if err != nil {
 			log.Fatalf("Error creating 'about' table: %v", err)
 		}
 
-		// Get build metadata from about.go and utilities
-		gitVersion := utilities.Version
-		gitCommit := utilities.Commit
-		goVersion := utilities.GoVersion
-		platformOs := utilities.PlatformOs
-		platformArch := utilities.PlatformArch
-
 		// Insert values into 'about' table
-		_, err = db.Exec(`INSERT INTO about (gitVersion, gitCommit, goVersion, platform) VALUES (?, ?, ?, ?)`,
-			gitVersion, gitCommit, goVersion, fmt.Sprintf("%s/%s", platformOs, platformArch))
+		_, err = db.Exec(`INSERT INTO about (gitVersion, gitCommit, goVersion, platform, githubURL) 
+			VALUES (?, ?, ?, ?, ?)`,
+			utilities.Version, utilities.Commit, utilities.GoVersion,
+			fmt.Sprintf("%s/%s", utilities.PlatformOs, utilities.PlatformArch),
+			"https://github.com/opt-nc/geol")
 		if err != nil {
 			log.Fatalf("Error inserting into 'about' table: %v", err)
 		}

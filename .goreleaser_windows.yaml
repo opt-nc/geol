@@ -19,14 +19,10 @@ builds:
     env:
       - CGO_ENABLED=1
     goos:
-      - linux
       - windows
-      - darwin
     ignore:
       - goos: windows
         goarch: arm64
-      - goos: linux
-        goarch: "386"
       - goos: windows
         goarch: "386"
     binary: geol
@@ -48,8 +44,6 @@ archives:
     format_overrides:
       - goos: windows
         formats: [zip]
-      - goos: linux
-        formats: [tar.gz]
     files:
       - src: completions/*
       - src: manpages/*
