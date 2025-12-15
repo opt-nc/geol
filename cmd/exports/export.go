@@ -1,23 +1,20 @@
 package exports
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
 // ExportCmd represents the export command
 var ExportCmd = &cobra.Command{
 	Use:   "export",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Export data to various formats",
+	Long: `Export the application data and product information to different file formats.
+By default, this command exports to a DuckDB database (equivalent to 'export duckdb').
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+Available formats:
+- duckdb: Export to a DuckDB database file (default)`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("export called")
+		duckdbCmd.Run(duckdbCmd, args)
 	},
 }
 

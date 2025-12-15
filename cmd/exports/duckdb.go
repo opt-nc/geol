@@ -15,13 +15,13 @@ import (
 // duckdbCmd represents the duckdb command
 var duckdbCmd = &cobra.Command{
 	Use:   "duckdb",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Export data to a DuckDB database",
+	Long: `Export the application data, metadata, and product information from the endoflife.date API into a DuckDB database file.
+This command creates a new DuckDB file (default: geol.duckdb) and populates it with
+information such as version details, platform info, and comprehensive product lifecycle data.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+You can specify the output filename using the --output flag.
+If the file already exists, use the --force flag to overwrite it.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		dbPath, _ := cmd.Flags().GetString("output")
 		forceDuckDB, _ := cmd.Flags().GetBool("force")
