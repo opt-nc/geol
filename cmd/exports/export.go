@@ -14,10 +14,11 @@ By default, this command exports to a DuckDB database (equivalent to 'export duc
 Available formats:
 - duckdb: Export to a DuckDB database file (default)`,
 	Run: func(cmd *cobra.Command, args []string) {
-		duckdbCmd.Run(duckdbCmd, args)
+		duckdbCmd.Run(cmd, args)
 	},
 }
 
 func init() {
-
+	ExportCmd.Flags().StringP("output", "o", "geol.duckdb", "Output DuckDB database file path")
+	ExportCmd.Flags().BoolP("force", "f", false, "Force overwrite of existing geol.duckdb file")
 }

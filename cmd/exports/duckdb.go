@@ -7,6 +7,7 @@ import (
 
 	_ "github.com/duckdb/duckdb-go/v2"
 	"github.com/phuslu/log"
+	progressbar "github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 
 	"github.com/opt-nc/geol/cmd/product"
@@ -15,6 +16,19 @@ import (
 
 // createAboutTable creates the 'about' table and inserts metadata
 func createAboutTable(db *sql.DB) error {
+	bar := progressbar.NewOptions(2,
+		progressbar.OptionSetDescription("Creating 'about' table"),
+		progressbar.OptionSetWidth(40),
+		progressbar.OptionShowCount(),
+		progressbar.OptionSetTheme(progressbar.Theme{
+			Saucer:        "=",
+			SaucerHead:    ">",
+			SaucerPadding: " ",
+			BarStart:      "[",
+			BarEnd:        "]",
+		}),
+	)
+
 	// Create 'about' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS about (
 			gitVersion TEXT,
@@ -28,6 +42,7 @@ func createAboutTable(db *sql.DB) error {
 	if err != nil {
 		return fmt.Errorf("error creating 'about' table: %w", err)
 	}
+	_ = bar.Add(1)
 
 	// Insert values into 'about' table
 	_, err = db.Exec(`INSERT INTO about (gitVersion, gitCommit, goVersion, platform, githubURL) 
@@ -38,6 +53,8 @@ func createAboutTable(db *sql.DB) error {
 	if err != nil {
 		return fmt.Errorf("error inserting into 'about' table: %w", err)
 	}
+	_ = bar.Add(1)
+	fmt.Println()
 
 	return nil
 }
@@ -68,11 +85,26 @@ func createDetailsTable(cmd *cobra.Command, db *sql.DB) error {
 		return fmt.Errorf("error retrieving products from cache: %w", err)
 	}
 
+	// Create progress bar for products
+	bar := progressbar.NewOptions(len(products.Products),
+		progressbar.OptionSetDescription("Inserting product details"),
+		progressbar.OptionSetWidth(40),
+		progressbar.OptionShowCount(),
+		progressbar.OptionSetTheme(progressbar.Theme{
+			Saucer:        "=",
+			SaucerHead:    ">",
+			SaucerPadding: " ",
+			BarStart:      "[",
+			BarEnd:        "]",
+		}),
+	)
+
 	// Insert data for each product
 	for productName := range products.Products {
 		prodData, err := product.FetchProductData(productName)
 		if err != nil {
 			log.Warn().Err(err).Msgf("Error fetching product data for %s, skipping", productName)
+			_ = bar.Add(1)
 			continue
 		}
 
@@ -91,7 +123,9 @@ func createDetailsTable(cmd *cobra.Command, db *sql.DB) error {
 				return fmt.Errorf("error inserting release data for %s: %w", productName, err)
 			}
 		}
+		_ = bar.Add(1)
 	}
+	fmt.Println()
 
 	return nil
 }
