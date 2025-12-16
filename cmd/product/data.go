@@ -10,7 +10,7 @@ type ReleaseInfo struct {
 	LTS         bool
 }
 
-type productReleases struct {
+type ProductReleases struct {
 	Name     string
 	Releases []ReleaseInfo
 }

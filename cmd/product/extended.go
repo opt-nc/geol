@@ -56,7 +56,7 @@ geol product extended quarkus > quarkus-eol.md`,
 			log.Fatal().Err(err).Msg("Error retrieving products from cache")
 		}
 
-		var allProducts []productReleases
+		var allProducts []ProductReleases
 
 		for _, prod := range args {
 			found := false
@@ -82,7 +82,7 @@ geol product extended quarkus > quarkus-eol.md`,
 				continue // product not found in cache
 			}
 
-			prodData, err := fetchProductData(prod)
+			prodData, err := FetchProductData(prod)
 			if err != nil {
 				log.Fatal().Err(err).Msg("Error fetching product data")
 			}
@@ -101,7 +101,7 @@ geol product extended quarkus > quarkus-eol.md`,
 }
 
 // renderProductTable displays a formatted table for a single product's release information
-func renderProductTable(prod productReleases, numberFlag int, mdFlag bool, isFirst bool) {
+func renderProductTable(prod ProductReleases, numberFlag int, mdFlag bool, isFirst bool) {
 	// Print as a title "# Products" for the first product
 	if isFirst {
 		mainTitle := lipgloss.NewStyle().
@@ -277,27 +277,27 @@ func renderProductTable(prod productReleases, numberFlag int, mdFlag bool, isFir
 	_, _ = lipgloss.Println(summary)
 }
 
-// fetchProductData retrieves product release data from the API
-func fetchProductData(productName string) (productReleases, error) {
+// FetchProductData retrieves product release data from the API
+func FetchProductData(productName string) (ProductReleases, error) {
 	url := utilities.ApiUrl + "products/" + productName
 	resp, err := http.Get(url)
 	if err != nil {
-		return productReleases{}, fmt.Errorf("error requesting %s: %w", productName, err)
+		return ProductReleases{}, fmt.Errorf("error requesting %s: %w", productName, err)
 	}
 	body, err := io.ReadAll(resp.Body)
 	if cerr := resp.Body.Close(); cerr != nil {
-		return productReleases{}, fmt.Errorf("error closing HTTP body for %s: %w", productName, cerr)
+		return ProductReleases{}, fmt.Errorf("error closing HTTP body for %s: %w", productName, cerr)
 	}
 	if err != nil {
-		return productReleases{}, fmt.Errorf("error reading response for %s: %w", productName, err)
+		return ProductReleases{}, fmt.Errorf("error reading response for %s: %w", productName, err)
 	}
 	if resp.StatusCode != 200 {
-		return productReleases{}, fmt.Errorf("product %s not found on the API", productName)
+		return ProductReleases{}, fmt.Errorf("product %s not found on the API", productName)
 	}
 
 	var apiResp ApiRespExtended
 	if err := json.Unmarshal(body, &apiResp); err != nil {
-		return productReleases{}, fmt.Errorf("error decoding JSON for %s: %w", productName, err)
+		return ProductReleases{}, fmt.Errorf("error decoding JSON for %s: %w", productName, err)
 	}
 
 	var releases []ReleaseInfo
@@ -313,7 +313,7 @@ func fetchProductData(productName string) (productReleases, error) {
 		})
 	}
 
-	return productReleases{
+	return ProductReleases{
 		Name:     apiResp.Result.Name,
 		Releases: releases,
 	}, nil

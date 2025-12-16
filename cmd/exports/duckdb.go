@@ -9,6 +9,7 @@ import (
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 
+	"github.com/opt-nc/geol/cmd/product"
 	"github.com/opt-nc/geol/utilities"
 )
 
@@ -42,16 +43,55 @@ func createAboutTable(db *sql.DB) error {
 }
 
 // createDetailsTable creates the 'details' table and inserts product details
-func createDetailsTable(db *sql.DB) error {
+func createDetailsTable(cmd *cobra.Command, db *sql.DB) error {
 	// Create 'details' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS details (
-			-- TODO: Define table schema
+			product_id TEXT,
+			cycle TEXT,
+			release TEXT,
+			latest TEXT,
+			latest_release TEXT,
+			eol TEXT
 		)`)
 	if err != nil {
 		return fmt.Errorf("error creating 'details' table: %w", err)
 	}
 
-	// TODO: Insert product details data
+	// Get products from cache
+	productsPath, err := utilities.GetProductsPath()
+	if err != nil {
+		return fmt.Errorf("error retrieving products path: %w", err)
+	}
+
+	products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
+	if err != nil {
+		return fmt.Errorf("error retrieving products from cache: %w", err)
+	}
+
+	// Insert data for each product
+	for productName := range products.Products {
+		prodData, err := product.FetchProductData(productName)
+		if err != nil {
+			log.Warn().Err(err).Msgf("Error fetching product data for %s, skipping", productName)
+			continue
+		}
+
+		// Insert each release into the details table
+		for _, release := range prodData.Releases {
+			_, err = db.Exec(`INSERT INTO details (product_id, cycle, release, latest, latest_release, eol) 
+				VALUES (?, ?, ?, ?, ?, ?)`,
+				prodData.Name,
+				release.Name,
+				release.ReleaseDate,
+				release.LatestName,
+				release.LatestDate,
+				release.EolFrom,
+			)
+			if err != nil {
+				return fmt.Errorf("error inserting release data for %s: %w", productName, err)
+			}
+		}
+	}
 
 	return nil
 }
@@ -96,7 +136,7 @@ If the file already exists, use the --force flag to overwrite it.`,
 		}
 
 		// Create 'details' table and insert product details
-		if err := createDetailsTable(db); err != nil {
+		if err := createDetailsTable(cmd, db); err != nil {
 			log.Fatal().Err(err).Msg("Error creating and populating 'details' table")
 		}
 
