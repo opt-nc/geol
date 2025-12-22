@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"charm.land/bubbles/v2/progress"
 	tea "charm.land/bubbletea/v2"
@@ -110,7 +111,7 @@ func createAboutTable(db *sql.DB) error {
 		utilities.Version, utilities.Commit, utilities.GoVersion,
 		fmt.Sprintf("%s/%s", utilities.PlatformOs, utilities.PlatformArch),
 		"https://github.com/opt-nc/geol")
-	log.Info().Msg("Inserted metadata into 'about' table")
+	log.Info().Msg("Inserted metadata into \"about\" table")
 	if err != nil {
 		return fmt.Errorf("error inserting into 'about' table: %w", err)
 	}
@@ -220,6 +221,7 @@ func createDetailsTable(db *sql.DB) error {
 	if err != nil {
 		return fmt.Errorf("error inserting data into 'details' table: %w", err)
 	}
+	log.Info().Msg("Created and populated \"details\" table")
 
 	return nil
 }
@@ -228,13 +230,15 @@ func createDetailsTable(db *sql.DB) error {
 var duckdbCmd = &cobra.Command{
 	Use:   "duckdb",
 	Short: "Export data to a DuckDB database",
-	Long: `Export the application data, metadata, and product information from the endoflife.date API into a DuckDB database file.
+	Long: `Export all known products and their end-of-life (EOL) metadata into a DuckDB database file.
 This command creates a new DuckDB file (default: geol.duckdb) and populates it with
 information such as version details, platform info, and comprehensive product lifecycle data.
 
 You can specify the output filename using the --output flag.
 If the file already exists, use the --force flag to overwrite it.`,
 	Run: func(cmd *cobra.Command, args []string) {
+		startTime := time.Now()
+
 		utilities.AnalyzeCacheProductsValidity(cmd)
 		dbPath, _ := cmd.Flags().GetString("output")
 		forceDuckDB, _ := cmd.Flags().GetBool("force")
@@ -258,11 +262,6 @@ If the file already exists, use the --force flag to overwrite it.`,
 			}
 		}()
 
-		// Create 'about' table and insert metadata
-		if err := createAboutTable(db); err != nil {
-			log.Fatal().Err(err).Msg("Error creating and populating 'about' table")
-		}
-
 		// Create 'details_temp' table and insert product details
 		if err := createTempDetailsTable(cmd, db); err != nil {
 			log.Fatal().Err(err).Msg("Error creating and populating 'details_temp' table")
@@ -273,12 +272,21 @@ If the file already exists, use the --force flag to overwrite it.`,
 			log.Fatal().Err(err).Msg("Error creating and populating 'details' table")
 		}
 
-		log.Info().Msg("DuckDB database created successfully at " + dbPath)
+		// Create 'about' table and insert metadata
+		if err := createAboutTable(db); err != nil {
+			log.Fatal().Err(err).Msg("Error creating and populating 'about' table")
+		}
+
+		duration := time.Since(startTime)
+		log.Info().Msgf("DuckDB database created successfully at %s (took %v)", dbPath, duration.Round(time.Millisecond))
+		log.Info().Msg("You can query the database using DuckDB CLI or any compatible client.")
+		log.Info().Msgf("Example CLI command: duckdb %s", dbPath)
+		log.Info().Msg("Check https://github.com/davidgasquez/awesome-duckdb for more tools and clients.")
 	},
 }
 
 func init() {
 	ExportCmd.AddCommand(duckdbCmd)
 	duckdbCmd.Flags().StringP("output", "o", "geol.duckdb", "Output DuckDB database file path")
-	duckdbCmd.Flags().BoolP("force", "f", false, "Force overwrite of existing geol.duckdb file")
+	duckdbCmd.Flags().BoolP("force", "f", false, "Overwrites the DuckDB database file if it already exists")
 }

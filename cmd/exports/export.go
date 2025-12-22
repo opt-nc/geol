@@ -8,7 +8,7 @@ import (
 var ExportCmd = &cobra.Command{
 	Use:   "export",
 	Short: "Export data to various formats",
-	Long: `Export the application data and product information to different file formats.
+	Long: `Export all known products and their end-of-life (EOL) metadata in different file formats.
 By default, this command exports to a DuckDB database (equivalent to 'export duckdb').
 
 Available formats:
@@ -20,5 +20,5 @@ Available formats:
 
 func init() {
 	ExportCmd.Flags().StringP("output", "o", "geol.duckdb", "Output DuckDB database file path")
-	ExportCmd.Flags().BoolP("force", "f", false, "Force overwrite of existing geol.duckdb file")
+	ExportCmd.Flags().BoolP("force", "f", false, "Overwrites the DuckDB database file if it already exists")
 }
