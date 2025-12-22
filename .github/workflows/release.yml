@@ -51,7 +51,7 @@ jobs:
         with:
           distribution: goreleaser
           version: '~> v2'
-          args: release --clean --skip-publish --config .goreleaser_linux.yaml
+          args: release --clean --skip=publish --config .goreleaser_linux.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload
@@ -74,7 +74,7 @@ jobs:
         with:
           distribution: goreleaser
           version: '~> v2'
-          args: release --clean --skip-publish --config .goreleaser_darwin.yaml
+          args: release --clean --skip=publish --config .goreleaser_darwin.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload
@@ -97,7 +97,7 @@ jobs:
         with:
           distribution: goreleaser
           version: '~> v2'
-          args: release --clean --skip-publish --config .goreleaser_windows.yaml
+          args: release --clean --skip=publish --config .goreleaser_windows.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload
