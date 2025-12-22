@@ -44,9 +44,9 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
           fetch-depth: 0
-      
+
       - name: Install cross-compiler for linux/arm64
-        run: sudo apt install -y gcc-aarch64-linux-gnu
+        run: apt install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
       
       - name: Run GoReleaser for Linux
         uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a
@@ -72,7 +72,10 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
           fetch-depth: 0
-      
+      - name: Set up Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c
+        with:
+            go-version: 1.25.5
       - name: Run GoReleaser for macOS
         uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a
         with:
@@ -97,7 +100,6 @@ jobs:
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
         with:
           fetch-depth: 0
-      
       - name: Run GoReleaser for Windows
         uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a
         with:
