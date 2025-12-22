@@ -43,3 +43,4 @@ manpages/
 /assets/logos/package.json
 /assets/logos/package-lock.json
 /assets/cheatsheet/.task/
+*.duckdb

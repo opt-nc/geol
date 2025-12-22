@@ -298,27 +298,23 @@ geol check --file stack.yaml`,
 		strict, _ := cmd.Flags().GetBool("strict")
 		_, err := os.Stat(file)
 		if err != nil {
-			log.Error().Msg("Error: the file does not exist: " + file)
-			return
+			log.Fatal().Msg("Error: the file does not exist: " + file)
 		}
 
 		// Read the YAML file
 		data, err := os.ReadFile(file)
 		if err != nil {
-			log.Error().Msg("Error reading file: " + err.Error())
-			return
+			log.Fatal().Msg("Error reading file: " + err.Error())
 		}
 
 		var config geolConfig
 		if err := yaml.Unmarshal(data, &config); err != nil {
-			log.Error().Msg("YAML format error: " + err.Error())
-			return
+			log.Fatal().Msg("YAML format error: " + err.Error())
 		}
 
 		missing := checkRequiredKeys(config)
 		if len(missing) > 0 {
-			log.Error().Msg("Missing or empty keys: " + fmt.Sprintf("%v", missing))
-			os.Exit(1)
+			log.Fatal().Msg("Missing or empty keys: " + fmt.Sprintf("%v", missing))
 		}
 
 		utilities.AnalyzeCacheProductsValidity(cmd)

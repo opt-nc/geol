@@ -12,14 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Variables injected at build time with ldflags
-var (
-	Commit    = "none"
-	Date      = "unknown"
-	BuiltBy   = "GoReleaser"
-	GoVersion = runtime.Version()
-)
-
 // aboutCmd represents the about command
 var aboutCmd = &cobra.Command{
 	Use:     "about",
@@ -71,28 +63,28 @@ var aboutCmd = &cobra.Command{
 		if _, err := lipgloss.Printf("%-20s ", "Git Commit:"); err != nil {
 			log.Error().Err(err).Msg("Error printing Git Commit label")
 		}
-		if _, err := lipgloss.Println(Commit); err != nil {
+		if _, err := lipgloss.Println(utilities.Commit); err != nil {
 			log.Error().Err(err).Msg("Error printing Git Commit value")
 		}
 
 		if _, err := lipgloss.Printf("%-20s ", "BuildDate:"); err != nil {
 			log.Error().Err(err).Msg("Error printing BuildDate label")
 		}
-		if _, err := lipgloss.Println(Date); err != nil {
+		if _, err := lipgloss.Println(utilities.Date); err != nil {
 			log.Error().Err(err).Msg("Error printing BuildDate value")
 		}
 
 		if _, err := lipgloss.Printf("%-20s ", "BuiltBy:"); err != nil {
 			log.Error().Err(err).Msg("Error printing BuiltBy label")
 		}
-		if _, err := lipgloss.Println(BuiltBy); err != nil {
+		if _, err := lipgloss.Println(utilities.BuiltBy); err != nil {
 			log.Error().Err(err).Msg("Error printing BuiltBy value")
 		}
 
 		if _, err := lipgloss.Printf("%-20s ", "GoVersion:"); err != nil {
 			log.Error().Err(err).Msg("Error printing GoVersion label")
 		}
-		if _, err := lipgloss.Println(GoVersion); err != nil {
+		if _, err := lipgloss.Println(utilities.GoVersion); err != nil {
 			log.Error().Err(err).Msg("Error printing GoVersion value")
 		}
 
@@ -106,7 +98,7 @@ var aboutCmd = &cobra.Command{
 		if _, err := lipgloss.Printf("%-20s ", "Platform:"); err != nil {
 			log.Error().Err(err).Msg("Error printing Platform label")
 		}
-		if _, err := lipgloss.Printf("%s/%s\n", runtime.GOOS, runtime.GOARCH); err != nil {
+		if _, err := lipgloss.Printf("%s/%s\n", utilities.PlatformOs, utilities.PlatformArch); err != nil {
 			log.Error().Err(err).Msg("Error printing Platform value")
 		}
 
