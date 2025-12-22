@@ -110,6 +110,7 @@ func createAboutTable(db *sql.DB) error {
 		utilities.Version, utilities.Commit, utilities.GoVersion,
 		fmt.Sprintf("%s/%s", utilities.PlatformOs, utilities.PlatformArch),
 		"https://github.com/opt-nc/geol")
+	log.Info().Msg("Inserted metadata into 'about' table")
 	if err != nil {
 		return fmt.Errorf("error inserting into 'about' table: %w", err)
 	}
@@ -117,10 +118,10 @@ func createAboutTable(db *sql.DB) error {
 	return nil
 }
 
-// createDetailsTable creates the 'details' table and inserts product details
-func createDetailsTable(cmd *cobra.Command, db *sql.DB) error {
-	// Create 'details' table if not exists
-	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS details (
+// createTempDetailsTable creates the 'details_temp' table and inserts product details
+func createTempDetailsTable(cmd *cobra.Command, db *sql.DB) error {
+	// Create 'details_temp' table if not exists
+	_, err := db.Exec(`CREATE TEMP TABLE IF NOT EXISTS details_temp (
 			product_id TEXT,
 			cycle TEXT,
 			release TEXT,
@@ -129,7 +130,7 @@ func createDetailsTable(cmd *cobra.Command, db *sql.DB) error {
 			eol TEXT
 		)`)
 	if err != nil {
-		return fmt.Errorf("error creating 'details' table: %w", err)
+		return fmt.Errorf("error creating 'details_temp' table: %w", err)
 	}
 
 	// Get products from cache
@@ -164,9 +165,9 @@ func createDetailsTable(cmd *cobra.Command, db *sql.DB) error {
 				continue
 			}
 
-			// Insert each release into the details table
+			// Insert each release into the details_temp table
 			for _, release := range prodData.Releases {
-				_, err = db.Exec(`INSERT INTO details (product_id, cycle, release, latest, latest_release, eol) 
+				_, err = db.Exec(`INSERT INTO details_temp (product_id, cycle, release, latest, latest_release, eol) 
 						VALUES (?, ?, ?, ?, ?, ?)`,
 					prodData.Name,
 					release.Name,
@@ -186,6 +187,38 @@ func createDetailsTable(cmd *cobra.Command, db *sql.DB) error {
 	// Run the program and wait for completion
 	if _, err := p.Run(); err != nil {
 		return fmt.Errorf("error running progress display: %w", err)
+	}
+
+	return nil
+}
+
+// createDetailsTable creates the final 'details' table from 'details_temp' with proper date types
+func createDetailsTable(db *sql.DB) error {
+	// Create 'details' table with DATE columns for release_date, latest_release_date, and eol
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS details (
+			product_id TEXT,
+			cycle TEXT,
+			release_date DATE,
+			latest TEXT,
+			latest_release_date DATE,
+			eol DATE
+		)`)
+	if err != nil {
+		return fmt.Errorf("error creating 'details' table: %w", err)
+	}
+
+	// Insert data from details_temp, converting empty strings to NULL and casting to DATE
+	_, err = db.Exec(`INSERT INTO details (product_id, cycle, release_date, latest, latest_release_date, eol)
+		SELECT 
+			product_id,
+			cycle,
+			CASE WHEN release = '' THEN NULL ELSE TRY_CAST(release AS DATE) END,
+			latest,
+			CASE WHEN latest_release = '' THEN NULL ELSE TRY_CAST(latest_release AS DATE) END,
+			CASE WHEN eol = '' THEN NULL ELSE TRY_CAST(eol AS DATE) END
+		FROM details_temp`)
+	if err != nil {
+		return fmt.Errorf("error inserting data into 'details' table: %w", err)
 	}
 
 	return nil
@@ -230,8 +263,13 @@ If the file already exists, use the --force flag to overwrite it.`,
 			log.Fatal().Err(err).Msg("Error creating and populating 'about' table")
 		}
 
-		// Create 'details' table and insert product details
-		if err := createDetailsTable(cmd, db); err != nil {
+		// Create 'details_temp' table and insert product details
+		if err := createTempDetailsTable(cmd, db); err != nil {
+			log.Fatal().Err(err).Msg("Error creating and populating 'details_temp' table")
+		}
+
+		// Create 'details' table from 'details_temp' with proper date types
+		if err := createDetailsTable(db); err != nil {
 			log.Fatal().Err(err).Msg("Error creating and populating 'details' table")
 		}
 
