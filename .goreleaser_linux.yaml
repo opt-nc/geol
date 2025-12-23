@@ -48,3 +48,11 @@ archives:
     files:
       - src: completions/*
       - src: manpages/*
+
+checksum:
+  name_template: 'checksums.txt'
+
+
+sboms:
+  - id: geol-source
+    artifacts: archive
