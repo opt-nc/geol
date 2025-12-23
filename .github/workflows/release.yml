@@ -164,7 +164,7 @@ jobs:
       - name: Publish Release
         uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a
         with:
-          args: release --skip=validate --config .goreleaser_release.yaml
+          args: release --skip=validate,before --config .goreleaser_release.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PUBLIC_HOMEBREW_TAP_TOKEN: ${{ secrets.PUBLIC_HOMEBREW_TAP_TOKEN }}
