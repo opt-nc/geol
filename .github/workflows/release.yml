@@ -61,7 +61,7 @@ jobs:
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: geol-linux-artifacts
-          path: dist/geol*
+          path: dist
 
   build-darwin:
     name: 🔨 Build macOS
@@ -90,7 +90,7 @@ jobs:
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: geol-darwin-artifacts
-          path: dist/geol*
+          path: dist
 
   build-windows:
     name: 🔨 Build Windows
@@ -115,7 +115,7 @@ jobs:
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: geol-windows-artifacts
-          path: dist/geol*
+          path: dist
     
   publish-release:
     name: 🚀 Publish Release
