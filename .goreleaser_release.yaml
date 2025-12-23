@@ -17,6 +17,8 @@ release:
     ---
 
     Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
+  extra_files:
+    - ./geol-build/*
 
 homebrew_casks:
   - # Name of the recipe
