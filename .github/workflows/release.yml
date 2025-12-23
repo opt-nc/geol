@@ -124,6 +124,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          fetch-depth: 0
       
       - name: Make directories
         run: mkdir -p ./dist/linux ./dist/darwin ./dist/windows
@@ -162,7 +164,7 @@ jobs:
       - name: Publish Release
         uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a
         with:
-          args: release --config .goreleaser_release.yaml
+          args: release --skip=validate --config .goreleaser_release.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PUBLIC_HOMEBREW_TAP_TOKEN: ${{ secrets.PUBLIC_HOMEBREW_TAP_TOKEN }}
