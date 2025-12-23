@@ -128,50 +128,50 @@ jobs:
           fetch-depth: 0
       
       - name: Make directories
-        run: mkdir -p ./dist/linux ./dist/darwin ./dist/windows
+        run: mkdir -p ./geol-build/linux ./geol-build/darwin ./geol-build/windows
 
       - name: Download Linux artifacts
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
         with:
           name: geol-linux-artifacts
-          path: ./dist/linux
+          path: ./geol-build/linux
       - name: Download macOS artifacts
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
         with:
           name: geol-darwin-artifacts
-          path: ./dist/darwin
+          path: ./geol-build/darwin
       - name: Download Windows artifacts
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
         with:
           name: geol-windows-artifacts
-          path: ./dist/windows
+          path: ./geol-build/windows
       - name: Flatten artifacts
         run: |
           # Combine checksums from all platforms into global checksums.txt
-          cat ./dist/linux/checksums.txt > ./dist/checksums.txt
-          cat ./dist/darwin/checksums.txt >> ./dist/checksums.txt
-          cat ./dist/windows/checksums.txt >> ./dist/checksums.txt
+          cat ./geol-build/linux/checksums.txt > ./geol-build/checksums.txt
+          cat ./geol-build/darwin/checksums.txt >> ./geol-build/checksums.txt
+          cat ./geol-build/windows/checksums.txt >> ./geol-build/checksums.txt
           # Remove individual checksum files
-          rm -f ./dist/linux/checksums.txt
-          rm -f ./dist/darwin/checksums.txt
-          rm -f ./dist/windows/checksums.txt
+          rm -f ./geol-build/linux/checksums.txt
+          rm -f ./geol-build/darwin/checksums.txt
+          rm -f ./geol-build/windows/checksums.txt
           # Move all artifacts to dist root
-          mv ./dist/linux/* ./dist/
-          mv ./dist/darwin/* ./dist/
-          mv ./dist/windows/* ./dist/
+          mv ./geol-build/linux/* ./geol-build/
+          mv ./geol-build/darwin/* ./geol-build/
+          mv ./geol-build/windows/* ./geol-build/
           # Clean up subdirectories
-          rm -rf ./dist/linux ./dist/darwin ./dist/windows
+          rm -rf ./geol-build/linux ./geol-build/darwin ./geol-build/windows
       - name: Publish Release
         uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a
         with:
-          args: release --skip=validate,before --config .goreleaser_release.yaml
+          args: release --skip=validate --config .goreleaser_release.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PUBLIC_HOMEBREW_TAP_TOKEN: ${{ secrets.PUBLIC_HOMEBREW_TAP_TOKEN }}
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a
         with:
-          subject-checksums: ./dist/checksums.txt
+          subject-checksums: ./geol-build/checksums.txt
 
 
   post-release:
