@@ -1,0 +1,44 @@
+version: 2
+
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+builds:
+  - main: main.go
+    env:
+      - CGO_ENABLED=1
+    goos:
+      - windows
+    ignore:
+      - goos: windows
+        goarch: arm64
+      - goos: windows
+        goarch: "386"
+    binary: geol
+    ldflags:
+      - "-X 'github.com/opt-nc/geol/utilities.Version={{.Version}}'"
+      - "-X 'github.com/opt-nc/geol/utilities.Commit={{.Commit}}'"
+      - "-X 'github.com/opt-nc/geol/utilities.Date={{.Date}}'"
+
+archives:
+  - # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      geol_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    # use zip for windows archives
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+checksum:
+  name_template: 'checksums.txt'
+
+
+sboms:
+  - id: geol-source
+    artifacts: archive

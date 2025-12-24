@@ -1,0 +1,291 @@
+name: 🎯 Release
+
+on:
+  push:
+    branches: [main, develop]
+
+permissions:
+  id-token: write
+  contents: write
+  attestations: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  release:
+    name: 🎯 Semantic Release
+    runs-on: ubuntu-latest
+    outputs:
+      new_release_published: ${{ steps.release.outputs.new_release_published }}
+      new_release_version: ${{ steps.release.outputs.new_release_version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+      
+      - name: 📦 Semantic Release
+        id: release
+        uses: cycjimmy/semantic-release-action@b12c8f6015dc215fe37bc154d4ad456dd3833c90
+        with:
+          extra_plugins: |
+            @semantic-release/exec
+            @semantic-release/git
+            @semantic-release/release-notes-generator
+            conventional-changelog-conventionalcommits
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-linux:
+    name: 🔨 Build Linux
+    runs-on: ubuntu-latest
+    needs: release
+    if: needs.release.outputs.new_release_published == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          fetch-depth: 0
+
+      - name: Install cross-compiler for linux/arm64
+        run: sudo apt install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+      
+      - uses: anchore/sbom-action/download-syft@a930d0ac434e3182448fe678398ba5713717112a # installs syft
+      - name: Run GoReleaser for Linux
+        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: release --clean --skip=publish --config .goreleaser_linux.yaml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: geol-linux-artifacts
+          path: dist
+
+  build-darwin:
+    name: 🔨 Build macOS
+    runs-on: macos-latest
+    needs: release
+    if: needs.release.outputs.new_release_published == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c
+        with:
+            go-version: 1.25.5
+      - uses: anchore/sbom-action/download-syft@a930d0ac434e3182448fe678398ba5713717112a # installs syft
+      - name: Run GoReleaser for macOS
+        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: release --clean --skip=publish --config .goreleaser_darwin.yaml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: geol-darwin-artifacts
+          path: dist
+
+  build-windows:
+    name: 🔨 Build Windows
+    runs-on: windows-latest
+    needs: release
+    if: needs.release.outputs.new_release_published == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          fetch-depth: 0
+      - uses: anchore/sbom-action/download-syft@a930d0ac434e3182448fe678398ba5713717112a # installs syft
+      - name: Run GoReleaser for Windows
+        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a
+        with:
+          distribution: goreleaser
+          version: '~> v2'
+          args: release --clean --skip=publish --config .goreleaser_windows.yaml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        with:
+          name: geol-windows-artifacts
+          path: dist
+    
+  publish-release:
+    name: 🚀 Publish Release
+    runs-on: ubuntu-latest
+    needs: [release, build-linux, build-darwin, build-windows]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          fetch-depth: 0
+      
+      - name: Make directories
+        run: mkdir -p ./geol-build/linux ./geol-build/darwin ./geol-build/windows
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          name: geol-linux-artifacts
+          path: ./geol-build/linux
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          name: geol-darwin-artifacts
+          path: ./geol-build/darwin
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        with:
+          name: geol-windows-artifacts
+          path: ./geol-build/windows
+      - name: Flatten artifacts
+        run: |
+          # Combine checksums from all platforms into global checksums.txt
+          cat ./geol-build/linux/checksums.txt > ./geol-build/checksums.txt
+          cat ./geol-build/darwin/checksums.txt >> ./geol-build/checksums.txt
+          cat ./geol-build/windows/checksums.txt >> ./geol-build/checksums.txt
+          # Remove individual checksum files
+          rm -f ./geol-build/linux/checksums.txt
+          rm -f ./geol-build/darwin/checksums.txt
+          rm -f ./geol-build/windows/checksums.txt
+          # Move all artifacts to dist root
+          mv ./geol-build/linux/* ./geol-build/
+          mv ./geol-build/darwin/* ./geol-build/
+          mv ./geol-build/windows/* ./geol-build/
+          # Clean up subdirectories
+          rm -rf ./geol-build/linux ./geol-build/darwin ./geol-build/windows
+      - name: Publish Release
+        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a
+        with:
+          args: release --skip=validate --config .goreleaser_release.yaml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          #PUBLIC_HOMEBREW_TAP_TOKEN: ${{ secrets.PUBLIC_HOMEBREW_TAP_TOKEN }}
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@00014ed6ed5efc5b1ab7f7f34a39eb55d41aa4f8
+        with:
+          subject-checksums: ./geol-build/checksums.txt
+      
+      - name: Update Homebrew Tap
+        if: ${{ github.ref == 'refs/heads/main' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.PUBLIC_HOMEBREW_TAP_TOKEN }}
+        run: |
+          # Extract checksums for Darwin and Linux archives
+          DARWIN_ARM64_SHA=$(grep "geol_Darwin_arm64.tar.gz" ./geol-build/checksums.txt | awk '{print $1}')
+          DARWIN_AMD64_SHA=$(grep "geol_Darwin_x86_64.tar.gz" ./geol-build/checksums.txt | awk '{print $1}')
+          LINUX_ARM64_SHA=$(grep "geol_Linux_arm64.tar.gz" ./geol-build/checksums.txt | awk '{print $1}')
+          LINUX_AMD64_SHA=$(grep "geol_Linux_x86_64.tar.gz" ./geol-build/checksums.txt | awk '{print $1}')
+          
+          # Clone homebrew tap
+          git clone https://oauth2:${GITHUB_TOKEN}@github.com/opt-nc/homebrew-tap.git /tmp/homebrew-tap
+          cd /tmp/homebrew-tap
+          
+          # Configure git
+          git config user.name "goreleaserbot"
+          git config user.email "goreleaserbot@opt.nc"
+          
+          # Get version from tag
+          VERSION="${{ needs.release.outputs.new_release_version }}"
+          
+          # Create/update cask
+          cat > Casks/geol.rb <<EOF
+          cask "geol" do
+            name "geol"
+            desc "geol, the cli to efficiently display product end-of-life dates in your terminal using the endoflife.date API."
+            homepage "https://github.com/opt-nc/geol"
+            version "${VERSION}"
+          
+            livecheck do
+              skip "Auto-generated on release."
+            end
+          
+            binary "geol"
+            manpage "manpages/geol.1.gz"
+            bash_completion "completions/geol.bash"
+            zsh_completion "completions/geol.zsh"
+            fish_completion "completions/geol.fish"
+          
+            on_macos do
+              on_intel do
+                url "https://github.com/opt-nc/geol/releases/download/v#{version}/geol_Darwin_x86_64.tar.gz",
+                  using: :homebrew_curl
+                sha256 "${DARWIN_AMD64_SHA}"
+              end
+              on_arm do
+                url "https://github.com/opt-nc/geol/releases/download/v#{version}/geol_Darwin_arm64.tar.gz",
+                  using: :homebrew_curl
+                sha256 "${DARWIN_ARM64_SHA}"
+              end
+            end
+          
+            on_linux do
+              on_intel do
+                url "https://github.com/opt-nc/geol/releases/download/v#{version}/geol_Linux_x86_64.tar.gz",
+                  using: :homebrew_curl
+                sha256 "${LINUX_AMD64_SHA}"
+              end
+              on_arm do
+                url "https://github.com/opt-nc/geol/releases/download/v#{version}/geol_Linux_arm64.tar.gz",
+                  using: :homebrew_curl
+                sha256 "${LINUX_ARM64_SHA}"
+              end
+            end
+          
+            # No zap stanza required
+          end
+          EOF
+          
+          # Commit and push
+          git add Casks/geol.rb
+          git commit -m "Brew formula update for geol version v${VERSION}"
+          git push origin main
+      
+
+
+  post-release:
+    name: 📝 Post-Release Tasks
+    runs-on: ubuntu-latest
+    needs: [publish-release]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          fetch-depth: 0
+      
+      - name: Update Go Report Card
+        run: |
+          curl -X POST -F "repo=github.com/opt-nc/geol" https://goreportcard.com/checks
+      
+      - name: 👍 Merge main back to dev
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git fetch
+          git checkout develop
+          git branch --set-upstream-to=origin/develop develop
+          git pull
+          git merge --no-ff main -m "Auto-merge main back to dev"
+          git push
+
+  cleanup:
+    name: 🧹 Cleanup Pre-Releases
+    runs-on: ubuntu-latest
+    needs: [release, post-release]
+    if: github.ref == 'refs/heads/main' && needs.release.outputs.new_release_published == 'true'
+    steps:
+      - name: Delete pre-releases
+        uses: dev-drprasad/delete-older-releases@dfbe6be2a006e9475dfcbe5b8d201f1824c2a9fe
+        with:
+          delete_tag_pattern: develop
+          keep_latest: 0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

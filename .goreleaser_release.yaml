@@ -1,0 +1,26 @@
+version: 2
+
+dist: dist
+
+builds:
+  - skip: true
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+
+release:
+  footer: >-
+
+    ---
+
+    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
+  extra_files:
+    - glob: ./geol-build/*.tar.gz
+    - glob: ./geol-build/*.zip
+    - glob: ./geol-build/*.sbom.json
+    - glob: ./geol-build/checksums.txt
