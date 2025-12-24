@@ -120,7 +120,7 @@ jobs:
   publish-release:
     name: 🚀 Publish Release
     runs-on: ubuntu-latest
-    needs: [build-linux, build-darwin, build-windows]
+    needs: [release, build-linux, build-darwin, build-windows]
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
@@ -167,11 +167,87 @@ jobs:
           args: release --skip=validate --config .goreleaser_release.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PUBLIC_HOMEBREW_TAP_TOKEN: ${{ secrets.PUBLIC_HOMEBREW_TAP_TOKEN }}
+          #PUBLIC_HOMEBREW_TAP_TOKEN: ${{ secrets.PUBLIC_HOMEBREW_TAP_TOKEN }}
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a
         with:
           subject-checksums: ./geol-build/checksums.txt
+      
+      - name: Update Homebrew Tap
+        if: ${{ github.ref == 'refs/heads/main' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.PUBLIC_HOMEBREW_TAP_TOKEN }}
+        run: |
+          # Extract checksums for Darwin and Linux archives
+          DARWIN_ARM64_SHA=$(grep "geol_Darwin_arm64.tar.gz" ./geol-build/checksums.txt | awk '{print $1}')
+          DARWIN_AMD64_SHA=$(grep "geol_Darwin_x86_64.tar.gz" ./geol-build/checksums.txt | awk '{print $1}')
+          LINUX_ARM64_SHA=$(grep "geol_Linux_arm64.tar.gz" ./geol-build/checksums.txt | awk '{print $1}')
+          LINUX_AMD64_SHA=$(grep "geol_Linux_x86_64.tar.gz" ./geol-build/checksums.txt | awk '{print $1}')
+          
+          # Clone homebrew tap
+          git clone https://oauth2:${GITHUB_TOKEN}@github.com/opt-nc/homebrew-tap.git /tmp/homebrew-tap
+          cd /tmp/homebrew-tap
+          
+          # Configure git
+          git config user.name "goreleaserbot"
+          git config user.email "goreleaserbot@opt.nc"
+          
+          # Get version from tag
+          VERSION="${{ needs.release.outputs.new_release_version }}"
+          
+          # Create/update cask
+          cat > Casks/geol.rb <<EOF
+          cask "geol" do
+            name "geol"
+            desc "geol, the cli to efficiently display product end-of-life dates in your terminal using the endoflife.date API."
+            homepage "https://github.com/opt-nc/geol"
+            version "${VERSION}"
+          
+            livecheck do
+              skip "Auto-generated on release."
+            end
+          
+            binary "geol"
+            manpage "manpages/geol.1.gz"
+            bash_completion "completions/geol.bash"
+            zsh_completion "completions/geol.zsh"
+            fish_completion "completions/geol.fish"
+          
+            on_macos do
+              on_intel do
+                url "https://github.com/opt-nc/geol/releases/download/v#{version}/geol_Darwin_x86_64.tar.gz",
+                  using: :homebrew_curl
+                sha256 "${DARWIN_AMD64_SHA}"
+              end
+              on_arm do
+                url "https://github.com/opt-nc/geol/releases/download/v#{version}/geol_Darwin_arm64.tar.gz",
+                  using: :homebrew_curl
+                sha256 "${DARWIN_ARM64_SHA}"
+              end
+            end
+          
+            on_linux do
+              on_intel do
+                url "https://github.com/opt-nc/geol/releases/download/v#{version}/geol_Linux_x86_64.tar.gz",
+                  using: :homebrew_curl
+                sha256 "${LINUX_AMD64_SHA}"
+              end
+              on_arm do
+                url "https://github.com/opt-nc/geol/releases/download/v#{version}/geol_Linux_arm64.tar.gz",
+                  using: :homebrew_curl
+                sha256 "${LINUX_ARM64_SHA}"
+              end
+            end
+          
+            # No zap stanza required
+          end
+          EOF
+          
+          # Commit and push
+          git add Casks/geol.rb
+          git commit -m "Brew formula update for geol version v${VERSION}"
+          git push origin main
+      
 
 
   post-release:

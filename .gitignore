@@ -44,3 +44,4 @@ manpages/
 /assets/logos/package-lock.json
 /assets/cheatsheet/.task/
 *.duckdb
+geol-build/
