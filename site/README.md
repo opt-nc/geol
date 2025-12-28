@@ -1,3 +1,21 @@
+# How to build and run
+
+```sh
+npm install --save docusaurus
+```
+
+then:
+
+```sh
+npm run build
+```
+
+finally:
+
+```sh
+npm run serve
+```
+
 # Website
 
 This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
