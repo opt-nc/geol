@@ -86,7 +86,7 @@ const config = {
         title: 'geol',
         logo: {
           alt: 'geol Logo',
-          src: 'img/logo.svg',
+          src: 'img/logo-no-name-gradient.png',
         },
         items: [
           {
@@ -129,6 +129,10 @@ const config = {
               {
                 label: 'endoflife.date DEV.to Series',
                 href: 'https://dev.to/adriens/series/21232',
+              },
+              {
+                label: 'Project kanban',
+                href: 'https://github.com/orgs/opt-nc/projects/28',
               },
             ],
           },
