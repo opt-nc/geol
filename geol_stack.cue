@@ -1,12 +1,15 @@
 // CUE schema to validate the .geol.yml file
 // This schema is intended for validating the YAML file used by the stack command in Geol.
-// The fields app_name and critical are optional, all other fields are required
+// The fields app_name and app_id are optional, all other fields are required
 
 // geolVersion: the major geol version this file is compatible with
 geolVersion: string
 
 // app_name: the name of the report you want as output
 app_name?: string
+
+// app_id: an optional identifier for the application
+app_id?: string
 
 stack: [...{
     // name: the name of the product as you want

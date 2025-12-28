@@ -179,10 +179,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PUBLIC_HOMEBREW_TAP_TOKEN }}
         run: |
           # Extract checksums for Darwin and Linux archives
-          DARWIN_ARM64_SHA=$(grep "geol_Darwin_arm64.tar.gz" ./geol-build/checksums.txt | awk '{print $1}')
-          DARWIN_AMD64_SHA=$(grep "geol_Darwin_x86_64.tar.gz" ./geol-build/checksums.txt | awk '{print $1}')
-          LINUX_ARM64_SHA=$(grep "geol_Linux_arm64.tar.gz" ./geol-build/checksums.txt | awk '{print $1}')
-          LINUX_AMD64_SHA=$(grep "geol_Linux_x86_64.tar.gz" ./geol-build/checksums.txt | awk '{print $1}')
+          DARWIN_ARM64_SHA=$(grep "geol_Darwin_arm64.tar.gz$" ./geol-build/checksums.txt | awk '{print $1}')
+          DARWIN_AMD64_SHA=$(grep "geol_Darwin_x86_64.tar.gz$" ./geol-build/checksums.txt | awk '{print $1}')
+          LINUX_ARM64_SHA=$(grep "geol_Linux_arm64.tar.gz$" ./geol-build/checksums.txt | awk '{print $1}')
+          LINUX_AMD64_SHA=$(grep "geol_Linux_x86_64.tar.gz$" ./geol-build/checksums.txt | awk '{print $1}')
           
           # Clone homebrew tap
           git clone https://oauth2:${GITHUB_TOKEN}@github.com/opt-nc/homebrew-tap.git /tmp/homebrew-tap
