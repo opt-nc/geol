@@ -1,0 +1,58 @@
+{
+  "permalink": "/blog/first-hackathon",
+  "editUrl": "https://github.com/opt-nc/geol/blog/2025-10-29-hackathon.mdx",
+  "source": "@site/blog/2025-10-29-hackathon.mdx",
+  "title": "Hackathon kickoff",
+  "description": "",
+  "date": "2025-10-29T00:00:00.000Z",
+  "tags": [
+    {
+      "inline": false,
+      "label": "Hola",
+      "permalink": "/blog/tags/hola",
+      "description": "Hola tag description"
+    },
+    {
+      "inline": false,
+      "label": "Docusaurus",
+      "permalink": "/blog/tags/docusaurus",
+      "description": "Docusaurus tag description"
+    }
+  ],
+  "readingTime": 0.09,
+  "hasTruncateMarker": false,
+  "authors": [
+    {
+      "name": "Adrien SALES",
+      "title": "Product Manager | Data Engineer | Blogger",
+      "url": "https://www.linkedin.com/in/adrien-sales/",
+      "page": {
+        "permalink": "/blog/authors/adriens"
+      },
+      "socials": {
+        "x": "https://x.com/rastadidi",
+        "linkedin": "https://www.linkedin.com/in/adrien-sales/",
+        "github": "https://github.com/adriens",
+        "devto": "https://dev.to/adriens"
+      },
+      "imageURL": "https://avatars.githubusercontent.com/u/5235127?v=4",
+      "key": "adriens"
+    }
+  ],
+  "frontMatter": {
+    "slug": "first-hackathon",
+    "title": "Hackathon kickoff",
+    "authors": [
+      "adriens"
+    ],
+    "tags": [
+      "hola",
+      "docusaurus"
+    ]
+  },
+  "unlisted": false,
+  "nextItem": {
+    "title": "Welcome",
+    "permalink": "/blog/welcome"
+  }
+}

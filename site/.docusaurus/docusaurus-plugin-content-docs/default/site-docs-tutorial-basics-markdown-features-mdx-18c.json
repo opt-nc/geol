@@ -1,0 +1,27 @@
+{
+  "id": "tutorial-basics/markdown-features",
+  "title": "Markdown Features",
+  "description": "geol documentation supports standard Markdown features : it is",
+  "source": "@site/docs/tutorial-basics/markdown-features.mdx",
+  "sourceDirName": "tutorial-basics",
+  "slug": "/tutorial-basics/markdown-features",
+  "permalink": "/docs/tutorial-basics/markdown-features",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/opt-nc/geol/docs/tutorial-basics/markdown-features.mdx",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 4,
+  "frontMatter": {
+    "sidebar_position": 4
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Learn the check command",
+    "permalink": "/docs/tutorial-basics/check-command"
+  },
+  "next": {
+    "title": "Congratulations!",
+    "permalink": "/docs/tutorial-basics/congratulations"
+  }
+}

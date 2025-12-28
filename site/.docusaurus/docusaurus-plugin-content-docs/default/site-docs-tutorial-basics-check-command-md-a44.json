@@ -1,0 +1,27 @@
+{
+  "id": "tutorial-basics/check-command",
+  "title": "Learn the check command",
+  "description": "About the check command that helps your stack.",
+  "source": "@site/docs/tutorial-basics/check-command.md",
+  "sourceDirName": "tutorial-basics",
+  "slug": "/tutorial-basics/check-command",
+  "permalink": "/docs/tutorial-basics/check-command",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/opt-nc/geol/docs/tutorial-basics/check-command.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 3,
+  "frontMatter": {
+    "sidebar_position": 3
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Reporting products with...",
+    "permalink": "/docs/tutorial-basics/reporting-in-termial"
+  },
+  "next": {
+    "title": "Markdown Features",
+    "permalink": "/docs/tutorial-basics/markdown-features"
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "permalink": "/blog/welcome",
+  "editUrl": "https://github.com/opt-nc/geol/blog/2021-08-26-welcome/index.md",
+  "source": "@site/blog/2021-08-26-welcome/index.md",
+  "title": "Welcome",
+  "description": "Docusaurus blogging features are powered by the blog plugin.",
+  "date": "2021-08-26T00:00:00.000Z",
+  "tags": [
+    {
+      "inline": false,
+      "label": "Facebook",
+      "permalink": "/blog/tags/facebook",
+      "description": "Facebook tag description"
+    },
+    {
+      "inline": false,
+      "label": "Hello",
+      "permalink": "/blog/tags/hello",
+      "description": "Hello tag description"
+    },
+    {
+      "inline": false,
+      "label": "Docusaurus",
+      "permalink": "/blog/tags/docusaurus",
+      "description": "Docusaurus tag description"
+    }
+  ],
+  "readingTime": 0.56,
+  "hasTruncateMarker": true,
+  "authors": [
+    {
+      "name": "Adrien SALES",
+      "title": "Product Manager | Data Engineer | Blogger",
+      "url": "https://www.linkedin.com/in/adrien-sales/",
+      "page": {
+        "permalink": "/blog/authors/adriens"
+      },
+      "socials": {
+        "x": "https://x.com/rastadidi",
+        "linkedin": "https://www.linkedin.com/in/adrien-sales/",
+        "github": "https://github.com/adriens",
+        "devto": "https://dev.to/adriens"
+      },
+      "imageURL": "https://avatars.githubusercontent.com/u/5235127?v=4",
+      "key": "adriens"
+    }
+  ],
+  "frontMatter": {
+    "slug": "welcome",
+    "title": "Welcome",
+    "authors": [
+      "adriens"
+    ],
+    "tags": [
+      "facebook",
+      "hello",
+      "docusaurus"
+    ]
+  },
+  "unlisted": false,
+  "prevItem": {
+    "title": "Hackathon kickoff",
+    "permalink": "/blog/first-hackathon"
+  },
+  "nextItem": {
+    "title": "MDX Blog Post",
+    "permalink": "/blog/mdx-blog-post"
+  }
+}

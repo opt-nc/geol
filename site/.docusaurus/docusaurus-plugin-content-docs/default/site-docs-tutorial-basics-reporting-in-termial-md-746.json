@@ -1,0 +1,27 @@
+{
+  "id": "tutorial-basics/reporting-in-termial",
+  "title": "Reporting products with...",
+  "description": "Each product ...",
+  "source": "@site/docs/tutorial-basics/reporting-in-termial.md",
+  "sourceDirName": "tutorial-basics",
+  "slug": "/tutorial-basics/reporting-in-termial",
+  "permalink": "/docs/tutorial-basics/reporting-in-termial",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/opt-nc/geol/docs/tutorial-basics/reporting-in-termial.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "sidebar_position": 2
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Know endoflife.date keys",
+    "permalink": "/docs/tutorial-basics/deal-with-keys"
+  },
+  "next": {
+    "title": "Learn the check command",
+    "permalink": "/docs/tutorial-basics/check-command"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "tutorial-extras/dataengineering",
+  "title": "Data Engineering with geol",
+  "description": "",
+  "source": "@site/docs/tutorial-extras/dataengineering.md",
+  "sourceDirName": "tutorial-extras",
+  "slug": "/tutorial-extras/dataengineering",
+  "permalink": "/docs/tutorial-extras/dataengineering",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/opt-nc/geol/docs/tutorial-extras/dataengineering.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 2,
+  "frontMatter": {
+    "sidebar_position": 2
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "asciidoc Toolchain",
+    "permalink": "/docs/tutorial-extras/asciidoc-toolchain"
+  }
+}

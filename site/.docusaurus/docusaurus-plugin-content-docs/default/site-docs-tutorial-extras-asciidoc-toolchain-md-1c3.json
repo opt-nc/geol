@@ -1,0 +1,27 @@
+{
+  "id": "tutorial-extras/asciidoc-toolchain",
+  "title": "asciidoc Toolchain",
+  "description": "",
+  "source": "@site/docs/tutorial-extras/asciidoc-toolchain.md",
+  "sourceDirName": "tutorial-extras",
+  "slug": "/tutorial-extras/asciidoc-toolchain",
+  "permalink": "/docs/tutorial-extras/asciidoc-toolchain",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/opt-nc/geol/docs/tutorial-extras/asciidoc-toolchain.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Tutorial - Advanced",
+    "permalink": "/docs/category/tutorial---advanced"
+  },
+  "next": {
+    "title": "Data Engineering with geol",
+    "permalink": "/docs/tutorial-extras/dataengineering"
+  }
+}

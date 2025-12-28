@@ -1,0 +1,55 @@
+{
+  "permalink": "/blog/mdx-blog-post",
+  "editUrl": "https://github.com/opt-nc/geol/blog/2021-08-01-mdx-blog-post.mdx",
+  "source": "@site/blog/2021-08-01-mdx-blog-post.mdx",
+  "title": "MDX Blog Post",
+  "description": "Blog posts support Docusaurus Markdown features, such as MDX.",
+  "date": "2021-08-01T00:00:00.000Z",
+  "tags": [
+    {
+      "inline": false,
+      "label": "Docusaurus",
+      "permalink": "/blog/tags/docusaurus",
+      "description": "Docusaurus tag description"
+    }
+  ],
+  "readingTime": 0.27,
+  "hasTruncateMarker": true,
+  "authors": [
+    {
+      "name": "Adrien SALES",
+      "title": "Product Manager | Data Engineer | Blogger",
+      "url": "https://www.linkedin.com/in/adrien-sales/",
+      "page": {
+        "permalink": "/blog/authors/adriens"
+      },
+      "socials": {
+        "x": "https://x.com/rastadidi",
+        "linkedin": "https://www.linkedin.com/in/adrien-sales/",
+        "github": "https://github.com/adriens",
+        "devto": "https://dev.to/adriens"
+      },
+      "imageURL": "https://avatars.githubusercontent.com/u/5235127?v=4",
+      "key": "adriens"
+    }
+  ],
+  "frontMatter": {
+    "slug": "mdx-blog-post",
+    "title": "MDX Blog Post",
+    "authors": [
+      "adriens"
+    ],
+    "tags": [
+      "docusaurus"
+    ]
+  },
+  "unlisted": false,
+  "prevItem": {
+    "title": "Welcome",
+    "permalink": "/blog/welcome"
+  },
+  "nextItem": {
+    "title": "Long Blog Post",
+    "permalink": "/blog/long-blog-post"
+  }
+}
