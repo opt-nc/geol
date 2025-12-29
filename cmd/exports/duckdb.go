@@ -482,7 +482,8 @@ func createProductsTable(db *sql.DB, allData *allProductsData) error {
 			id TEXT PRIMARY KEY,
 			label TEXT,
 			category_id TEXT,
-			uri TEXT
+			uri TEXT,
+			FOREIGN KEY (category_id) REFERENCES categories(id)
 		)`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'products' table")
@@ -778,6 +779,55 @@ func createCategoriesTable(db *sql.DB, allCategories map[string]utilities.Catego
 	return nil
 }
 
+func createProductTagsTable(db *sql.DB, allData *allProductsData) error {
+	// Create 'product_tags' table if not exists
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS product_tags (
+			product_id TEXT,
+			tag_id TEXT,
+			FOREIGN KEY (product_id) REFERENCES products(id),
+			FOREIGN KEY (tag_id) REFERENCES tags(id)
+		)`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating 'product_tags' table")
+		return err
+	}
+
+	// Add comment to 'product_tags' table
+	_, err = db.Exec(`COMMENT ON TABLE product_tags IS 'Junction table linking products to their associated tags for many-to-many relationships'`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comment to 'product_tags' table")
+		return err
+	}
+
+	// Add comments to 'product_tags' table columns
+	_, err = db.Exec(`
+		COMMENT ON COLUMN product_tags.product_id IS 'Product id referencing the products table';
+		COMMENT ON COLUMN product_tags.tag_id IS 'Tag id referencing the tags table';
+	`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comments to 'product_tags' columns")
+		return err
+	}
+
+	// Insert product-tag relationships
+	for _, prodData := range allData.Products {
+		for _, tag := range prodData.Tags {
+			_, err = db.Exec(`INSERT INTO product_tags (product_id, tag_id) 
+					VALUES (?, ?)`,
+				prodData.Name,
+				tag.Name,
+			)
+			if err != nil {
+				log.Error().Err(err).Msgf("Error inserting product-tag relationship for product %s and tag %s", prodData.Name, tag.Name)
+			}
+		}
+	}
+
+	log.Info().Msg("Created and populated \"product_tags\" table")
+
+	return nil
+}
+
 // duckdbCmd represents the duckdb command
 var duckdbCmd = &cobra.Command{
 	Use:   "duckdb",
@@ -830,6 +880,15 @@ If the file already exists, use the --force flag to overwrite it.`,
 			log.Fatal().Err(err).Msg("Error fetching categories from API")
 		}
 
+		// Create 'tags' table and insert tags
+		if err := createTagsTable(db, allTags); err != nil {
+			log.Fatal().Err(err).Msg("Error creating and populating 'tags' table")
+		}
+
+		// Create 'categories' table and insert categories
+		if err := createCategoriesTable(db, allCategories); err != nil {
+			log.Fatal().Err(err).Msg("Error creating and populating 'categories' table")
+		}
 		// Create 'products' table and insert product information
 		if err := createProductsTable(db, allProductsData); err != nil {
 			log.Fatal().Err(err).Msg("Error creating and populating 'products' table")
@@ -855,14 +914,9 @@ If the file already exists, use the --force flag to overwrite it.`,
 			log.Fatal().Err(err).Msg("Error creating and populating 'product_identifiers' table")
 		}
 
-		// Create 'tags' table and insert tags
-		if err := createTagsTable(db, allTags); err != nil {
-			log.Fatal().Err(err).Msg("Error creating and populating 'tags' table")
-		}
-
-		// Create 'categories' table and insert categories
-		if err := createCategoriesTable(db, allCategories); err != nil {
-			log.Fatal().Err(err).Msg("Error creating and populating 'categories' table")
+		// Create 'product_tags' junction table
+		if err := createProductTagsTable(db, allProductsData); err != nil {
+			log.Fatal().Err(err).Msg("Error creating and populating 'product_tags' table")
 		}
 
 		// Create 'about' table and insert metadata
