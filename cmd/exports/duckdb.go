@@ -124,7 +124,7 @@ func createAboutTable(db *sql.DB) error {
 }
 
 // createTempDetailsTable creates the 'details_temp' table and inserts product details
-func createTempDetailsTable(cmd *cobra.Command, db *sql.DB) error {
+func createTempDetailsTable(db *sql.DB) error {
 	// Create 'details_temp' table if not exists
 	_, err := db.Exec(`CREATE TEMP TABLE IF NOT EXISTS details_temp (
 			product_id TEXT,
@@ -135,24 +135,37 @@ func createTempDetailsTable(cmd *cobra.Command, db *sql.DB) error {
 			eol TEXT
 		)`)
 	if err != nil {
-		return fmt.Errorf("error creating 'details_temp' table: %w", err)
+		log.Error().Err(err).Msg("Error creating 'details_temp' table")
+		return err
 	}
 
-	// Get products from cache
-	productsPath, err := utilities.GetProductsPath()
+	// Get product IDs from the products table
+	rows, err := db.Query(`SELECT id FROM products`)
 	if err != nil {
-		return fmt.Errorf("error retrieving products path: %w", err)
+		log.Error().Err(err).Msg("Error querying products from database")
+		return err
+	}
+	defer rows.Close()
+
+	var productIDs []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			log.Error().Err(err).Msg("Error scanning product ID")
+			return err
+		}
+		productIDs = append(productIDs, id)
 	}
 
-	products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
-	if err != nil {
-		return fmt.Errorf("error retrieving products from cache: %w", err)
+	if err := rows.Err(); err != nil {
+		log.Error().Err(err).Msg("Error iterating over product rows")
+		return err
 	}
 
 	// Initialize the bubbletea model with progress bar
 	m := model{
 		progress:          progress.New(progress.WithWidth(maxWidth)),
-		totalProducts:     len(products.Products),
+		totalProducts:     len(productIDs),
 		processed:         0,
 		done:              false,
 		progressMessage:   "Fetching product details from API...",
@@ -164,7 +177,7 @@ func createTempDetailsTable(cmd *cobra.Command, db *sql.DB) error {
 
 	// Process products in a goroutine
 	go func() {
-		for productName := range products.Products {
+		for _, productName := range productIDs {
 			prodData, err := product.FetchProductData(productName)
 			if err != nil {
 				log.Warn().Err(err).Msgf("Error fetching product data for %s, skipping", productName)
@@ -193,7 +206,8 @@ func createTempDetailsTable(cmd *cobra.Command, db *sql.DB) error {
 
 	// Run the program and wait for completion
 	if _, err := p.Run(); err != nil {
-		return fmt.Errorf("error running progress display: %w", err)
+		log.Error().Err(err).Msg("Error running progress display")
+		return err
 	}
 
 	return nil
@@ -208,14 +222,16 @@ func createDetailsTable(db *sql.DB) error {
 			release_date DATE,
 			latest TEXT,
 			latest_release_date DATE,
-			eol DATE
+			eol_date DATE,
+			FOREIGN KEY (product_id) REFERENCES products(id)
 		)`)
 	if err != nil {
-		return fmt.Errorf("error creating 'details' table: %w", err)
+		log.Error().Err(err).Msg("Error creating 'details' table")
+		return err
 	}
 
 	// Insert data from details_temp, converting empty strings to NULL and casting to DATE
-	_, err = db.Exec(`INSERT INTO details (product_id, cycle, release_date, latest, latest_release_date, eol)
+	_, err = db.Exec(`INSERT INTO details (product_id, cycle, release_date, latest, latest_release_date, eol_date)
 		SELECT 
 			product_id,
 			cycle,
@@ -225,7 +241,8 @@ func createDetailsTable(db *sql.DB) error {
 			CASE WHEN eol = '' THEN NULL ELSE TRY_CAST(eol AS DATE) END
 		FROM details_temp`)
 	if err != nil {
-		return fmt.Errorf("error inserting data into 'details' table: %w", err)
+		log.Error().Err(err).Msg("Error inserting data into 'details' table")
+		return err
 	}
 	log.Info().Msg("Created and populated \"details\" table")
 
@@ -386,7 +403,7 @@ If the file already exists, use the --force flag to overwrite it.`,
 		}
 
 		// Create 'details_temp' table and insert product details
-		if err := createTempDetailsTable(cmd, db); err != nil {
+		if err := createTempDetailsTable(db); err != nil {
 			log.Fatal().Err(err).Msg("Error creating and populating 'details_temp' table")
 		}
 
