@@ -39,6 +39,26 @@ type model struct {
 	completionMessage string
 }
 
+type identifiers struct {
+	Type string `json:"type"`
+	ID   string `json:"id"`
+}
+
+type productData struct {
+	Name        string                `json:"name"`
+	Aliases     []string              `json:"aliases"`
+	Label       string                `json:"label"`
+	Category    string                `json:"category"`
+	Tags        []utilities.Tag       `json:"tags"`
+	Identifiers []identifiers         `json:"identifiers"`
+	URI         string                `json:"links.html"`
+	Releases    []product.ReleaseInfo `json:"releases"`
+}
+
+type allProductsData struct {
+	Products map[string]*productData
+}
+
 func (m model) Init() tea.Cmd {
 	return nil
 }
@@ -90,6 +110,121 @@ func (m model) View() tea.View {
 	}
 
 	return tea.NewView(content)
+}
+
+// fetchAllProductData retrieves all product information and details from the API in a single pass
+func fetchAllProductData(cmd *cobra.Command) (*allProductsData, error) {
+	// Get products from cache
+	productsPath, err := utilities.GetProductsPath()
+	if err != nil {
+		log.Error().Err(err).Msg("Error retrieving products path")
+		return nil, err
+	}
+
+	products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
+	if err != nil {
+		log.Error().Err(err).Msg("Error retrieving products from cache")
+		return nil, err
+	}
+
+	allData := &allProductsData{
+		Products: make(map[string]*productData),
+	}
+
+	// Initialize the bubbletea model with progress bar
+	m := model{
+		progress:          progress.New(progress.WithWidth(maxWidth)),
+		totalProducts:     len(products.Products),
+		processed:         0,
+		done:              false,
+		progressMessage:   "Fetching all product data from API...",
+		completionMessage: "All product data fetched!",
+	}
+
+	// Start the TUI in a goroutine
+	p := tea.NewProgram(m)
+
+	// Process products in a goroutine
+	go func() {
+		for productName := range products.Products {
+			// Fetch basic product info
+			url := utilities.ApiUrl + "products/" + productName
+			resp, err := http.Get(url)
+			if err != nil {
+				log.Warn().Err(err).Msgf("Error requesting %s, skipping", productName)
+				p.Send(productProcessedMsg(productName))
+				continue
+			}
+
+			body, err := io.ReadAll(resp.Body)
+			if cerr := resp.Body.Close(); cerr != nil {
+				log.Warn().Err(cerr).Msgf("Error closing HTTP body for %s", productName)
+			}
+			if err != nil {
+				log.Warn().Err(err).Msgf("Error reading response for %s, skipping", productName)
+				p.Send(productProcessedMsg(productName))
+				continue
+			}
+
+			if resp.StatusCode != 200 {
+				log.Warn().Msgf("Product %s not found on the API (status %d), skipping", productName, resp.StatusCode)
+				p.Send(productProcessedMsg(productName))
+				continue
+			}
+
+			// Parse JSON response
+			var apiResp struct {
+				Result struct {
+					Name        string        `json:"name"`
+					Aliases     []string      `json:"aliases"`
+					Label       string        `json:"label"`
+					Category    string        `json:"category"`
+					Tags        []string      `json:"tags"`
+					Identifiers []identifiers `json:"identifiers"`
+					Links       struct {
+						Html string `json:"html"`
+					} `json:"links"`
+				} `json:"result"`
+			}
+
+			if err := json.Unmarshal(body, &apiResp); err != nil {
+				log.Warn().Err(err).Msgf("Error decoding JSON for %s, skipping", productName)
+				p.Send(productProcessedMsg(productName))
+				continue
+			}
+
+			// Fetch product details (releases)
+			prodData, err := product.FetchProductData(productName)
+			if err != nil {
+				log.Warn().Err(err).Msgf("Error fetching product data for %s, skipping", productName)
+				p.Send(productProcessedMsg(productName))
+				continue
+			}
+
+			// Store all data
+			allData.Products[productName] = &productData{
+				Name:        apiResp.Result.Name,
+				Aliases:     apiResp.Result.Aliases,
+				Label:       apiResp.Result.Label,
+				Category:    apiResp.Result.Category,
+				Tags:        utilities.ConvertTagStringsToTags(apiResp.Result.Tags),
+				Identifiers: apiResp.Result.Identifiers,
+				URI:         apiResp.Result.Links.Html,
+				Releases:    prodData.Releases,
+			}
+
+			p.Send(productProcessedMsg(productName))
+		}
+	}()
+
+	// Run the program and wait for completion
+	if _, err := p.Run(); err != nil {
+		log.Error().Err(err).Msg("Error running progress display")
+		return nil, err
+	}
+
+	log.Info().Msgf("Fetched data for %d products", len(allData.Products))
+	return allData, nil
 }
 
 // createAboutTable creates the 'about' table and inserts metadata
@@ -144,7 +279,7 @@ func createAboutTable(db *sql.DB) error {
 }
 
 // createTempDetailsTable creates the 'details_temp' table and inserts product details
-func createTempDetailsTable(db *sql.DB) error {
+func createTempDetailsTable(db *sql.DB, allData *allProductsData) error {
 	// Create 'details_temp' table if not exists
 	_, err := db.Exec(`CREATE TEMP TABLE IF NOT EXISTS details_temp (
 			product_id TEXT,
@@ -166,77 +301,26 @@ func createTempDetailsTable(db *sql.DB) error {
 		return err
 	}
 
-	// Get product IDs from the products table
-	rows, err := db.Query(`SELECT id FROM products`)
-	if err != nil {
-		log.Error().Err(err).Msg("Error querying products from database")
-		return err
-	}
-	defer rows.Close()
-
-	var productIDs []string
-	for rows.Next() {
-		var id string
-		if err := rows.Scan(&id); err != nil {
-			log.Error().Err(err).Msg("Error scanning product ID")
-			return err
-		}
-		productIDs = append(productIDs, id)
-	}
-
-	if err := rows.Err(); err != nil {
-		log.Error().Err(err).Msg("Error iterating over product rows")
-		return err
-	}
-
-	// Initialize the bubbletea model with progress bar
-	m := model{
-		progress:          progress.New(progress.WithWidth(maxWidth)),
-		totalProducts:     len(productIDs),
-		processed:         0,
-		done:              false,
-		progressMessage:   "Fetching product details from API...",
-		completionMessage: "All product details fetched!",
-	}
-
-	// Start the TUI in a goroutine
-	p := tea.NewProgram(m)
-
-	// Process products in a goroutine
-	go func() {
-		for _, productName := range productIDs {
-			prodData, err := product.FetchProductData(productName)
+	// Insert product details from pre-fetched data
+	for productName, prodData := range allData.Products {
+		// Insert each release into the details_temp table
+		for _, release := range prodData.Releases {
+			_, err = db.Exec(`INSERT INTO details_temp (product_id, cycle, release, latest, latest_release, eol) 
+					VALUES (?, ?, ?, ?, ?, ?)`,
+				productName,
+				release.Name,
+				release.ReleaseDate,
+				release.LatestName,
+				release.LatestDate,
+				release.EolFrom,
+			)
 			if err != nil {
-				log.Warn().Err(err).Msgf("Error fetching product data for %s, skipping", productName)
-				p.Send(productProcessedMsg(productName))
-				continue
+				log.Error().Err(err).Msgf("Error inserting release data for %s", productName)
 			}
-
-			// Insert each release into the details_temp table
-			for _, release := range prodData.Releases {
-				_, err = db.Exec(`INSERT INTO details_temp (product_id, cycle, release, latest, latest_release, eol) 
-						VALUES (?, ?, ?, ?, ?, ?)`,
-					prodData.Name,
-					release.Name,
-					release.ReleaseDate,
-					release.LatestName,
-					release.LatestDate,
-					release.EolFrom,
-				)
-				if err != nil {
-					log.Error().Err(err).Msgf("Error inserting release data for %s", productName)
-				}
-			}
-			p.Send(productProcessedMsg(productName))
 		}
-	}()
-
-	// Run the program and wait for completion
-	if _, err := p.Run(); err != nil {
-		log.Error().Err(err).Msg("Error running progress display")
-		return err
 	}
 
+	//log.Info().Msg("Populated \"details_temp\" table")
 	return nil
 }
 
@@ -299,7 +383,7 @@ func createDetailsTable(db *sql.DB) error {
 }
 
 // createProductsTable creates the 'products' table and inserts product information
-func createProductsTable(cmd *cobra.Command, db *sql.DB) error {
+func createProductsTable(db *sql.DB, allData *allProductsData) error {
 	// Create 'products' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS products (
 			id TEXT PRIMARY KEY,
@@ -331,97 +415,18 @@ func createProductsTable(cmd *cobra.Command, db *sql.DB) error {
 		return err
 	}
 
-	// Get products from cache
-	productsPath, err := utilities.GetProductsPath()
-	if err != nil {
-		log.Error().Err(err).Msg("Error retrieving products path")
-		return err
-	}
-
-	products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
-	if err != nil {
-		log.Error().Err(err).Msg("Error retrieving products from cache")
-		return err
-	}
-
-	// Initialize the bubbletea model with progress bar
-	m := model{
-		progress:          progress.New(progress.WithWidth(maxWidth)),
-		totalProducts:     len(products.Products),
-		processed:         0,
-		done:              false,
-		progressMessage:   "Fetching product information from API...",
-		completionMessage: "All product information fetched!",
-	}
-
-	// Start the TUI in a goroutine
-	p := tea.NewProgram(m)
-
-	// Process products in a goroutine
-	go func() {
-		for productName := range products.Products {
-			url := utilities.ApiUrl + "products/" + productName
-			resp, err := http.Get(url)
-			if err != nil {
-				log.Warn().Err(err).Msgf("Error requesting %s, skipping", productName)
-				p.Send(productProcessedMsg(productName))
-				continue
-			}
-
-			body, err := io.ReadAll(resp.Body)
-			if cerr := resp.Body.Close(); cerr != nil {
-				log.Warn().Err(cerr).Msgf("Error closing HTTP body for %s", productName)
-			}
-			if err != nil {
-				log.Warn().Err(err).Msgf("Error reading response for %s, skipping", productName)
-				p.Send(productProcessedMsg(productName))
-				continue
-			}
-
-			if resp.StatusCode != 200 {
-				log.Warn().Msgf("Product %s not found on the API (status %d), skipping", productName, resp.StatusCode)
-				p.Send(productProcessedMsg(productName))
-				continue
-			}
-
-			// Parse JSON response
-			var apiResp struct {
-				Result struct {
-					Name     string `json:"name"`
-					Label    string `json:"label"`
-					Category string `json:"category"`
-					Links    struct {
-						Html string `json:"html"`
-					} `json:"links"`
-				} `json:"result"`
-			}
-
-			if err := json.Unmarshal(body, &apiResp); err != nil {
-				log.Warn().Err(err).Msgf("Error decoding JSON for %s, skipping", productName)
-				p.Send(productProcessedMsg(productName))
-				continue
-			}
-
-			// Insert product data
-			_, err = db.Exec(`INSERT INTO products (id, label, category_id, uri) 
+	// Insert product data from pre-fetched data
+	for _, prodData := range allData.Products {
+		_, err = db.Exec(`INSERT INTO products (id, label, category_id, uri) 
 				VALUES (?, ?, ?, ?)`,
-				apiResp.Result.Name,
-				apiResp.Result.Label,
-				apiResp.Result.Category,
-				apiResp.Result.Links.Html,
-			)
-			if err != nil {
-				log.Error().Err(err).Msgf("Error inserting product data for %s", productName)
-			}
-
-			p.Send(productProcessedMsg(productName))
+			prodData.Name,
+			prodData.Label,
+			prodData.Category,
+			prodData.URI,
+		)
+		if err != nil {
+			log.Error().Err(err).Msgf("Error inserting product data for %s", prodData.Name)
 		}
-	}()
-
-	// Run the program and wait for completion
-	if _, err := p.Run(); err != nil {
-		log.Error().Err(err).Msg("Error running progress display")
-		return err
 	}
 
 	log.Info().Msg("Created and populated \"products\" table")
@@ -465,13 +470,19 @@ If the file already exists, use the --force flag to overwrite it.`,
 			}
 		}()
 
+		// Fetch all product data from API in a single pass
+		allData, err := fetchAllProductData(cmd)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Error fetching product data from API")
+		}
+
 		// Create 'products' table and insert product information
-		if err := createProductsTable(cmd, db); err != nil {
+		if err := createProductsTable(db, allData); err != nil {
 			log.Fatal().Err(err).Msg("Error creating and populating 'products' table")
 		}
 
 		// Create 'details_temp' table and insert product details
-		if err := createTempDetailsTable(db); err != nil {
+		if err := createTempDetailsTable(db, allData); err != nil {
 			log.Fatal().Err(err).Msg("Error creating and populating 'details_temp' table")
 		}
 
@@ -479,6 +490,10 @@ If the file already exists, use the --force flag to overwrite it.`,
 		if err := createDetailsTable(db); err != nil {
 			log.Fatal().Err(err).Msg("Error creating and populating 'details' table")
 		}
+
+		// Create 'aliases' table and insert product aliases
+
+		// Create 'product_identifiers' table and insert product identifiers
 
 		// Create 'about' table and insert metadata
 		if err := createAboutTable(db); err != nil {
