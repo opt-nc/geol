@@ -2,7 +2,10 @@ package exports
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -28,10 +31,12 @@ var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
 type productProcessedMsg string
 
 type model struct {
-	progress      progress.Model
-	totalProducts int
-	processed     int
-	done          bool
+	progress          progress.Model
+	totalProducts     int
+	processed         int
+	done              bool
+	progressMessage   string
+	completionMessage string
 }
 
 func (m model) Init() tea.Cmd {
@@ -78,11 +83,10 @@ func (m model) View() tea.View {
 	count := fmt.Sprintf(" %d/%d", m.processed, m.totalProducts)
 	content := "\n" +
 		pad + m.progress.View() + count + "\n\n"
-
 	if m.done {
-		content += pad + lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Render("✓") + " All products processed!\n"
+		content += pad + lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Render("✓") + " " + m.completionMessage + "\n"
 	} else {
-		content += pad + helpStyle("Inserting product details...")
+		content += pad + helpStyle(m.progressMessage)
 	}
 
 	return tea.NewView(content)
@@ -147,10 +151,12 @@ func createTempDetailsTable(cmd *cobra.Command, db *sql.DB) error {
 
 	// Initialize the bubbletea model with progress bar
 	m := model{
-		progress:      progress.New(progress.WithWidth(maxWidth)),
-		totalProducts: len(products.Products),
-		processed:     0,
-		done:          false,
+		progress:          progress.New(progress.WithWidth(maxWidth)),
+		totalProducts:     len(products.Products),
+		processed:         0,
+		done:              false,
+		progressMessage:   "Fetching product details from API...",
+		completionMessage: "All product details fetched!",
 	}
 
 	// Start the TUI in a goroutine
@@ -226,6 +232,118 @@ func createDetailsTable(db *sql.DB) error {
 	return nil
 }
 
+// createProductsTable creates the 'products' table and inserts product information
+func createProductsTable(cmd *cobra.Command, db *sql.DB) error {
+	// Create 'products' table if not exists
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS products (
+			id TEXT PRIMARY KEY,
+			label TEXT,
+			category_id TEXT,
+			uri TEXT
+		)`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating 'products' table")
+		return err
+	}
+
+	// Get products from cache
+	productsPath, err := utilities.GetProductsPath()
+	if err != nil {
+		log.Error().Err(err).Msg("Error retrieving products path")
+		return err
+	}
+
+	products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
+	if err != nil {
+		log.Error().Err(err).Msg("Error retrieving products from cache")
+		return err
+	}
+
+	// Initialize the bubbletea model with progress bar
+	m := model{
+		progress:          progress.New(progress.WithWidth(maxWidth)),
+		totalProducts:     len(products.Products),
+		processed:         0,
+		done:              false,
+		progressMessage:   "Fetching product information from API...",
+		completionMessage: "All product information fetched!",
+	}
+
+	// Start the TUI in a goroutine
+	p := tea.NewProgram(m)
+
+	// Process products in a goroutine
+	go func() {
+		for productName := range products.Products {
+			url := utilities.ApiUrl + "products/" + productName
+			resp, err := http.Get(url)
+			if err != nil {
+				log.Warn().Err(err).Msgf("Error requesting %s, skipping", productName)
+				p.Send(productProcessedMsg(productName))
+				continue
+			}
+
+			body, err := io.ReadAll(resp.Body)
+			if cerr := resp.Body.Close(); cerr != nil {
+				log.Warn().Err(cerr).Msgf("Error closing HTTP body for %s", productName)
+			}
+			if err != nil {
+				log.Warn().Err(err).Msgf("Error reading response for %s, skipping", productName)
+				p.Send(productProcessedMsg(productName))
+				continue
+			}
+
+			if resp.StatusCode != 200 {
+				log.Warn().Msgf("Product %s not found on the API (status %d), skipping", productName, resp.StatusCode)
+				p.Send(productProcessedMsg(productName))
+				continue
+			}
+
+			// Parse JSON response
+			var apiResp struct {
+				Result struct {
+					Name     string `json:"name"`
+					Label    string `json:"label"`
+					Category string `json:"category"`
+					Links    struct {
+						Html string `json:"html"`
+					} `json:"links"`
+				} `json:"result"`
+			}
+
+			if err := json.Unmarshal(body, &apiResp); err != nil {
+				log.Warn().Err(err).Msgf("Error decoding JSON for %s, skipping", productName)
+				p.Send(productProcessedMsg(productName))
+				continue
+			}
+
+			// Insert product data
+			_, err = db.Exec(`INSERT INTO products (id, label, category_id, uri) 
+				VALUES (?, ?, ?, ?)`,
+				apiResp.Result.Name,
+				apiResp.Result.Label,
+				apiResp.Result.Category,
+				apiResp.Result.Links.Html,
+			)
+			if err != nil {
+				log.Error().Err(err).Msgf("Error inserting product data for %s", productName)
+			}
+
+			p.Send(productProcessedMsg(productName))
+		}
+	}()
+
+	// Run the program and wait for completion
+	if _, err := p.Run(); err != nil {
+		log.Error().Err(err).Msg("Error running progress display")
+		return err
+	}
+
+	log.Info().Msg("Created and populated \"products\" table")
+
+	return nil
+}
+
 // duckdbCmd represents the duckdb command
 var duckdbCmd = &cobra.Command{
 	Use:   "duckdb",
@@ -261,6 +379,11 @@ If the file already exists, use the --force flag to overwrite it.`,
 				log.Fatal().Err(err).Msg("Error closing DuckDB database")
 			}
 		}()
+
+		// Create 'products' table and insert product information
+		if err := createProductsTable(cmd, db); err != nil {
+			log.Fatal().Err(err).Msg("Error creating and populating 'products' table")
+		}
 
 		// Create 'details_temp' table and insert product details
 		if err := createTempDetailsTable(cmd, db); err != nil {
