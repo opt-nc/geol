@@ -1,0 +1,62 @@
+{
+  "permalink": "/blog/first-hackathon",
+  "editUrl": "https://github.com/opt-nc/geol/blog/2025-01-17-hackathon.mdx",
+  "source": "@site/blog/2025-01-17-hackathon.mdx",
+  "title": "Geol Go inception during Hackathon",
+  "description": "During ⏳GitHub Copilot 1-Day Build Challenge : eol, a tiny Go client to manage eols",
+  "date": "2025-01-17T00:00:00.000Z",
+  "tags": [
+    {
+      "inline": false,
+      "label": "Hola",
+      "permalink": "/blog/tags/hola",
+      "description": "Hola tag description"
+    },
+    {
+      "inline": false,
+      "label": "Docusaurus",
+      "permalink": "/blog/tags/docusaurus",
+      "description": "Docusaurus tag description"
+    }
+  ],
+  "readingTime": 0.44,
+  "hasTruncateMarker": true,
+  "authors": [
+    {
+      "name": "Adrien SALES",
+      "title": "Product Manager | Data Engineer | Blogger",
+      "url": "https://www.linkedin.com/in/adrien-sales/",
+      "page": {
+        "permalink": "/blog/authors/adriens"
+      },
+      "socials": {
+        "x": "https://x.com/rastadidi",
+        "linkedin": "https://www.linkedin.com/in/adrien-sales/",
+        "github": "https://github.com/adriens",
+        "devto": "https://dev.to/adriens"
+      },
+      "imageURL": "https://avatars.githubusercontent.com/u/5235127?v=4",
+      "key": "adriens"
+    }
+  ],
+  "frontMatter": {
+    "slug": "first-hackathon",
+    "title": "Geol Go inception during Hackathon",
+    "authors": [
+      "adriens"
+    ],
+    "tags": [
+      "hola",
+      "docusaurus"
+    ]
+  },
+  "unlisted": false,
+  "prevItem": {
+    "title": "hacktoberfest geol kickoff",
+    "permalink": "/blog/dev-challenge-hacktoberfest"
+  },
+  "nextItem": {
+    "title": "Manage EoLs like a boss with endoflife.date",
+    "permalink": "/blog/end-of-life-date-first-article"
+  }
+}

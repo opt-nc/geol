@@ -1,0 +1,62 @@
+{
+  "permalink": "/blog/end-of-life-date-first-article",
+  "editUrl": "https://github.com/opt-nc/geol/blog/2022-12-14.mdx",
+  "source": "@site/blog/2022-12-14.mdx",
+  "title": "Manage EoLs like a boss with endoflife.date",
+  "description": "⌛ Manage EoLs like a boss with endoflife.date 🛑,",
+  "date": "2022-12-14T00:00:00.000Z",
+  "tags": [
+    {
+      "inline": false,
+      "label": "Hola",
+      "permalink": "/blog/tags/hola",
+      "description": "Hola tag description"
+    },
+    {
+      "inline": false,
+      "label": "Docusaurus",
+      "permalink": "/blog/tags/docusaurus",
+      "description": "Docusaurus tag description"
+    }
+  ],
+  "readingTime": 0.37,
+  "hasTruncateMarker": false,
+  "authors": [
+    {
+      "name": "Adrien SALES",
+      "title": "Product Manager | Data Engineer | Blogger",
+      "url": "https://www.linkedin.com/in/adrien-sales/",
+      "page": {
+        "permalink": "/blog/authors/adriens"
+      },
+      "socials": {
+        "x": "https://x.com/rastadidi",
+        "linkedin": "https://www.linkedin.com/in/adrien-sales/",
+        "github": "https://github.com/adriens",
+        "devto": "https://dev.to/adriens"
+      },
+      "imageURL": "https://avatars.githubusercontent.com/u/5235127?v=4",
+      "key": "adriens"
+    }
+  ],
+  "frontMatter": {
+    "slug": "end-of-life-date-first-article",
+    "title": "Manage EoLs like a boss with endoflife.date",
+    "authors": [
+      "adriens"
+    ],
+    "tags": [
+      "hola",
+      "docusaurus"
+    ]
+  },
+  "unlisted": false,
+  "prevItem": {
+    "title": "Geol Go inception during Hackathon",
+    "permalink": "/blog/first-hackathon"
+  },
+  "nextItem": {
+    "title": "Welcome",
+    "permalink": "/blog/welcome"
+  }
+}

@@ -4,7 +4,7 @@ import ComponentCreator from '@docusaurus/ComponentCreator';
 export default [
   {
     path: '/blog',
-    component: ComponentCreator('/blog', 'afd'),
+    component: ComponentCreator('/blog', '303'),
     exact: true
   },
   {
@@ -19,22 +19,22 @@ export default [
   },
   {
     path: '/blog/authors/adriens',
-    component: ComponentCreator('/blog/authors/adriens', 'f01'),
+    component: ComponentCreator('/blog/authors/adriens', '9ab'),
     exact: true
   },
   {
-    path: '/blog/first-blog-post',
-    component: ComponentCreator('/blog/first-blog-post', '89a'),
+    path: '/blog/dev-challenge-hacktoberfest',
+    component: ComponentCreator('/blog/dev-challenge-hacktoberfest', 'd53'),
+    exact: true
+  },
+  {
+    path: '/blog/end-of-life-date-first-article',
+    component: ComponentCreator('/blog/end-of-life-date-first-article', '4b8'),
     exact: true
   },
   {
     path: '/blog/first-hackathon',
-    component: ComponentCreator('/blog/first-hackathon', 'd8b'),
-    exact: true
-  },
-  {
-    path: '/blog/long-blog-post',
-    component: ComponentCreator('/blog/long-blog-post', '9ad'),
+    component: ComponentCreator('/blog/first-hackathon', '031'),
     exact: true
   },
   {
@@ -49,7 +49,7 @@ export default [
   },
   {
     path: '/blog/tags/docusaurus',
-    component: ComponentCreator('/blog/tags/docusaurus', '168'),
+    component: ComponentCreator('/blog/tags/docusaurus', 'b6f'),
     exact: true
   },
   {
@@ -59,12 +59,12 @@ export default [
   },
   {
     path: '/blog/tags/hello',
-    component: ComponentCreator('/blog/tags/hello', '299'),
+    component: ComponentCreator('/blog/tags/hello', '4ad'),
     exact: true
   },
   {
     path: '/blog/tags/hola',
-    component: ComponentCreator('/blog/tags/hola', '64c'),
+    component: ComponentCreator('/blog/tags/hola', '439'),
     exact: true
   },
   {

@@ -1,5 +1,5 @@
 {
-  "/blog-afd": {
+  "/blog-303": {
     "__comp": "a6aa9e1f",
     "__context": {
       "plugin": "36994c47"
@@ -10,16 +10,16 @@
         "content": "448ef00e"
       },
       {
+        "content": "0c8d83fd"
+      },
+      {
+        "content": "1f66b349"
+      },
+      {
         "content": "7661071f"
       },
       {
         "content": "f4f34a3a"
-      },
-      {
-        "content": "8717b14a"
-      },
-      {
-        "content": "925b3f96"
       }
     ],
     "__props": "c15d9823"
@@ -42,7 +42,7 @@
     "sidebar": "814f3328",
     "__props": "ef8b811a"
   },
-  "/blog/authors/adriens-f01": {
+  "/blog/authors/adriens-9ab": {
     "__comp": "33fc5bb8",
     "__context": {
       "data": {
@@ -55,33 +55,22 @@
         "content": "448ef00e"
       },
       {
+        "content": "0c8d83fd"
+      },
+      {
+        "content": "1f66b349"
+      },
+      {
         "content": "7661071f"
       },
       {
         "content": "f4f34a3a"
-      },
-      {
-        "content": "8717b14a"
-      },
-      {
-        "content": "925b3f96"
       }
     ],
     "sidebar": "814f3328",
     "__props": "a38442bb"
   },
-  "/blog/first-blog-post-89a": {
-    "__comp": "ccc49370",
-    "__context": {
-      "data": {
-        "blogMetadata": "acecf23e"
-      },
-      "plugin": "36994c47"
-    },
-    "sidebar": "814f3328",
-    "content": "e273c56f"
-  },
-  "/blog/first-hackathon-d8b": {
+  "/blog/dev-challenge-hacktoberfest-d53": {
     "__comp": "ccc49370",
     "__context": {
       "data": {
@@ -92,7 +81,7 @@
     "sidebar": "814f3328",
     "content": "8895665b"
   },
-  "/blog/long-blog-post-9ad": {
+  "/blog/end-of-life-date-first-article-4b8": {
     "__comp": "ccc49370",
     "__context": {
       "data": {
@@ -101,7 +90,18 @@
       "plugin": "36994c47"
     },
     "sidebar": "814f3328",
-    "content": "73664a40"
+    "content": "bee00323"
+  },
+  "/blog/first-hackathon-031": {
+    "__comp": "ccc49370",
+    "__context": {
+      "data": {
+        "blogMetadata": "acecf23e"
+      },
+      "plugin": "36994c47"
+    },
+    "sidebar": "814f3328",
+    "content": "9cacb202"
   },
   "/blog/mdx-blog-post-e9f": {
     "__comp": "ccc49370",
@@ -122,7 +122,7 @@
     "sidebar": "814f3328",
     "__props": "3a2db09e"
   },
-  "/blog/tags/docusaurus-168": {
+  "/blog/tags/docusaurus-b6f": {
     "__comp": "6875c492",
     "__context": {
       "plugin": "36994c47"
@@ -133,16 +133,16 @@
         "content": "448ef00e"
       },
       {
+        "content": "0c8d83fd"
+      },
+      {
+        "content": "1f66b349"
+      },
+      {
         "content": "7661071f"
       },
       {
         "content": "f4f34a3a"
-      },
-      {
-        "content": "8717b14a"
-      },
-      {
-        "content": "925b3f96"
       }
     ],
     "__props": "3217192f"
@@ -160,7 +160,7 @@
     ],
     "__props": "e5aefb32"
   },
-  "/blog/tags/hello-299": {
+  "/blog/tags/hello-4ad": {
     "__comp": "6875c492",
     "__context": {
       "plugin": "36994c47"
@@ -169,14 +169,11 @@
     "items": [
       {
         "content": "7661071f"
-      },
-      {
-        "content": "8717b14a"
       }
     ],
     "__props": "f82cd581"
   },
-  "/blog/tags/hola-64c": {
+  "/blog/tags/hola-439": {
     "__comp": "6875c492",
     "__context": {
       "plugin": "36994c47"
@@ -187,7 +184,10 @@
         "content": "448ef00e"
       },
       {
-        "content": "925b3f96"
+        "content": "0c8d83fd"
+      },
+      {
+        "content": "1f66b349"
       }
     ],
     "__props": "5e90a9b3"

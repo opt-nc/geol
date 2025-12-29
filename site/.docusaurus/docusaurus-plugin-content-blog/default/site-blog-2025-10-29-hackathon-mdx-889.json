@@ -1,8 +1,8 @@
 {
-  "permalink": "/blog/first-hackathon",
+  "permalink": "/blog/dev-challenge-hacktoberfest",
   "editUrl": "https://github.com/opt-nc/geol/blog/2025-10-29-hackathon.mdx",
   "source": "@site/blog/2025-10-29-hackathon.mdx",
-  "title": "Hackathon kickoff",
+  "title": "hacktoberfest geol kickoff",
   "description": "",
   "date": "2025-10-29T00:00:00.000Z",
   "tags": [
@@ -40,8 +40,8 @@
     }
   ],
   "frontMatter": {
-    "slug": "first-hackathon",
-    "title": "Hackathon kickoff",
+    "slug": "dev-challenge-hacktoberfest",
+    "title": "hacktoberfest geol kickoff",
     "authors": [
       "adriens"
     ],
@@ -52,7 +52,7 @@
   },
   "unlisted": false,
   "nextItem": {
-    "title": "Welcome",
-    "permalink": "/blog/welcome"
+    "title": "Geol Go inception during Hackathon",
+    "permalink": "/blog/first-hackathon"
   }
 }

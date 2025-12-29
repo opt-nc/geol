@@ -2,10 +2,22 @@
   "title": "Recent posts",
   "items": [
     {
-      "title": "Hackathon kickoff",
-      "permalink": "/blog/first-hackathon",
+      "title": "hacktoberfest geol kickoff",
+      "permalink": "/blog/dev-challenge-hacktoberfest",
       "unlisted": false,
       "date": "2025-10-29T00:00:00.000Z"
+    },
+    {
+      "title": "Geol Go inception during Hackathon",
+      "permalink": "/blog/first-hackathon",
+      "unlisted": false,
+      "date": "2025-01-17T00:00:00.000Z"
+    },
+    {
+      "title": "Manage EoLs like a boss with endoflife.date",
+      "permalink": "/blog/end-of-life-date-first-article",
+      "unlisted": false,
+      "date": "2022-12-14T00:00:00.000Z"
     },
     {
       "title": "Welcome",
@@ -18,18 +30,6 @@
       "permalink": "/blog/mdx-blog-post",
       "unlisted": false,
       "date": "2021-08-01T00:00:00.000Z"
-    },
-    {
-      "title": "Long Blog Post",
-      "permalink": "/blog/long-blog-post",
-      "unlisted": false,
-      "date": "2019-05-29T00:00:00.000Z"
-    },
-    {
-      "title": "First Blog Post",
-      "permalink": "/blog/first-blog-post",
-      "unlisted": false,
-      "date": "2019-05-28T00:00:00.000Z"
     }
   ]
 }

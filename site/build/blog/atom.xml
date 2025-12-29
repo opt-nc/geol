@@ -8,11 +8,46 @@
     <subtitle>geol Blog</subtitle>
     <icon>https://your-docusaurus-site.example.com/img/favicon.ico</icon>
     <entry>
-        <title type="html"><![CDATA[Hackathon kickoff]]></title>
-        <id>https://your-docusaurus-site.example.com/blog/first-hackathon</id>
-        <link href="https://your-docusaurus-site.example.com/blog/first-hackathon"/>
+        <title type="html"><![CDATA[hacktoberfest geol kickoff]]></title>
+        <id>https://your-docusaurus-site.example.com/blog/dev-challenge-hacktoberfest</id>
+        <link href="https://your-docusaurus-site.example.com/blog/dev-challenge-hacktoberfest"/>
         <updated>2025-10-29T00:00:00.000Z</updated>
         <content type="html"><![CDATA[<iframe width="560" height="315" src="https://www.youtube.com/embed/ZqiXogK2fSw" title="YouTube video" frameborder="0"></iframe>]]></content>
+        <author>
+            <name>Adrien SALES</name>
+            <uri>https://www.linkedin.com/in/adrien-sales/</uri>
+        </author>
+        <category label="Hola" term="Hola"/>
+        <category label="Docusaurus" term="Docusaurus"/>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Geol Go inception during Hackathon]]></title>
+        <id>https://your-docusaurus-site.example.com/blog/first-hackathon</id>
+        <link href="https://your-docusaurus-site.example.com/blog/first-hackathon"/>
+        <updated>2025-01-17T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[During ⏳GitHub Copilot 1-Day Build Challenge : eol, a tiny Go client to manage eols]]></summary>
+        <content type="html"><![CDATA[<p>During <a href="https://dev.to/adriens/github-copilot-1-day-build-challenge-eol-a-tiny-go-client-to-manage-eols-j" target="_blank" rel="noopener noreferrer" class="">⏳GitHub Copilot 1-Day Build Challenge : eol, a tiny Go client to manage eols</a></p>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/zcXKJ1KPn28" title="YouTube video" frameborder="0"></iframe>
+<p>This was the very first time I gave a try to port eol to geol, just to see how it would work with Go,
+Goreleaser, and how it feels to use GitHub Copilot as pair programmer.</p>]]></content>
+        <author>
+            <name>Adrien SALES</name>
+            <uri>https://www.linkedin.com/in/adrien-sales/</uri>
+        </author>
+        <category label="Hola" term="Hola"/>
+        <category label="Docusaurus" term="Docusaurus"/>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Manage EoLs like a boss with endoflife.date]]></title>
+        <id>https://your-docusaurus-site.example.com/blog/end-of-life-date-first-article</id>
+        <link href="https://your-docusaurus-site.example.com/blog/end-of-life-date-first-article"/>
+        <updated>2022-12-14T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[⌛ Manage EoLs like a boss with endoflife.date 🛑,]]></summary>
+        <content type="html"><![CDATA[<p><a href="https://dev.to/adriens/manage-eols-like-a-boss-with-endoflifedate-2ikf" target="_blank" rel="noopener noreferrer" class="">⌛ Manage EoLs like a boss with endoflife.date 🛑</a>,
+first ever article that shows up what is <a href="https://endoflife.date/" target="_blank" rel="noopener noreferrer" class="">endoflife.date</a> about,
+and what <a href="https://github.com/hugovk/norwegianblue/tree/main/eol" target="_blank" rel="noopener noreferrer" class=""><code>eol</code></a> can
+do to help you manage your software end-of-life dates from the command line.</p>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/ZOoawjzVa0g" title="YouTube video" frameborder="0"></iframe>]]></content>
         <author>
             <name>Adrien SALES</name>
             <uri>https://www.linkedin.com/in/adrien-sales/</uri>
@@ -63,52 +98,6 @@
             <name>Adrien SALES</name>
             <uri>https://www.linkedin.com/in/adrien-sales/</uri>
         </author>
-        <category label="Docusaurus" term="Docusaurus"/>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[Long Blog Post]]></title>
-        <id>https://your-docusaurus-site.example.com/blog/long-blog-post</id>
-        <link href="https://your-docusaurus-site.example.com/blog/long-blog-post"/>
-        <updated>2019-05-29T00:00:00.000Z</updated>
-        <summary type="html"><![CDATA[This is the summary of a very long blog post,]]></summary>
-        <content type="html"><![CDATA[<p>This is the summary of a very long blog post,</p>
-<p>Use a <code>&lt;!--</code> <code>truncate</code> <code>--&gt;</code> comment to limit blog post size in the list view.</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>
-<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>]]></content>
-        <author>
-            <name>Adrien SALES</name>
-            <uri>https://www.linkedin.com/in/adrien-sales/</uri>
-        </author>
-        <category label="Hello" term="Hello"/>
-        <category label="Docusaurus" term="Docusaurus"/>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[First Blog Post]]></title>
-        <id>https://your-docusaurus-site.example.com/blog/first-blog-post</id>
-        <link href="https://your-docusaurus-site.example.com/blog/first-blog-post"/>
-        <updated>2019-05-28T00:00:00.000Z</updated>
-        <summary type="html"><![CDATA[Lorem ipsum dolor sit amet...]]></summary>
-        <content type="html"><![CDATA[<p>Lorem ipsum dolor sit amet...</p>
-<p>...consectetur adipiscing elit. Pellentesque elementum dignissim ultricies. Fusce rhoncus ipsum tempor eros aliquam consequat. Lorem ipsum dolor sit amet</p>]]></content>
-        <author>
-            <name>Adrien SALES</name>
-            <uri>https://www.linkedin.com/in/adrien-sales/</uri>
-        </author>
-        <category label="Hola" term="Hola"/>
         <category label="Docusaurus" term="Docusaurus"/>
     </entry>
 </feed>
