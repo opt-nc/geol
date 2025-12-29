@@ -2,7 +2,10 @@ package exports
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -28,10 +31,32 @@ var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
 type productProcessedMsg string
 
 type model struct {
-	progress      progress.Model
-	totalProducts int
-	processed     int
-	done          bool
+	progress          progress.Model
+	totalProducts     int
+	processed         int
+	done              bool
+	progressMessage   string
+	completionMessage string
+}
+
+type identifiers struct {
+	Type string `json:"type"`
+	ID   string `json:"id"`
+}
+
+type productData struct {
+	Name        string                `json:"name"`
+	Aliases     []string              `json:"aliases"`
+	Label       string                `json:"label"`
+	Category    string                `json:"category"`
+	Tags        []utilities.Tag       `json:"tags"`
+	Identifiers []identifiers         `json:"identifiers"`
+	URI         string                `json:"links.html"`
+	Releases    []product.ReleaseInfo `json:"releases"`
+}
+
+type allProductsData struct {
+	Products map[string]*productData
 }
 
 func (m model) Init() tea.Cmd {
@@ -78,14 +103,128 @@ func (m model) View() tea.View {
 	count := fmt.Sprintf(" %d/%d", m.processed, m.totalProducts)
 	content := "\n" +
 		pad + m.progress.View() + count + "\n\n"
-
 	if m.done {
-		content += pad + lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Render("✓") + " All products processed!\n"
+		content += pad + lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Render("✓") + " " + m.completionMessage + "\n"
 	} else {
-		content += pad + helpStyle("Inserting product details...")
+		content += pad + helpStyle(m.progressMessage)
 	}
 
 	return tea.NewView(content)
+}
+
+// fetchAllProductData retrieves all product information and details from the API in a single pass
+func fetchAllProductData(cmd *cobra.Command) (*allProductsData, error) {
+	// Get products from cache
+	productsPath, err := utilities.GetProductsPath()
+	if err != nil {
+		log.Error().Err(err).Msg("Error retrieving products path")
+		return nil, err
+	}
+
+	products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
+	if err != nil {
+		log.Error().Err(err).Msg("Error retrieving products from cache")
+		return nil, err
+	}
+
+	allData := &allProductsData{
+		Products: make(map[string]*productData),
+	}
+
+	// Initialize the bubbletea model with progress bar
+	m := model{
+		progress:          progress.New(progress.WithWidth(maxWidth)),
+		totalProducts:     len(products.Products),
+		processed:         0,
+		done:              false,
+		progressMessage:   "Fetching all product data from API...",
+		completionMessage: "All product data fetched!",
+	}
+
+	// Start the TUI in a goroutine
+	p := tea.NewProgram(m)
+
+	// Process products in a goroutine
+	go func() {
+		for productName := range products.Products {
+			// Fetch basic product info
+			url := utilities.ApiUrl + "products/" + productName
+			resp, err := http.Get(url)
+			if err != nil {
+				log.Warn().Err(err).Msgf("Error requesting %s, skipping", productName)
+				p.Send(productProcessedMsg(productName))
+				continue
+			}
+
+			body, err := io.ReadAll(resp.Body)
+			if cerr := resp.Body.Close(); cerr != nil {
+				log.Warn().Err(cerr).Msgf("Error closing HTTP body for %s", productName)
+			}
+			if err != nil {
+				log.Warn().Err(err).Msgf("Error reading response for %s, skipping", productName)
+				p.Send(productProcessedMsg(productName))
+				continue
+			}
+
+			if resp.StatusCode != 200 {
+				log.Warn().Msgf("Product %s not found on the API (status %d), skipping", productName, resp.StatusCode)
+				p.Send(productProcessedMsg(productName))
+				continue
+			}
+
+			// Parse JSON response
+			var apiResp struct {
+				Result struct {
+					Name        string        `json:"name"`
+					Aliases     []string      `json:"aliases"`
+					Label       string        `json:"label"`
+					Category    string        `json:"category"`
+					Tags        []string      `json:"tags"`
+					Identifiers []identifiers `json:"identifiers"`
+					Links       struct {
+						Html string `json:"html"`
+					} `json:"links"`
+				} `json:"result"`
+			}
+
+			if err := json.Unmarshal(body, &apiResp); err != nil {
+				log.Warn().Err(err).Msgf("Error decoding JSON for %s, skipping", productName)
+				p.Send(productProcessedMsg(productName))
+				continue
+			}
+
+			// Fetch product details (releases)
+			prodData, err := product.FetchProductData(productName)
+			if err != nil {
+				log.Warn().Err(err).Msgf("Error fetching product data for %s, skipping", productName)
+				p.Send(productProcessedMsg(productName))
+				continue
+			}
+
+			// Store all data
+			allData.Products[productName] = &productData{
+				Name:        apiResp.Result.Name,
+				Aliases:     apiResp.Result.Aliases,
+				Label:       apiResp.Result.Label,
+				Category:    apiResp.Result.Category,
+				Tags:        utilities.ConvertTagStringsToTags(apiResp.Result.Tags),
+				Identifiers: apiResp.Result.Identifiers,
+				URI:         apiResp.Result.Links.Html,
+				Releases:    prodData.Releases,
+			}
+
+			p.Send(productProcessedMsg(productName))
+		}
+	}()
+
+	// Run the program and wait for completion
+	if _, err := p.Run(); err != nil {
+		log.Error().Err(err).Msg("Error running progress display")
+		return nil, err
+	}
+
+	log.Info().Msgf("Fetched data for %d products", len(allData.Products))
+	return allData, nil
 }
 
 // createAboutTable creates the 'about' table and inserts metadata
@@ -105,6 +244,26 @@ func createAboutTable(db *sql.DB) error {
 		return fmt.Errorf("error creating 'about' table: %w", err)
 	}
 
+	// Add comment to 'about' table
+	_, err = db.Exec(`COMMENT ON TABLE about IS 'Metadata about the geol version and platform that generated this database'`)
+	if err != nil {
+		return fmt.Errorf("error adding comment to 'about' table: %w", err)
+	}
+
+	// Add comments to 'about' table columns
+	_, err = db.Exec(`
+		COMMENT ON COLUMN about.git_version IS 'Git tag version of geol used to generate this database';
+		COMMENT ON COLUMN about.git_commit IS 'Git commit hash of geol used to generate this database';
+		COMMENT ON COLUMN about.go_version IS 'Go compiler version used to build geol';
+		COMMENT ON COLUMN about.platform IS 'Operating system and architecture where geol was executed';
+		COMMENT ON COLUMN about.github_URL IS 'GitHub repository URL for the geol project';
+		COMMENT ON COLUMN about.generated_at IS 'UTC timestamp when this database was generated';
+		COMMENT ON COLUMN about.generated_at_TZ IS 'Local timestamp with timezone when this database was generated';
+	`)
+	if err != nil {
+		return fmt.Errorf("error adding comments to 'about' columns: %w", err)
+	}
+
 	// Insert values into 'about' table
 	_, err = db.Exec(`INSERT INTO about (git_version, git_commit, go_version, platform, github_URL) 
 		VALUES (?, ?, ?, ?, ?)`,
@@ -120,7 +279,7 @@ func createAboutTable(db *sql.DB) error {
 }
 
 // createTempDetailsTable creates the 'details_temp' table and inserts product details
-func createTempDetailsTable(cmd *cobra.Command, db *sql.DB) error {
+func createTempDetailsTable(db *sql.DB, allData *allProductsData) error {
 	// Create 'details_temp' table if not exists
 	_, err := db.Exec(`CREATE TEMP TABLE IF NOT EXISTS details_temp (
 			product_id TEXT,
@@ -131,46 +290,52 @@ func createTempDetailsTable(cmd *cobra.Command, db *sql.DB) error {
 			eol TEXT
 		)`)
 	if err != nil {
-		return fmt.Errorf("error creating 'details_temp' table: %w", err)
+		log.Error().Err(err).Msg("Error creating 'details_temp' table")
+		return err
 	}
 
-	// Get products from cache
-	productsPath, err := utilities.GetProductsPath()
+	// Add comment to 'details_temp' table
+	_, err = db.Exec(`COMMENT ON TABLE details_temp IS 'Temporary table for storing raw product release details before type conversion'`)
 	if err != nil {
-		return fmt.Errorf("error retrieving products path: %w", err)
+		log.Error().Err(err).Msg("Error adding comment to 'details_temp' table")
+		return err
 	}
 
-	products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
+	// Get product IDs from the products table
+	rows, err := db.Query(`SELECT id FROM products`)
 	if err != nil {
-		return fmt.Errorf("error retrieving products from cache: %w", err)
+		log.Error().Err(err).Msg("Error querying products from database")
+		return err
+	}
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Error().Err(err).Msg("Error closing rows")
+		}
+	}()
+
+	var productIDs []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			log.Error().Err(err).Msg("Error scanning product ID")
+			return err
+		}
+		productIDs = append(productIDs, id)
 	}
 
-	// Initialize the bubbletea model with progress bar
-	m := model{
-		progress:      progress.New(progress.WithWidth(maxWidth)),
-		totalProducts: len(products.Products),
-		processed:     0,
-		done:          false,
+	if err := rows.Err(); err != nil {
+		log.Error().Err(err).Msg("Error iterating over product rows")
+		return err
 	}
 
-	// Start the TUI in a goroutine
-	p := tea.NewProgram(m)
-
-	// Process products in a goroutine
-	go func() {
-		for productName := range products.Products {
-			prodData, err := product.FetchProductData(productName)
-			if err != nil {
-				log.Warn().Err(err).Msgf("Error fetching product data for %s, skipping", productName)
-				p.Send(productProcessedMsg(productName))
-				continue
-			}
-
+	// Insert product details for each product in the database
+	for _, productID := range productIDs {
+		if prodData, exists := allData.Products[productID]; exists {
 			// Insert each release into the details_temp table
 			for _, release := range prodData.Releases {
 				_, err = db.Exec(`INSERT INTO details_temp (product_id, cycle, release, latest, latest_release, eol) 
 						VALUES (?, ?, ?, ?, ?, ?)`,
-					prodData.Name,
+					productID,
 					release.Name,
 					release.ReleaseDate,
 					release.LatestName,
@@ -178,18 +343,13 @@ func createTempDetailsTable(cmd *cobra.Command, db *sql.DB) error {
 					release.EolFrom,
 				)
 				if err != nil {
-					log.Error().Err(err).Msgf("Error inserting release data for %s", productName)
+					log.Error().Err(err).Msgf("Error inserting release data for %s", productID)
 				}
 			}
-			p.Send(productProcessedMsg(productName))
 		}
-	}()
-
-	// Run the program and wait for completion
-	if _, err := p.Run(); err != nil {
-		return fmt.Errorf("error running progress display: %w", err)
 	}
 
+	//log.Info().Msg("Populated \"details_temp\" table")
 	return nil
 }
 
@@ -202,14 +362,16 @@ func createDetailsTable(db *sql.DB) error {
 			release_date DATE,
 			latest TEXT,
 			latest_release_date DATE,
-			eol DATE
+			eol_date DATE,
+			FOREIGN KEY (product_id) REFERENCES products(id)
 		)`)
 	if err != nil {
-		return fmt.Errorf("error creating 'details' table: %w", err)
+		log.Error().Err(err).Msg("Error creating 'details' table")
+		return err
 	}
 
 	// Insert data from details_temp, converting empty strings to NULL and casting to DATE
-	_, err = db.Exec(`INSERT INTO details (product_id, cycle, release_date, latest, latest_release_date, eol)
+	_, err = db.Exec(`INSERT INTO details (product_id, cycle, release_date, latest, latest_release_date, eol_date)
 		SELECT 
 			product_id,
 			cycle,
@@ -219,9 +381,245 @@ func createDetailsTable(db *sql.DB) error {
 			CASE WHEN eol = '' THEN NULL ELSE TRY_CAST(eol AS DATE) END
 		FROM details_temp`)
 	if err != nil {
-		return fmt.Errorf("error inserting data into 'details' table: %w", err)
+		log.Error().Err(err).Msg("Error inserting data into 'details' table")
+		return err
 	}
+
+	// Add comment to 'details' table
+	_, err = db.Exec(`COMMENT ON TABLE details IS 'Product release lifecycle details including release dates, latest versions, and end-of-life (EOL) dates'`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comment to 'details' table")
+		return err
+	}
+
+	// Add comments to 'details' table columns
+	_, err = db.Exec(`
+		COMMENT ON COLUMN details.product_id IS 'Product id referencing the products table';
+		COMMENT ON COLUMN details.cycle IS 'Product release cycle or version number';
+		COMMENT ON COLUMN details.release_date IS 'Initial release date for this cycle';
+		COMMENT ON COLUMN details.latest IS 'Latest patch version within this cycle';
+		COMMENT ON COLUMN details.latest_release_date IS 'Release date of the latest patch version';
+		COMMENT ON COLUMN details.eol_date IS 'End-of-life date when this cycle stops receiving support';
+	`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comments to 'details' columns")
+		return err
+	}
+
 	log.Info().Msg("Created and populated \"details\" table")
+
+	return nil
+}
+
+// createProductsTable creates the 'products' table and inserts product information
+func createProductsTable(db *sql.DB, allData *allProductsData) error {
+	// Create 'products' table if not exists
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS products (
+			id TEXT PRIMARY KEY,
+			label TEXT,
+			category_id TEXT,
+			uri TEXT
+		)`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating 'products' table")
+		return err
+	}
+
+	// Add comment to 'products' table
+	_, err = db.Exec(`COMMENT ON TABLE products IS 'Catalog of all products tracked by geol with their labels, categories, and documentation URIs'`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comment to 'products' table")
+		return err
+	}
+
+	// Add comments to 'products' table columns
+	_, err = db.Exec(`
+		COMMENT ON COLUMN products.id IS 'Unique product id (primary key)';
+		COMMENT ON COLUMN products.label IS 'Human-readable display name for the product';
+		COMMENT ON COLUMN products.category_id IS 'Category id grouping related products';
+		COMMENT ON COLUMN products.uri IS 'URI to the product documentation on endoflife.date';
+	`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comments to 'products' columns")
+		return err
+	}
+
+	// Insert product data from pre-fetched data
+	for _, prodData := range allData.Products {
+		_, err = db.Exec(`INSERT INTO products (id, label, category_id, uri) 
+				VALUES (?, ?, ?, ?)`,
+			prodData.Name,
+			prodData.Label,
+			prodData.Category,
+			prodData.URI,
+		)
+		if err != nil {
+			log.Error().Err(err).Msgf("Error inserting product data for %s", prodData.Name)
+		}
+	}
+
+	log.Info().Msg("Created and populated \"products\" table")
+
+	return nil
+}
+
+func createAliasesTable(db *sql.DB, allData *allProductsData) error {
+	// Create 'aliases' table if not exists
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS aliases (
+			product_id TEXT,
+			alias TEXT,
+			FOREIGN KEY (product_id) REFERENCES products(id)
+		)`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating 'aliases' table")
+		return err
+	}
+
+	// Add comment to 'aliases' table
+	_, err = db.Exec(`COMMENT ON TABLE aliases IS 'Alternative names or aliases for products to facilitate searching and identification'`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comment to 'aliases' table")
+		return err
+	}
+	// Add comments to 'aliases' table columns
+	_, err = db.Exec(`
+		COMMENT ON COLUMN aliases.product_id IS 'Product id referencing the products table';
+		COMMENT ON COLUMN aliases.alias IS 'Alternative name or alias for the product';
+	`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comments to 'aliases' columns")
+		return err
+	}
+
+	// Get product IDs from the products table
+	rows, err := db.Query(`SELECT id FROM products`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error querying products from database")
+		return err
+	}
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Error().Err(err).Msg("Error closing rows")
+		}
+	}()
+
+	var productIDs []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			log.Error().Err(err).Msg("Error scanning product ID")
+			return err
+		}
+		productIDs = append(productIDs, id)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Error().Err(err).Msg("Error iterating over product rows")
+		return err
+	}
+
+	// Insert aliases for each product in the database
+	for _, productID := range productIDs {
+		if prodData, exists := allData.Products[productID]; exists {
+			for _, alias := range prodData.Aliases {
+				_, err = db.Exec(`INSERT INTO aliases (product_id, alias) 
+						VALUES (?, ?)`,
+					productID,
+					alias,
+				)
+				if err != nil {
+					log.Error().Err(err).Msgf("Error inserting alias %s for product %s", alias, productID)
+				}
+			}
+		}
+	}
+
+	log.Info().Msg("Created and populated \"aliases\" table")
+
+	return nil
+}
+
+func createProductIdentifiersTable(db *sql.DB, allData *allProductsData) error {
+	// Create 'product_identifiers' table if not exists
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS product_identifiers (
+			product_id TEXT,
+			identifier_type TEXT,
+			identifier_value TEXT,
+			FOREIGN KEY (product_id) REFERENCES products(id)
+		)`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating 'product_identifiers' table")
+		return err
+	}
+
+	// Add comment to 'product_identifiers' table
+	_, err = db.Exec(`COMMENT ON TABLE product_identifiers IS 'Various identifiers for products such as SKUs, model numbers, or codes used by manufacturers'`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comment to 'product_identifiers' table")
+		return err
+	}
+
+	// Add comments to 'product_identifiers' table columns
+	_, err = db.Exec(`
+		COMMENT ON COLUMN product_identifiers.product_id IS 'Product id referencing the products table';
+		COMMENT ON COLUMN product_identifiers.identifier_type IS 'Type of identifier (e.g., repology, purl, cpe)';
+		COMMENT ON COLUMN product_identifiers.identifier_value IS 'Value of the identifier';
+	`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comments to 'product_identifiers' columns")
+		return err
+	}
+
+	// Get product IDs from the products table
+	rows, err := db.Query(`SELECT id FROM products`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error querying products from database")
+		return err
+	}
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Error().Err(err).Msg("Error closing rows")
+		}
+	}()
+
+	var productIDs []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			log.Error().Err(err).Msg("Error scanning product ID")
+			return err
+		}
+		productIDs = append(productIDs, id)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Error().Err(err).Msg("Error iterating over product rows")
+		return err
+	}
+	// Insert product identifiers for each product in the database
+	for _, productID := range productIDs {
+		if prodData, exists := allData.Products[productID]; exists {
+			for _, identifier := range prodData.Identifiers {
+				// Special handling for repology identifiers - store full URL
+				identifierValue := identifier.ID
+				if identifier.Type == "repology" {
+					identifierValue = "https://repology.org/project/" + identifier.ID
+				}
+
+				_, err = db.Exec(`INSERT INTO product_identifiers (product_id, identifier_type, identifier_value)
+						VALUES (?, ?, ?)`,
+					productID,
+					identifier.Type,
+					identifierValue,
+				)
+				if err != nil {
+					log.Error().Err(err).Msgf("Error inserting identifier %s for product %s", identifier.ID, productID)
+				}
+			}
+		}
+	}
+
+	log.Info().Msg("Created and populated \"product_identifiers\" table")
 
 	return nil
 }
@@ -262,14 +660,35 @@ If the file already exists, use the --force flag to overwrite it.`,
 			}
 		}()
 
+		// Fetch all product data from API in a single pass
+		allData, err := fetchAllProductData(cmd)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Error fetching product data from API")
+		}
+
+		// Create 'products' table and insert product information
+		if err := createProductsTable(db, allData); err != nil {
+			log.Fatal().Err(err).Msg("Error creating and populating 'products' table")
+		}
+
 		// Create 'details_temp' table and insert product details
-		if err := createTempDetailsTable(cmd, db); err != nil {
+		if err := createTempDetailsTable(db, allData); err != nil {
 			log.Fatal().Err(err).Msg("Error creating and populating 'details_temp' table")
 		}
 
 		// Create 'details' table from 'details_temp' with proper date types
 		if err := createDetailsTable(db); err != nil {
 			log.Fatal().Err(err).Msg("Error creating and populating 'details' table")
+		}
+
+		// Create 'aliases' table and insert product aliases
+		if err := createAliasesTable(db, allData); err != nil {
+			log.Fatal().Err(err).Msg("Error creating and populating 'aliases' table")
+		}
+
+		// Create 'product_identifiers' table and insert product identifiers
+		if err := createProductIdentifiersTable(db, allData); err != nil {
+			log.Fatal().Err(err).Msg("Error creating and populating 'product_identifiers' table")
 		}
 
 		// Create 'about' table and insert metadata

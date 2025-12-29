@@ -117,3 +117,15 @@ func readAndUnmarshalTags(tagsPath string, tags *TagsFile) error {
 	}
 	return nil
 }
+
+// ConvertTagStringsToTags converts a slice of tag strings to a slice of Tag structs
+func ConvertTagStringsToTags(tagStrings []string) []Tag {
+	tags := make([]Tag, len(tagStrings))
+	for i, tagName := range tagStrings {
+		tags[i] = Tag{
+			Name: tagName,
+			Uri:  "https://endoflife.date/api/v1/tags/" + tagName,
+		}
+	}
+	return tags
+}
