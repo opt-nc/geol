@@ -301,21 +301,46 @@ func createTempDetailsTable(db *sql.DB, allData *allProductsData) error {
 		return err
 	}
 
-	// Insert product details from pre-fetched data
-	for productName, prodData := range allData.Products {
-		// Insert each release into the details_temp table
-		for _, release := range prodData.Releases {
-			_, err = db.Exec(`INSERT INTO details_temp (product_id, cycle, release, latest, latest_release, eol) 
-					VALUES (?, ?, ?, ?, ?, ?)`,
-				productName,
-				release.Name,
-				release.ReleaseDate,
-				release.LatestName,
-				release.LatestDate,
-				release.EolFrom,
-			)
-			if err != nil {
-				log.Error().Err(err).Msgf("Error inserting release data for %s", productName)
+	// Get product IDs from the products table
+	rows, err := db.Query(`SELECT id FROM products`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error querying products from database")
+		return err
+	}
+	defer rows.Close()
+
+	var productIDs []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			log.Error().Err(err).Msg("Error scanning product ID")
+			return err
+		}
+		productIDs = append(productIDs, id)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Error().Err(err).Msg("Error iterating over product rows")
+		return err
+	}
+
+	// Insert product details for each product in the database
+	for _, productID := range productIDs {
+		if prodData, exists := allData.Products[productID]; exists {
+			// Insert each release into the details_temp table
+			for _, release := range prodData.Releases {
+				_, err = db.Exec(`INSERT INTO details_temp (product_id, cycle, release, latest, latest_release, eol) 
+						VALUES (?, ?, ?, ?, ?, ?)`,
+					productID,
+					release.Name,
+					release.ReleaseDate,
+					release.LatestName,
+					release.LatestDate,
+					release.EolFrom,
+				)
+				if err != nil {
+					log.Error().Err(err).Msgf("Error inserting release data for %s", productID)
+				}
 			}
 		}
 	}
@@ -434,6 +459,78 @@ func createProductsTable(db *sql.DB, allData *allProductsData) error {
 	return nil
 }
 
+func createAliasesTable(db *sql.DB, allData *allProductsData) error {
+	// Create 'aliases' table if not exists
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS aliases (
+			product_id TEXT,
+			alias TEXT,
+			FOREIGN KEY (product_id) REFERENCES products(id)
+		)`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating 'aliases' table")
+		return err
+	}
+
+	// Add comment to 'aliases' table
+	_, err = db.Exec(`COMMENT ON TABLE aliases IS 'Alternative names or aliases for products to facilitate searching and identification'`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comment to 'aliases' table")
+		return err
+	}
+	// Add comments to 'aliases' table columns
+	_, err = db.Exec(`
+		COMMENT ON COLUMN aliases.product_id IS 'Product id referencing the products table';
+		COMMENT ON COLUMN aliases.alias IS 'Alternative name or alias for the product';
+	`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comments to 'aliases' columns")
+		return err
+	}
+
+	// Get product IDs from the products table
+	rows, err := db.Query(`SELECT id FROM products`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error querying products from database")
+		return err
+	}
+	defer rows.Close()
+
+	var productIDs []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			log.Error().Err(err).Msg("Error scanning product ID")
+			return err
+		}
+		productIDs = append(productIDs, id)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Error().Err(err).Msg("Error iterating over product rows")
+		return err
+	}
+
+	// Insert aliases for each product in the database
+	for _, productID := range productIDs {
+		if prodData, exists := allData.Products[productID]; exists {
+			for _, alias := range prodData.Aliases {
+				_, err = db.Exec(`INSERT INTO aliases (product_id, alias) 
+						VALUES (?, ?)`,
+					productID,
+					alias,
+				)
+				if err != nil {
+					log.Error().Err(err).Msgf("Error inserting alias %s for product %s", alias, productID)
+				}
+			}
+		}
+	}
+
+	log.Info().Msg("Created and populated \"aliases\" table")
+
+	return nil
+}
+
 // duckdbCmd represents the duckdb command
 var duckdbCmd = &cobra.Command{
 	Use:   "duckdb",
@@ -492,8 +589,14 @@ If the file already exists, use the --force flag to overwrite it.`,
 		}
 
 		// Create 'aliases' table and insert product aliases
+		if err := createAliasesTable(db, allData); err != nil {
+			log.Fatal().Err(err).Msg("Error creating and populating 'aliases' table")
+		}
 
 		// Create 'product_identifiers' table and insert product identifiers
+		// if err := createProductIdentifiersTable(db, allData); err != nil {
+		// 	log.Fatal().Err(err).Msg("Error creating and populating 'product_identifiers' table")
+		// }
 
 		// Create 'about' table and insert metadata
 		if err := createAboutTable(db); err != nil {
