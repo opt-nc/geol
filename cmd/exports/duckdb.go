@@ -531,6 +531,87 @@ func createAliasesTable(db *sql.DB, allData *allProductsData) error {
 	return nil
 }
 
+func createProductIdentifiersTable(db *sql.DB, allData *allProductsData) error {
+	// Create 'product_identifiers' table if not exists
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS product_identifiers (
+			product_id TEXT,
+			identifier_type TEXT,
+			identifier_value TEXT,
+			FOREIGN KEY (product_id) REFERENCES products(id)
+		)`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating 'product_identifiers' table")
+		return err
+	}
+
+	// Add comment to 'product_identifiers' table
+	_, err = db.Exec(`COMMENT ON TABLE product_identifiers IS 'Various identifiers for products such as SKUs, model numbers, or codes used by manufacturers'`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comment to 'product_identifiers' table")
+		return err
+	}
+
+	// Add comments to 'product_identifiers' table columns
+	_, err = db.Exec(`
+		COMMENT ON COLUMN product_identifiers.product_id IS 'Product id referencing the products table';
+		COMMENT ON COLUMN product_identifiers.identifier_type IS 'Type of identifier (e.g., repology, purl, cpe)';
+		COMMENT ON COLUMN product_identifiers.identifier_value IS 'Value of the identifier';
+	`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comments to 'product_identifiers' columns")
+		return err
+	}
+
+	// Get product IDs from the products table
+	rows, err := db.Query(`SELECT id FROM products`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error querying products from database")
+		return err
+	}
+	defer rows.Close()
+
+	var productIDs []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			log.Error().Err(err).Msg("Error scanning product ID")
+			return err
+		}
+		productIDs = append(productIDs, id)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Error().Err(err).Msg("Error iterating over product rows")
+		return err
+	}
+	// Insert product identifiers for each product in the database
+	for _, productID := range productIDs {
+		if prodData, exists := allData.Products[productID]; exists {
+			for _, identifier := range prodData.Identifiers {
+				// Special handling for repology identifiers - store full URL
+				identifierValue := identifier.ID
+				if identifier.Type == "repology" {
+					identifierValue = "https://repology.org/project/" + identifier.ID
+				}
+
+				_, err = db.Exec(`INSERT INTO product_identifiers (product_id, identifier_type, identifier_value)
+						VALUES (?, ?, ?)`,
+					productID,
+					identifier.Type,
+					identifierValue,
+				)
+				if err != nil {
+					log.Error().Err(err).Msgf("Error inserting identifier %s for product %s", identifier.ID, productID)
+				}
+			}
+		}
+	}
+
+	log.Info().Msg("Created and populated \"product_identifiers\" table")
+
+	return nil
+}
+
 // duckdbCmd represents the duckdb command
 var duckdbCmd = &cobra.Command{
 	Use:   "duckdb",
@@ -594,9 +675,9 @@ If the file already exists, use the --force flag to overwrite it.`,
 		}
 
 		// Create 'product_identifiers' table and insert product identifiers
-		// if err := createProductIdentifiersTable(db, allData); err != nil {
-		// 	log.Fatal().Err(err).Msg("Error creating and populating 'product_identifiers' table")
-		// }
+		if err := createProductIdentifiersTable(db, allData); err != nil {
+			log.Fatal().Err(err).Msg("Error creating and populating 'product_identifiers' table")
+		}
 
 		// Create 'about' table and insert metadata
 		if err := createAboutTable(db); err != nil {
