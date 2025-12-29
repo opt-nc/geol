@@ -307,7 +307,11 @@ func createTempDetailsTable(db *sql.DB, allData *allProductsData) error {
 		log.Error().Err(err).Msg("Error querying products from database")
 		return err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Error().Err(err).Msg("Error closing rows")
+		}
+	}()
 
 	var productIDs []string
 	for rows.Next() {
@@ -493,7 +497,11 @@ func createAliasesTable(db *sql.DB, allData *allProductsData) error {
 		log.Error().Err(err).Msg("Error querying products from database")
 		return err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Error().Err(err).Msg("Error closing rows")
+		}
+	}()
 
 	var productIDs []string
 	for rows.Next() {
@@ -568,7 +576,11 @@ func createProductIdentifiersTable(db *sql.DB, allData *allProductsData) error {
 		log.Error().Err(err).Msg("Error querying products from database")
 		return err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Error().Err(err).Msg("Error closing rows")
+		}
+	}()
 
 	var productIDs []string
 	for rows.Next() {
