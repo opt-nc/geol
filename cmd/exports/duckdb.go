@@ -227,6 +227,70 @@ func fetchAllProductData(cmd *cobra.Command) (*allProductsData, error) {
 	return allData, nil
 }
 
+// fetchAllCategories retrieves all categories from the API
+func fetchAllCategories() (map[string]utilities.Category, error) {
+	// Fetch categories from API
+	resp, err := http.Get(utilities.ApiUrl + "categories")
+	if err != nil {
+		log.Error().Err(err).Msg("Error fetching categories")
+		return nil, err
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Error().Err(err).Msg("Error closing response body")
+		}
+	}()
+
+	var apiResp struct {
+		Result []utilities.Category `json:"result"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+		log.Error().Err(err).Msg("Error decoding categories JSON")
+		return nil, err
+	}
+
+	categories := make(map[string]utilities.Category)
+	for _, category := range apiResp.Result {
+		categories[category.Name] = category
+	}
+
+	log.Info().Msgf("Fetched %d categories", len(categories))
+	return categories, nil
+}
+
+// fetchAllTags retrieves all tags from the API
+func fetchAllTags() (map[string]utilities.Tag, error) {
+	// Fetch tags from API
+	resp, err := http.Get(utilities.ApiUrl + "tags")
+	if err != nil {
+		log.Error().Err(err).Msg("Error fetching tags")
+		return nil, err
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Error().Err(err).Msg("Error closing response body")
+		}
+	}()
+
+	var apiResp struct {
+		Result []utilities.Tag `json:"result"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {
+		log.Error().Err(err).Msg("Error decoding tags JSON")
+		return nil, err
+	}
+
+	tags := make(map[string]utilities.Tag)
+	for _, tag := range apiResp.Result {
+		tags[tag.Name] = tag
+	}
+
+	log.Info().Msgf("Fetched %d tags", len(tags))
+	return tags, nil
+}
+
 // createAboutTable creates the 'about' table and inserts metadata
 func createAboutTable(db *sql.DB) error {
 
@@ -624,6 +688,96 @@ func createProductIdentifiersTable(db *sql.DB, allData *allProductsData) error {
 	return nil
 }
 
+func createTagsTable(db *sql.DB, allTags map[string]utilities.Tag) error {
+	// Create 'tags' table if not exists
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS tags (
+			id TEXT PRIMARY KEY,
+			uri TEXT
+		)`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating 'tags' table")
+		return err
+	}
+
+	// Add comment to 'tags' table
+	_, err = db.Exec(`COMMENT ON TABLE tags IS 'Tags used to categorize and group products by common characteristics or use cases'`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comment to 'tags' table")
+		return err
+	}
+
+	// Add comments to 'tags' table columns
+	_, err = db.Exec(`
+		COMMENT ON COLUMN tags.id IS 'Unique tag identifier (primary key)';
+		COMMENT ON COLUMN tags.uri IS 'URI to the tag page on endoflife.date';
+	`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comments to 'tags' columns")
+		return err
+	}
+
+	// Insert tags data
+	for _, tag := range allTags {
+		_, err = db.Exec(`INSERT INTO tags (id, uri) 
+				VALUES (?, ?)`,
+			tag.Name,
+			tag.Uri,
+		)
+		if err != nil {
+			log.Error().Err(err).Msgf("Error inserting tag %s", tag.Name)
+		}
+	}
+
+	log.Info().Msg("Created and populated \"tags\" table")
+
+	return nil
+}
+
+func createCategoriesTable(db *sql.DB, allCategories map[string]utilities.Category) error {
+	// Create 'categories' table if not exists
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS categories (
+			id TEXT PRIMARY KEY,
+			uri TEXT
+		)`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating 'categories' table")
+		return err
+	}
+
+	// Add comment to 'categories' table
+	_, err = db.Exec(`COMMENT ON TABLE categories IS 'Categories used to group products by their primary function or domain'`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comment to 'categories' table")
+		return err
+	}
+
+	// Add comments to 'categories' table columns
+	_, err = db.Exec(`
+		COMMENT ON COLUMN categories.id IS 'Unique category identifier (primary key)';
+		COMMENT ON COLUMN categories.uri IS 'URI to the category page on endoflife.date';
+	`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comments to 'categories' columns")
+		return err
+	}
+
+	// Insert categories data
+	for _, category := range allCategories {
+		_, err = db.Exec(`INSERT INTO categories (id, uri) 
+				VALUES (?, ?)`,
+			category.Name,
+			category.Uri,
+		)
+		if err != nil {
+			log.Error().Err(err).Msgf("Error inserting category %s", category.Name)
+		}
+	}
+
+	log.Info().Msg("Created and populated \"categories\" table")
+
+	return nil
+}
+
 // duckdbCmd represents the duckdb command
 var duckdbCmd = &cobra.Command{
 	Use:   "duckdb",
@@ -661,18 +815,28 @@ If the file already exists, use the --force flag to overwrite it.`,
 		}()
 
 		// Fetch all product data from API in a single pass
-		allData, err := fetchAllProductData(cmd)
+		allProductsData, err := fetchAllProductData(cmd)
 		if err != nil {
 			log.Fatal().Err(err).Msg("Error fetching product data from API")
 		}
 
+		allTags, err := fetchAllTags()
+		if err != nil {
+			log.Fatal().Err(err).Msg("Error fetching tags from API")
+		}
+
+		allCategories, err := fetchAllCategories()
+		if err != nil {
+			log.Fatal().Err(err).Msg("Error fetching categories from API")
+		}
+
 		// Create 'products' table and insert product information
-		if err := createProductsTable(db, allData); err != nil {
+		if err := createProductsTable(db, allProductsData); err != nil {
 			log.Fatal().Err(err).Msg("Error creating and populating 'products' table")
 		}
 
 		// Create 'details_temp' table and insert product details
-		if err := createTempDetailsTable(db, allData); err != nil {
+		if err := createTempDetailsTable(db, allProductsData); err != nil {
 			log.Fatal().Err(err).Msg("Error creating and populating 'details_temp' table")
 		}
 
@@ -682,13 +846,23 @@ If the file already exists, use the --force flag to overwrite it.`,
 		}
 
 		// Create 'aliases' table and insert product aliases
-		if err := createAliasesTable(db, allData); err != nil {
+		if err := createAliasesTable(db, allProductsData); err != nil {
 			log.Fatal().Err(err).Msg("Error creating and populating 'aliases' table")
 		}
 
 		// Create 'product_identifiers' table and insert product identifiers
-		if err := createProductIdentifiersTable(db, allData); err != nil {
+		if err := createProductIdentifiersTable(db, allProductsData); err != nil {
 			log.Fatal().Err(err).Msg("Error creating and populating 'product_identifiers' table")
+		}
+
+		// Create 'tags' table and insert tags
+		if err := createTagsTable(db, allTags); err != nil {
+			log.Fatal().Err(err).Msg("Error creating and populating 'tags' table")
+		}
+
+		// Create 'categories' table and insert categories
+		if err := createCategoriesTable(db, allCategories); err != nil {
+			log.Fatal().Err(err).Msg("Error creating and populating 'categories' table")
 		}
 
 		// Create 'about' table and insert metadata
