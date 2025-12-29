@@ -109,6 +109,26 @@ func createAboutTable(db *sql.DB) error {
 		return fmt.Errorf("error creating 'about' table: %w", err)
 	}
 
+	// Add comment to 'about' table
+	_, err = db.Exec(`COMMENT ON TABLE about IS 'Metadata about the geol version and platform that generated this database'`)
+	if err != nil {
+		return fmt.Errorf("error adding comment to 'about' table: %w", err)
+	}
+
+	// Add comments to 'about' table columns
+	_, err = db.Exec(`
+		COMMENT ON COLUMN about.git_version IS 'Git tag version of geol used to generate this database';
+		COMMENT ON COLUMN about.git_commit IS 'Git commit hash of geol used to generate this database';
+		COMMENT ON COLUMN about.go_version IS 'Go compiler version used to build geol';
+		COMMENT ON COLUMN about.platform IS 'Operating system and architecture where geol was executed';
+		COMMENT ON COLUMN about.github_URL IS 'GitHub repository URL for the geol project';
+		COMMENT ON COLUMN about.generated_at IS 'UTC timestamp when this database was generated';
+		COMMENT ON COLUMN about.generated_at_TZ IS 'Local timestamp with timezone when this database was generated';
+	`)
+	if err != nil {
+		return fmt.Errorf("error adding comments to 'about' columns: %w", err)
+	}
+
 	// Insert values into 'about' table
 	_, err = db.Exec(`INSERT INTO about (git_version, git_commit, go_version, platform, github_URL) 
 		VALUES (?, ?, ?, ?, ?)`,
@@ -136,6 +156,13 @@ func createTempDetailsTable(db *sql.DB) error {
 		)`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'details_temp' table")
+		return err
+	}
+
+	// Add comment to 'details_temp' table
+	_, err = db.Exec(`COMMENT ON TABLE details_temp IS 'Temporary table for storing raw product release details before type conversion'`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comment to 'details_temp' table")
 		return err
 	}
 
@@ -244,6 +271,28 @@ func createDetailsTable(db *sql.DB) error {
 		log.Error().Err(err).Msg("Error inserting data into 'details' table")
 		return err
 	}
+
+	// Add comment to 'details' table
+	_, err = db.Exec(`COMMENT ON TABLE details IS 'Product release lifecycle details including release dates, latest versions, and end-of-life (EOL) dates'`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comment to 'details' table")
+		return err
+	}
+
+	// Add comments to 'details' table columns
+	_, err = db.Exec(`
+		COMMENT ON COLUMN details.product_id IS 'Product id referencing the products table';
+		COMMENT ON COLUMN details.cycle IS 'Product release cycle or version number';
+		COMMENT ON COLUMN details.release_date IS 'Initial release date for this cycle';
+		COMMENT ON COLUMN details.latest IS 'Latest patch version within this cycle';
+		COMMENT ON COLUMN details.latest_release_date IS 'Release date of the latest patch version';
+		COMMENT ON COLUMN details.eol_date IS 'End-of-life date when this cycle stops receiving support';
+	`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comments to 'details' columns")
+		return err
+	}
+
 	log.Info().Msg("Created and populated \"details\" table")
 
 	return nil
@@ -260,6 +309,25 @@ func createProductsTable(cmd *cobra.Command, db *sql.DB) error {
 		)`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'products' table")
+		return err
+	}
+
+	// Add comment to 'products' table
+	_, err = db.Exec(`COMMENT ON TABLE products IS 'Catalog of all products tracked by geol with their labels, categories, and documentation URIs'`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comment to 'products' table")
+		return err
+	}
+
+	// Add comments to 'products' table columns
+	_, err = db.Exec(`
+		COMMENT ON COLUMN products.id IS 'Unique product id (primary key)';
+		COMMENT ON COLUMN products.label IS 'Human-readable display name for the product';
+		COMMENT ON COLUMN products.category_id IS 'Category id grouping related products';
+		COMMENT ON COLUMN products.uri IS 'URI to the product documentation on endoflife.date';
+	`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error adding comments to 'products' columns")
 		return err
 	}
 
