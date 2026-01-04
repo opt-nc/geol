@@ -31,3 +31,14 @@ stack:
   - name: traefik
     version: "2.11"
     id_eol: traefik
+
+  # Example: Using the skip field for products not yet in endoflife.date API
+  # The skip field allows you to:
+  # - Keep the product in your inventory for other tools (export, reporting)
+  # - Document WHY it's not checked (e.g., waiting for API support)
+  # - Easily enable checking when the product becomes available
+  # See: https://endoflife.date/docs/api/adding-a-new-product
+  - name: non-existent-product
+    version: "1.0"
+    id_eol: non-existent-product
+    skip: true
