@@ -15,6 +15,9 @@ stack: [...{
     // name: the name of the product as you want
     // it to appear in the report. For example,
     // use 'Red Hat' if you want a report on RHEL.
+    // IMPORTANT: The name field must be UNIQUE across all stack items.
+    // If you need to track the same product in different environments,
+    // use suffixes like 'traefik-prod' and 'traefik-qual'.
     name: string
 
     // version: the current version of the product.
@@ -25,4 +28,12 @@ stack: [...{
     // endoflife.date (see https://endoflife.date)
     // https://endoflife.date/{id_eol} needs to exist
     id_eol: string
+
+    // skip: whether to skip this product in EOL checks.
+    // Optional field. Defaults to false if not specified.
+    // Set to true to exclude this product from checks
+    // (e.g., when not yet available in endoflife.date API).
+    // Products with skip: true remain in the YAML for tracking
+    // but are not checked against the endoflife.date API.
+    skip?: bool | *false
 }]

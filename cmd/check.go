@@ -30,6 +30,7 @@ type stackItem struct {
 	Name    string `yaml:"name"`
 	Version string `yaml:"version"`
 	IdEol   string `yaml:"id_eol"`
+	Skip    bool   `yaml:"skip,omitempty"`
 }
 type geolConfig struct {
 	AppName string      `yaml:"app_name"`
@@ -50,6 +51,12 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 	errorOut := false
 
 	for _, item := range stack {
+		// Skip items marked with skip: true
+		if item.Skip {
+			log.Info().Msgf("Found skip:true for %s %s, product will be skipped", item.Name, item.Version)
+			continue
+		}
+
 		eolDate := lookupEolDate(item.IdEol, item.Version)
 		var status string
 		var daysStr string
@@ -259,29 +266,46 @@ func renderStackTable(rows []stackTableRow) string {
 	return t.Render()
 }
 
-// checkRequiredKeys validates required keys in geolConfig and returns a slice of missing keys
-func checkRequiredKeys(config geolConfig) []string {
-	missing := []string{}
+// validationResult holds validation errors categorized by type
+type validationResult struct {
+	missing    []string
+	duplicates []string
+}
+
+// checkRequiredKeys validates required keys in geolConfig and returns categorized errors
+func checkRequiredKeys(config geolConfig) validationResult {
+	result := validationResult{
+		missing:    []string{},
+		duplicates: []string{},
+	}
 
 	if config.AppName == "" {
-		missing = append(missing, "app_name")
+		result.missing = append(result.missing, "app_name")
 	}
 	if len(config.Stack) == 0 {
-		missing = append(missing, "stack")
+		result.missing = append(result.missing, "stack")
 	}
 
+	// Check for duplicate names
+	namesSeen := make(map[string]int)
 	for i, item := range config.Stack {
 		if item.Name == "" {
-			missing = append(missing, fmt.Sprintf("stack[%d].name", i))
+			result.missing = append(result.missing, fmt.Sprintf("stack[%d].name", i))
+		} else {
+			// Check for duplicate name
+			if prevIdx, exists := namesSeen[item.Name]; exists {
+				result.duplicates = append(result.duplicates, fmt.Sprintf("duplicate name '%s' at positions %d and %d", item.Name, prevIdx, i))
+			}
+			namesSeen[item.Name] = i
 		}
 		if item.Version == "" {
-			missing = append(missing, fmt.Sprintf("stack[%d].version", i))
+			result.missing = append(result.missing, fmt.Sprintf("stack[%d].version", i))
 		}
 		if item.IdEol == "" {
-			missing = append(missing, fmt.Sprintf("stack[%d].id_eol", i))
+			result.missing = append(result.missing, fmt.Sprintf("stack[%d].id_eol", i))
 		}
 	}
-	return missing
+	return result
 }
 
 // checkCmd represents the check command
@@ -312,9 +336,27 @@ geol check --file stack.yaml`,
 			log.Fatal().Msg("YAML format error: " + err.Error())
 		}
 
-		missing := checkRequiredKeys(config)
-		if len(missing) > 0 {
-			log.Fatal().Msg("Missing or empty keys: " + fmt.Sprintf("%v", missing))
+		validation := checkRequiredKeys(config)
+		hasErrors := false
+		
+		// Log missing fields
+		if len(validation.missing) > 0 {
+			for _, missing := range validation.missing {
+				log.Error().Msgf("Missing or empty key: %s", missing)
+			}
+			hasErrors = true
+		}
+		
+		// Log duplicate names
+		if len(validation.duplicates) > 0 {
+			for _, duplicate := range validation.duplicates {
+				log.Error().Msg(duplicate)
+			}
+			hasErrors = true
+		}
+		
+		if hasErrors {
+			log.Fatal().Msg("Validation failed: please fix the errors above")
 		}
 
 		utilities.AnalyzeCacheProductsValidity(cmd)
