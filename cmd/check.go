@@ -43,6 +43,7 @@ type stackTableRow struct {
 	EolDate  string
 	Status   string
 	Days     string
+	IsLatest bool
 }
 
 // getStackTableRows returns a slice of StackTableRow for a given stack and today date
@@ -57,7 +58,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			continue
 		}
 
-		eolDate := lookupEolDate(item.IdEol, item.Version)
+		eolDate, isLatest := lookupEolDate(item.IdEol, item.Version)
 		var status string
 		var daysStr string
 		var daysInt int
@@ -96,6 +97,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			EolDate:  eolDate,
 			Status:   status,
 			Days:     daysStr,
+			IsLatest: isLatest,
 		})
 	}
 	// Sort rows by Status: EOL, WARN, OK, INFO, then by Days (from smallest to largest)
@@ -136,19 +138,19 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 }
 
 // lookupEolDate should return the EOL date for a given id_eol and version (YYYY-MM-DD)
-func lookupEolDate(idEol, version string) string {
+func lookupEolDate(idEol, version string) (string, bool) {
 	// Try to get products cache path
 	productsPath, err := utilities.GetProductsPath()
 	if err != nil {
 		log.Error().Err(err).Msg("Error retrieving products path")
-		return ""
+		return "", false
 	}
 
 	// Get products from cache (refresh if needed)
 	products, err := utilities.GetProductsWithCacheRefresh(nil, productsPath)
 	if err != nil {
 		log.Error().Err(err).Msg("Error retrieving products from cache")
-		return ""
+		return "", false
 	}
 
 	prod := idEol
@@ -209,9 +211,47 @@ func lookupEolDate(idEol, version string) string {
 			log.Error().Err(err).Msgf("Error decoding JSON for %s", prod)
 			os.Exit(1)
 		}
-		return apiResp.Result.EolFrom
+
+		url = utilities.ApiUrl + "products/" + prod
+		resp, err = http.Get(url)
+		if err != nil {
+			log.Error().Err(err).Msgf("Error requesting %s", prod)
+			os.Exit(1)
+		}
+		body, err = io.ReadAll(resp.Body)
+		if cerr := resp.Body.Close(); cerr != nil {
+			log.Error().Err(cerr).Msgf("Error closing HTTP body for %s", prod)
+			os.Exit(1)
+		}
+		if err != nil {
+			log.Error().Err(err).Msgf("Error reading response for %s", prod)
+			os.Exit(1)
+		}
+		if resp.StatusCode != 200 {
+			log.Error().Msgf("Product %s not found (status %d)", prod, resp.StatusCode)
+			os.Exit(1)
+		}
+		var apiRespProd struct {
+			Result struct {
+				Releases []struct {
+					Name string `json:"name"`
+				} `json:"releases"`
+			} `json:"result"`
+		}
+
+		if err := json.Unmarshal(body, &apiRespProd); err != nil {
+			log.Error().Err(err).Msgf("Error decoding JSON for %s", prod)
+			os.Exit(1)
+		}
+
+		isLatest := false
+		if len(apiRespProd.Result.Releases) > 0 && apiRespProd.Result.Releases[0].Name == version {
+			isLatest = true
+		}
+
+		return apiResp.Result.EolFrom, isLatest
 	}
-	return ""
+	return "", false
 }
 
 // renderStackTable renders the stack table using lipgloss/table
@@ -222,11 +262,12 @@ func renderStackTable(rows []stackTableRow) string {
 
 	t := table.New()
 	t.Headers(
-		"Software", "Version", "EOL Date", "Status", "Days",
+		"Software", "Version", "EOL Date", "Status", "Days", "Is Latest",
 	)
 	for _, r := range rows {
 		var daysStr string
 		var statusStr string
+		var latestStr string
 		switch r.Status {
 		case "EOL":
 			statusStr = red.Render(r.Status)
@@ -241,12 +282,18 @@ func renderStackTable(rows []stackTableRow) string {
 			statusStr = r.Status
 			daysStr = r.Days
 		}
+		if r.IsLatest {
+			latestStr = green.Render("true")
+		} else {
+			latestStr = red.Render("false")
+		}
 		t.Row(
 			r.Software,
 			r.Version,
 			r.EolDate,
 			statusStr,
 			daysStr,
+			latestStr,
 		)
 	}
 	if term.IsTerminal(int(os.Stdout.Fd())) {
@@ -338,7 +385,7 @@ geol check --file stack.yaml`,
 
 		validation := checkRequiredKeys(config)
 		hasErrors := false
-		
+
 		// Log missing fields
 		if len(validation.missing) > 0 {
 			for _, missing := range validation.missing {
@@ -346,7 +393,7 @@ geol check --file stack.yaml`,
 			}
 			hasErrors = true
 		}
-		
+
 		// Log duplicate names
 		if len(validation.duplicates) > 0 {
 			for _, duplicate := range validation.duplicates {
@@ -354,7 +401,7 @@ geol check --file stack.yaml`,
 			}
 			hasErrors = true
 		}
-		
+
 		if hasErrors {
 			log.Fatal().Msg("Validation failed: please fix the errors above")
 		}
