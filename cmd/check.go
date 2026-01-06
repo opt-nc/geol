@@ -24,6 +24,7 @@ func init() {
 	rootCmd.AddCommand(checkCmd)
 	checkCmd.Flags().StringP("file", "f", ".geol.yaml", "File to check (default .geol.yaml)")
 	checkCmd.Flags().BoolP("strict", "s", false, "Exit with error if any product is EOL")
+	checkCmd.Flags().Bool("json", false, "Output in JSON format")
 }
 
 type stackItem struct {
@@ -38,13 +39,13 @@ type geolConfig struct {
 }
 
 type stackTableRow struct {
-	Software      string
-	Version       string
-	EolDate       string
-	Status        string
-	Days          string
-	IsLatest      bool
-	LatestVersion string
+	Software      string `json:"software"`
+	Version       string `json:"version"`
+	EolDate       string `json:"eol_date"`
+	Status        string `json:"status"`
+	Days          string `json:"days"`
+	IsLatest      bool   `json:"is_latest"`
+	LatestVersion string `json:"latest_version"`
 }
 
 // getStackTableRows returns a slice of StackTableRow for a given stack and today date
@@ -370,10 +371,12 @@ var checkCmd = &cobra.Command{
 	Long: `The 'check' command analyzes each software component listed in your stack YAML file (default: .geol.yaml), retrieves End-of-Life (EOL) information, and displays the EOL status report. Great to identify outdated software in a given stack.
 Try using 'geol check init' to generate a sample stack YAML file.`,
 	Example: `geol check
-geol check --file stack.yaml`,
+geol check --file stack.yaml
+geol check --json`,
 	Run: func(cmd *cobra.Command, args []string) {
 		file, _ := cmd.Flags().GetString("file")
 		strict, _ := cmd.Flags().GetBool("strict")
+		jsonOutput, _ := cmd.Flags().GetBool("json")
 		_, err := os.Stat(file)
 		if err != nil {
 			log.Fatal().Msg("Error: the file does not exist: " + file)
@@ -416,13 +419,30 @@ geol check --file stack.yaml`,
 		utilities.AnalyzeCacheProductsValidity(cmd)
 		today := time.Now()
 		rows, errorOut := getStackTableRows(config.Stack, today)
-		tableStr := renderStackTable(rows)
-		styledTitle := lipgloss.NewStyle().
-			Bold(true).Foreground(lipgloss.Color("#FFFF88")).
-			Background(lipgloss.Color("#5F5FFF")).
-			Render("## " + config.AppName)
-		_, _ = lipgloss.Println(styledTitle)
-		_, _ = lipgloss.Println(tableStr)
+
+		if jsonOutput {
+			output := struct {
+				Title              string          `json:"title"`
+				SoftwareComponents []stackTableRow `json:"software_components"`
+			}{
+				Title:              config.AppName,
+				SoftwareComponents: rows,
+			}
+			jsonData, err := json.MarshalIndent(output, "", "  ")
+			if err != nil {
+				log.Fatal().Msg("Error generating JSON output: " + err.Error())
+			}
+			fmt.Println(string(jsonData))
+		} else {
+			tableStr := renderStackTable(rows)
+			styledTitle := lipgloss.NewStyle().
+				Bold(true).Foreground(lipgloss.Color("#FFFF88")).
+				Background(lipgloss.Color("#5F5FFF")).
+				Render("## " + config.AppName)
+			_, _ = lipgloss.Println(styledTitle)
+			_, _ = lipgloss.Println(tableStr)
+		}
+
 		if errorOut && strict {
 			os.Exit(1)
 		}
