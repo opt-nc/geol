@@ -38,12 +38,13 @@ type geolConfig struct {
 }
 
 type stackTableRow struct {
-	Software string
-	Version  string
-	EolDate  string
-	Status   string
-	Days     string
-	IsLatest bool
+	Software      string
+	Version       string
+	EolDate       string
+	Status        string
+	Days          string
+	IsLatest      bool
+	LatestVersion string
 }
 
 // getStackTableRows returns a slice of StackTableRow for a given stack and today date
@@ -58,7 +59,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			continue
 		}
 
-		eolDate, isLatest := lookupEolDate(item.IdEol, item.Version)
+		eolDate, isLatest, latestVersion := lookupEolDate(item.IdEol, item.Version)
 		var status string
 		var daysStr string
 		var daysInt int
@@ -92,12 +93,13 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			status = "OK"
 		}
 		rows = append(rows, stackTableRow{
-			Software: item.Name,
-			Version:  item.Version,
-			EolDate:  eolDate,
-			Status:   status,
-			Days:     daysStr,
-			IsLatest: isLatest,
+			Software:      item.Name,
+			Version:       item.Version,
+			EolDate:       eolDate,
+			Status:        status,
+			Days:          daysStr,
+			IsLatest:      isLatest,
+			LatestVersion: latestVersion,
 		})
 	}
 	// Sort rows by Status: EOL, WARN, OK, INFO, then by Days (from smallest to largest)
@@ -138,19 +140,19 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 }
 
 // lookupEolDate should return the EOL date for a given id_eol and version (YYYY-MM-DD)
-func lookupEolDate(idEol, version string) (string, bool) {
+func lookupEolDate(idEol, version string) (string, bool, string) {
 	// Try to get products cache path
 	productsPath, err := utilities.GetProductsPath()
 	if err != nil {
 		log.Error().Err(err).Msg("Error retrieving products path")
-		return "", false
+		return "", false, ""
 	}
 
 	// Get products from cache (refresh if needed)
 	products, err := utilities.GetProductsWithCacheRefresh(nil, productsPath)
 	if err != nil {
 		log.Error().Err(err).Msg("Error retrieving products from cache")
-		return "", false
+		return "", false, ""
 	}
 
 	prod := idEol
@@ -245,13 +247,17 @@ func lookupEolDate(idEol, version string) (string, bool) {
 		}
 
 		isLatest := false
-		if len(apiRespProd.Result.Releases) > 0 && apiRespProd.Result.Releases[0].Name == version {
-			isLatest = true
+		latestVersion := ""
+		if len(apiRespProd.Result.Releases) > 0 {
+			latestVersion = apiRespProd.Result.Releases[0].Name
+			if latestVersion == version {
+				isLatest = true
+			}
 		}
 
-		return apiResp.Result.EolFrom, isLatest
+		return apiResp.Result.EolFrom, isLatest, latestVersion
 	}
-	return "", false
+	return "", false, ""
 }
 
 // renderStackTable renders the stack table using lipgloss/table
@@ -262,7 +268,7 @@ func renderStackTable(rows []stackTableRow) string {
 
 	t := table.New()
 	t.Headers(
-		"Software", "Version", "EOL Date", "Status", "Days", "Is Latest",
+		"Software", "Version", "EOL Date", "Status", "Days", "Is Latest", "Latest",
 	)
 	for _, r := range rows {
 		var daysStr string
@@ -294,6 +300,7 @@ func renderStackTable(rows []stackTableRow) string {
 			statusStr,
 			daysStr,
 			latestStr,
+			r.LatestVersion,
 		)
 	}
 	if term.IsTerminal(int(os.Stdout.Fd())) {
