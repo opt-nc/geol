@@ -24,6 +24,7 @@ func init() {
 	rootCmd.AddCommand(checkCmd)
 	checkCmd.Flags().StringP("file", "f", ".geol.yaml", "File to check (default .geol.yaml)")
 	checkCmd.Flags().BoolP("strict", "s", false, "Exit with error if any product is EOL")
+	checkCmd.Flags().Bool("json", false, "Output in JSON format")
 }
 
 type stackItem struct {
@@ -38,11 +39,13 @@ type geolConfig struct {
 }
 
 type stackTableRow struct {
-	Software string
-	Version  string
-	EolDate  string
-	Status   string
-	Days     string
+	Software      string `json:"software"`
+	Version       string `json:"version"`
+	EolDate       string `json:"eol_date"`
+	Status        string `json:"status"`
+	Days          string `json:"days"`
+	IsLatest      bool   `json:"is_latest"`
+	LatestVersion string `json:"latest_version"`
 }
 
 // getStackTableRows returns a slice of StackTableRow for a given stack and today date
@@ -57,7 +60,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			continue
 		}
 
-		eolDate := lookupEolDate(item.IdEol, item.Version)
+		eolDate, isLatest, latestVersion := lookupEolDate(item.IdEol, item.Version)
 		var status string
 		var daysStr string
 		var daysInt int
@@ -91,11 +94,13 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			status = "OK"
 		}
 		rows = append(rows, stackTableRow{
-			Software: item.Name,
-			Version:  item.Version,
-			EolDate:  eolDate,
-			Status:   status,
-			Days:     daysStr,
+			Software:      item.Name,
+			Version:       item.Version,
+			EolDate:       eolDate,
+			Status:        status,
+			Days:          daysStr,
+			IsLatest:      isLatest,
+			LatestVersion: latestVersion,
 		})
 	}
 	// Sort rows by Status: EOL, WARN, OK, INFO, then by Days (from smallest to largest)
@@ -136,19 +141,19 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 }
 
 // lookupEolDate should return the EOL date for a given id_eol and version (YYYY-MM-DD)
-func lookupEolDate(idEol, version string) string {
+func lookupEolDate(idEol, version string) (string, bool, string) {
 	// Try to get products cache path
 	productsPath, err := utilities.GetProductsPath()
 	if err != nil {
 		log.Error().Err(err).Msg("Error retrieving products path")
-		return ""
+		return "", false, ""
 	}
 
 	// Get products from cache (refresh if needed)
 	products, err := utilities.GetProductsWithCacheRefresh(nil, productsPath)
 	if err != nil {
 		log.Error().Err(err).Msg("Error retrieving products from cache")
-		return ""
+		return "", false, ""
 	}
 
 	prod := idEol
@@ -209,9 +214,51 @@ func lookupEolDate(idEol, version string) string {
 			log.Error().Err(err).Msgf("Error decoding JSON for %s", prod)
 			os.Exit(1)
 		}
-		return apiResp.Result.EolFrom
+
+		url = utilities.ApiUrl + "products/" + prod
+		resp, err = http.Get(url)
+		if err != nil {
+			log.Error().Err(err).Msgf("Error requesting %s", prod)
+			os.Exit(1)
+		}
+		body, err = io.ReadAll(resp.Body)
+		if cerr := resp.Body.Close(); cerr != nil {
+			log.Error().Err(cerr).Msgf("Error closing HTTP body for %s", prod)
+			os.Exit(1)
+		}
+		if err != nil {
+			log.Error().Err(err).Msgf("Error reading response for %s", prod)
+			os.Exit(1)
+		}
+		if resp.StatusCode != 200 {
+			log.Error().Msgf("Product %s not found (status %d)", prod, resp.StatusCode)
+			os.Exit(1)
+		}
+		var apiRespProd struct {
+			Result struct {
+				Releases []struct {
+					Name string `json:"name"`
+				} `json:"releases"`
+			} `json:"result"`
+		}
+
+		if err := json.Unmarshal(body, &apiRespProd); err != nil {
+			log.Error().Err(err).Msgf("Error decoding JSON for %s", prod)
+			os.Exit(1)
+		}
+
+		isLatest := false
+		latestVersion := ""
+		if len(apiRespProd.Result.Releases) > 0 {
+			latestVersion = apiRespProd.Result.Releases[0].Name
+			if latestVersion == version {
+				isLatest = true
+			}
+		}
+
+		return apiResp.Result.EolFrom, isLatest, latestVersion
 	}
-	return ""
+	return "", false, ""
 }
 
 // renderStackTable renders the stack table using lipgloss/table
@@ -222,11 +269,12 @@ func renderStackTable(rows []stackTableRow) string {
 
 	t := table.New()
 	t.Headers(
-		"Software", "Version", "EOL Date", "Status", "Days",
+		"Software", "Version", "EOL Date", "Status", "Days", "Is Latest", "Latest",
 	)
 	for _, r := range rows {
 		var daysStr string
 		var statusStr string
+		var latestStr string
 		switch r.Status {
 		case "EOL":
 			statusStr = red.Render(r.Status)
@@ -241,12 +289,19 @@ func renderStackTable(rows []stackTableRow) string {
 			statusStr = r.Status
 			daysStr = r.Days
 		}
+		if r.IsLatest {
+			latestStr = green.Render("true")
+		} else {
+			latestStr = red.Render("false")
+		}
 		t.Row(
 			r.Software,
 			r.Version,
 			r.EolDate,
 			statusStr,
 			daysStr,
+			latestStr,
+			r.LatestVersion,
 		)
 	}
 	if term.IsTerminal(int(os.Stdout.Fd())) {
@@ -316,10 +371,12 @@ var checkCmd = &cobra.Command{
 	Long: `The 'check' command analyzes each software component listed in your stack YAML file (default: .geol.yaml), retrieves End-of-Life (EOL) information, and displays the EOL status report. Great to identify outdated software in a given stack.
 Try using 'geol check init' to generate a sample stack YAML file.`,
 	Example: `geol check
-geol check --file stack.yaml`,
+geol check --file stack.yaml
+geol check --json`,
 	Run: func(cmd *cobra.Command, args []string) {
 		file, _ := cmd.Flags().GetString("file")
 		strict, _ := cmd.Flags().GetBool("strict")
+		jsonOutput, _ := cmd.Flags().GetBool("json")
 		_, err := os.Stat(file)
 		if err != nil {
 			log.Fatal().Msg("Error: the file does not exist: " + file)
@@ -338,7 +395,7 @@ geol check --file stack.yaml`,
 
 		validation := checkRequiredKeys(config)
 		hasErrors := false
-		
+
 		// Log missing fields
 		if len(validation.missing) > 0 {
 			for _, missing := range validation.missing {
@@ -346,7 +403,7 @@ geol check --file stack.yaml`,
 			}
 			hasErrors = true
 		}
-		
+
 		// Log duplicate names
 		if len(validation.duplicates) > 0 {
 			for _, duplicate := range validation.duplicates {
@@ -354,7 +411,7 @@ geol check --file stack.yaml`,
 			}
 			hasErrors = true
 		}
-		
+
 		if hasErrors {
 			log.Fatal().Msg("Validation failed: please fix the errors above")
 		}
@@ -362,13 +419,30 @@ geol check --file stack.yaml`,
 		utilities.AnalyzeCacheProductsValidity(cmd)
 		today := time.Now()
 		rows, errorOut := getStackTableRows(config.Stack, today)
-		tableStr := renderStackTable(rows)
-		styledTitle := lipgloss.NewStyle().
-			Bold(true).Foreground(lipgloss.Color("#FFFF88")).
-			Background(lipgloss.Color("#5F5FFF")).
-			Render("## " + config.AppName)
-		_, _ = lipgloss.Println(styledTitle)
-		_, _ = lipgloss.Println(tableStr)
+
+		if jsonOutput {
+			output := struct {
+				Title              string          `json:"title"`
+				SoftwareComponents []stackTableRow `json:"software_components"`
+			}{
+				Title:              config.AppName,
+				SoftwareComponents: rows,
+			}
+			jsonData, err := json.MarshalIndent(output, "", "  ")
+			if err != nil {
+				log.Fatal().Msg("Error generating JSON output: " + err.Error())
+			}
+			fmt.Println(string(jsonData))
+		} else {
+			tableStr := renderStackTable(rows)
+			styledTitle := lipgloss.NewStyle().
+				Bold(true).Foreground(lipgloss.Color("#FFFF88")).
+				Background(lipgloss.Color("#5F5FFF")).
+				Render("## " + config.AppName)
+			_, _ = lipgloss.Println(styledTitle)
+			_, _ = lipgloss.Println(tableStr)
+		}
+
 		if errorOut && strict {
 			os.Exit(1)
 		}
