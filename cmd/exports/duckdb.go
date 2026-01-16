@@ -793,16 +793,47 @@ func createCategoriesTable(db *sql.DB, allCategories map[string]utilities.Catego
 		return err
 	}
 
-	// Insert categories data
+	// Collect all categories
+	type categoryEntry struct {
+		id  string
+		uri string
+	}
+	var allCategoriesSlice []categoryEntry
+
 	for _, category := range allCategories {
-		_, err = db.Exec(`INSERT INTO categories (id, uri) 
-				VALUES (?, ?)`,
-			category.Name,
-			category.Uri,
+		allCategoriesSlice = append(allCategoriesSlice, categoryEntry{
+			id:  category.Name,
+			uri: category.Uri,
+		})
+	}
+
+	// Sort categories by id using DuckDB
+	// First insert all data into a temporary table, then insert sorted
+	_, err = db.Exec(`CREATE TEMP TABLE IF NOT EXISTS categories_temp (
+			id TEXT,
+			uri TEXT
+		)`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating categories_temp table")
+		return err
+	}
+
+	for _, entry := range allCategoriesSlice {
+		_, err = db.Exec(`INSERT INTO categories_temp (id, uri) VALUES (?, ?)`,
+			entry.id,
+			entry.uri,
 		)
 		if err != nil {
-			log.Error().Err(err).Msgf("Error inserting category %s", category.Name)
+			log.Error().Err(err).Msgf("Error inserting category %s into temp table", entry.id)
 		}
+	}
+
+	// Insert from temp table sorted by id
+	_, err = db.Exec(`INSERT INTO categories (id, uri) 
+		SELECT id, uri FROM categories_temp ORDER BY id`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error inserting sorted categories")
+		return err
 	}
 
 	log.Info().Msg("Created and populated \"categories\" table")
