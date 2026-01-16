@@ -583,20 +583,51 @@ func createAliasesTable(db *sql.DB, allData *allProductsData) error {
 		return err
 	}
 
-	// Insert aliases for each product in the database
+	// Collect all aliases with their product IDs
+	type aliasEntry struct {
+		id        string
+		productID string
+	}
+	var allAliases []aliasEntry
+
 	for _, productID := range productIDs {
 		if prodData, exists := allData.Products[productID]; exists {
 			for _, alias := range prodData.Aliases {
-				_, err = db.Exec(`INSERT INTO aliases (id, product_id) 
-						VALUES (?, ?)`,
-					alias,
-					productID,
-				)
-				if err != nil {
-					log.Error().Err(err).Msgf("Error inserting alias %s for product %s", alias, productID)
-				}
+				allAliases = append(allAliases, aliasEntry{
+					id:        alias,
+					productID: productID,
+				})
 			}
 		}
+	}
+
+	// Sort aliases by id using DuckDB
+	// First insert all data into a temporary table, then insert sorted
+	_, err = db.Exec(`CREATE TEMP TABLE IF NOT EXISTS aliases_temp (
+			id TEXT,
+			product_id TEXT
+		)`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating aliases_temp table")
+		return err
+	}
+
+	for _, entry := range allAliases {
+		_, err = db.Exec(`INSERT INTO aliases_temp (id, product_id) VALUES (?, ?)`,
+			entry.id,
+			entry.productID,
+		)
+		if err != nil {
+			log.Error().Err(err).Msgf("Error inserting alias %s into temp table", entry.id)
+		}
+	}
+
+	// Insert from temp table sorted by id
+	_, err = db.Exec(`INSERT INTO aliases (id, product_id) 
+		SELECT id, product_id FROM aliases_temp ORDER BY id`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error inserting sorted aliases")
+		return err
 	}
 
 	log.Info().Msg("Created and populated \"aliases\" table")
