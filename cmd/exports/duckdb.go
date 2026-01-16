@@ -531,8 +531,8 @@ func createProductsTable(db *sql.DB, allData *allProductsData) error {
 func createAliasesTable(db *sql.DB, allData *allProductsData) error {
 	// Create 'aliases' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS aliases (
+			id TEXT PRIMARY KEY,
 			product_id TEXT,
-			alias TEXT,
 			FOREIGN KEY (product_id) REFERENCES products(id)
 		)`)
 	if err != nil {
@@ -548,8 +548,8 @@ func createAliasesTable(db *sql.DB, allData *allProductsData) error {
 	}
 	// Add comments to 'aliases' table columns
 	_, err = db.Exec(`
+		COMMENT ON COLUMN aliases.id IS 'Alternative name or alias for the product (primary key)';
 		COMMENT ON COLUMN aliases.product_id IS 'Product id referencing the products table';
-		COMMENT ON COLUMN aliases.alias IS 'Alternative name or alias for the product';
 	`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error adding comments to 'aliases' columns")
@@ -587,10 +587,10 @@ func createAliasesTable(db *sql.DB, allData *allProductsData) error {
 	for _, productID := range productIDs {
 		if prodData, exists := allData.Products[productID]; exists {
 			for _, alias := range prodData.Aliases {
-				_, err = db.Exec(`INSERT INTO aliases (product_id, alias) 
+				_, err = db.Exec(`INSERT INTO aliases (id, product_id) 
 						VALUES (?, ?)`,
-					productID,
 					alias,
+					productID,
 				)
 				if err != nil {
 					log.Error().Err(err).Msgf("Error inserting alias %s for product %s", alias, productID)
