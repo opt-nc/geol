@@ -11,7 +11,7 @@ require (
 	github.com/charmbracelet/glamour/v2 v2.0.0-20251106195642-800eb8175930
 	github.com/charmbracelet/x/term v0.2.2
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
-	github.com/duckdb/duckdb-go/v2 v2.5.4
+	github.com/duckdb/duckdb-go/v2 v2.5.5
 	github.com/phuslu/log v1.0.121
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/term v0.39.0
@@ -20,7 +20,7 @@ require (
 
 require (
 	github.com/alecthomas/chroma/v2 v2.23.1 // indirect
-	github.com/apache/arrow-go/v18 v18.5.0 // indirect
+	github.com/apache/arrow-go/v18 v18.5.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/colorprofile v0.4.1 // indirect
 	github.com/charmbracelet/harmonica v0.2.0 // indirect
@@ -35,19 +35,12 @@ require (
 	github.com/clipperhouse/uax29/v2 v2.4.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.1 // indirect
 	github.com/dlclark/regexp2 v1.11.5 // indirect
-	github.com/duckdb/duckdb-go-bindings v0.3.2 // indirect
-	github.com/duckdb/duckdb-go-bindings/darwin-amd64 v0.1.24 // indirect
-	github.com/duckdb/duckdb-go-bindings/darwin-arm64 v0.1.24 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/darwin-amd64 v0.3.2 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/darwin-arm64 v0.3.2 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/linux-amd64 v0.3.2 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/linux-arm64 v0.3.2 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/windows-amd64 v0.3.2 // indirect
-	github.com/duckdb/duckdb-go-bindings/linux-amd64 v0.1.24 // indirect
-	github.com/duckdb/duckdb-go-bindings/linux-arm64 v0.1.24 // indirect
-	github.com/duckdb/duckdb-go-bindings/windows-amd64 v0.1.24 // indirect
-	github.com/duckdb/duckdb-go/arrowmapping v0.0.27 // indirect
-	github.com/duckdb/duckdb-go/mapping v0.0.27 // indirect
+	github.com/duckdb/duckdb-go-bindings v0.3.3 // indirect
+	github.com/duckdb/duckdb-go-bindings/lib/darwin-amd64 v0.3.3 // indirect
+	github.com/duckdb/duckdb-go-bindings/lib/darwin-arm64 v0.3.3 // indirect
+	github.com/duckdb/duckdb-go-bindings/lib/linux-amd64 v0.3.3 // indirect
+	github.com/duckdb/duckdb-go-bindings/lib/linux-arm64 v0.3.3 // indirect
+	github.com/duckdb/duckdb-go-bindings/lib/windows-amd64 v0.3.3 // indirect
 	github.com/emicklei/proto v1.14.2 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
