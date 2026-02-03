@@ -24,12 +24,20 @@
 \usepackage{fancyhdr}
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[LE,RO]{\leftmark}
-\fancyhead[RE,LO]{\thepage}
-\renewcommand{\headrulewidth}{0.4pt}
+% Keep document minimal: no running chapter titles in the header to
+% avoid duplication with chapter titles (page number only in footer).
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \fancyfoot[C]{\thepage}%
+}
 
 % --- Liens hypertexte ---
 \usepackage[colorlinks=true,linkcolor=black,citecolor=blue,urlcolor=blue]{hyperref}
+
+% Use French heading for bibliography produced by thebibliography
+\renewcommand{\bibname}{Références}
 
 % --- Commandes utiles ---
 \newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
@@ -236,7 +244,6 @@ Build & Builds locaux validés (fr + en) \\
 \end{center}
 
 \bigskip
-Les fichiers générés et modifiés sont disponibles dans le dépôt ; pour une revue détaillée, voir le journal des commits correspondant.
 
 \chapter{Analyse et discussion}
 Interprétation des résultats et limites.
@@ -261,9 +268,11 @@ En conclusion, les travaux menés ont rendu le site \texttt{geol} plus accessibl
   \item Automatiser la génération de l'index de recherche lors du build pour garantir l'alignement entre sources et fichiers statiques.
 \end{itemize}
 
-% --- Annexes ---
 \appendix
-\chapter{Annexe A}
+% Use an unnumbered appendix chapter but keep it in the TOC to avoid
+% potential duplicate printed headings from the document class.
+\chapter*{Annexe A}
+\addcontentsline{toc}{chapter}{Annexe A}
 Éléments complémentaires (ex : code, données, commandes).
 
 % --- Références ---
@@ -272,9 +281,6 @@ En conclusion, les travaux menés ont rendu le site \texttt{geol} plus accessibl
 % \addbibresource{bibliography.bib} puis restaurez l'appel à biber
 % dans le `Taskfile.yml`.
 \cleardoublepage
-\chapter*{Références}
-\addcontentsline{toc}{chapter}{Références}
-
 \begin{thebibliography}{9}
 \bibitem{geol}
 OPT-NC, "geol — Repository for the geol project", GitHub, \url{https://github.com/opt-nc/geol}. Accessed 5 janvier 2026.

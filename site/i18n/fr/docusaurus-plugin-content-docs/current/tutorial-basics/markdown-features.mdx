@@ -16,6 +16,14 @@ geol list products > geol-report.md
 
 `pandoc` est un convertisseur de documents permettant de transformer du Markdown en EPUB, PDF, DOCX, HTML, et plus encore. Flux de travail typique :
 
+Installer `pandoc` (exemple) :
+
+```bash
+brew install pandoc
+```
+
+Voir https://pandoc.org/installing.html pour les détails.
+
 - Produire `geol-report.md` avec `geol`.
 - Option A — export direct avec `pandoc` :
 
@@ -29,11 +37,3 @@ pandoc geol-report.md -o geol-report.pdf --pdf-engine=xelatex
 ```bash
 pandoc geol-report.md -f markdown -t asciidoc -o geol-report.adoc
 ```
-
-Installer `pandoc` (exemple) :
-
-```bash
-brew install pandoc
-```
-
-Voir https://pandoc.org/installing.html pour les détails.

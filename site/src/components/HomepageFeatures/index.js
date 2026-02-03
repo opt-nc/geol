@@ -70,7 +70,7 @@ function Feature({Svg, title, description}) {
         <Svg className={styles.featureSvg} role="img" />
       </div>
       <div className={clsx('text--center padding-horiz--md', !title && styles.noTitle)}>
-        <Heading as="h3" style={{visibility: title ? 'visible' : 'hidden'}} aria-hidden={!title}>
+        <Heading as="h2" style={{visibility: title ? 'visible' : 'hidden'}} aria-hidden={!title}>
           {title || ' '}
         </Heading>
         <p>{description}</p>

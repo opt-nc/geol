@@ -332,4 +332,43 @@ img[draggable="true"] { draggable: false; }
 }
 
 
+/* Global keyboard focus outlines for accessibility */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+.navbar__link:focus-visible,
+.DocSearch-Button:focus-visible,
+.DocSearch-Input:focus-visible {
+  outline: 3px solid rgba(11,131,120,0.24);
+  outline-offset: 2px;
+}
+
+/* Ensure default interactive controls have visible borders in both themes */
+button, .button, .DocSearch-Button {
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+[data-theme='dark'] button,
+[data-theme='dark'] .button,
+[data-theme='dark'] .DocSearch-Button {
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Dark-theme focus variant for better visibility */
+[data-theme='dark'] button:focus-visible,
+[data-theme='dark'] a:focus-visible,
+[data-theme='dark'] input:focus-visible,
+[data-theme='dark'] select:focus-visible,
+[data-theme='dark'] textarea:focus-visible,
+[data-theme='dark'] .navbar__link:focus-visible,
+[data-theme='dark'] .DocSearch-Button:focus-visible,
+[data-theme='dark'] .DocSearch-Input:focus-visible {
+  outline: 3px solid rgba(139,211,199,0.22);
+  outline-offset: 2px;
+}
+
+
+
 

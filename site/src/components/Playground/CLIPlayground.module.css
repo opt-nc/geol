@@ -26,7 +26,22 @@
 .examples{ width:100%; background:var(--ifm-background-surface); padding:12px; border-radius:8px }
 .exampleItem{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin:8px 0 }
 .code{ background:transparent; padding:4px 6px; border-radius:4px; font-family: ui-monospace, monospace }
-.btnSmall{ margin-left:6px; padding:6px 8px; border-radius:6px; border:1px solid rgba(0,0,0,0.08); background:#fff }
+.btnSmall{ margin-left:6px; padding:6px 8px; border-radius:6px; background:transparent; color:inherit; border:1px solid rgba(0,0,0,0.08); outline:none }
+
+/* Focus styles for keyboard users */
+.btnSmall:focus-visible, .run:focus-visible, .input:focus-visible {
+  outline: 3px solid rgba(11,131,120,0.24);
+  outline-offset: 2px;
+}
+
+@media (prefers-color-scheme: dark){
+  .btnSmall{ border:1px solid rgba(255,255,255,0.08) }
+  .btnSmall:focus-visible, .run:focus-visible, .input:focus-visible {
+    outline: 3px solid rgba(139,211,199,0.22);
+  }
+  .commandItem{ background:rgba(255,255,255,0.02); }
+  .commands{ background:var(--ifm-color-emphasis-0,#071018); }
+}
 .buttons{ display:flex; gap:6px }
 
 .commands{ width:100%; background:var(--ifm-color-emphasis-0,#071018); color:var(--ifm-color-emphasis-900,#e6eef8); padding:12px; border-radius:8px }

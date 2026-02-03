@@ -29,12 +29,12 @@ function defaultSimulator(cmd){
   if(c === 'geol version') return `2.5.1\n12:15 INF > Checking the latest geol version...\n12:15 INF > You have the latest geol version !`;
 
   if(c === 'geol about') return `
-  _______  _______   ______    __      
- /  _____||   ____| /  __  \  |  |     
-|  |  __  |  |__   |  |  |  | |  |     
-|  | |_ | |   __|  |  |  |  | |  |     
-|  |__| | |  |____ |  '--'  | |  '----.
- \______| |_______| \______/  |_______|
+  ____     ______     ______    __ 
+/  _____| |   ____|  /  __  \\  |  |     
+|  |  __  |  |__    |  |  |  | |  |     
+|  | |_ | |   __|   |  |  |  | |  |     
+|  |__| | |  |____  |  '--'  | |  '---.
+ \\______| |_______|  \\______/  |_______|
 ⏳ Tech doesn’t last forever. Awareness does.
 
 --- Build Info ---
@@ -577,9 +577,9 @@ export default function CLIPlayground({examples}){
             <div key={idx} className={styles.exampleItem}>
               <div className={styles.code}>{ex}</div>
               <div className={styles.buttons}>
-                <button className={styles.btnSmall} onClick={()=>{ setInput(ex); }}>{t.use}</button>
-                <button className={styles.btnSmall} onClick={()=>copyText(ex)}>{copied===ex? t.copied : t.copy}</button>
-                <button className={styles.btnSmall} onClick={()=>runCommand(ex)}>{t.run}</button>
+                <button type="button" className={styles.btnSmall} aria-label={`${t.use} ${ex}`} title={`${t.use} ${ex}`} onClick={()=>{ setInput(ex); }}>{t.use}</button>
+                <button type="button" className={styles.btnSmall} aria-label={`${t.copy} ${ex}`} title={`${t.copy} ${ex}`} onClick={()=>copyText(ex)}>{copied===ex? t.copied : t.copy}</button>
+                <button type="button" className={styles.btnSmall} aria-label={`${t.run} ${ex}`} title={`${t.run} ${ex}`} onClick={()=>runCommand(ex)}>{t.run}</button>
               </div>
             </div>
           ));
@@ -592,9 +592,9 @@ export default function CLIPlayground({examples}){
             <div key={i} className={`${styles.commandItem} ${cmd && cmd.trim() === 'geol about' ? styles.aboutCmd : ''}`}>
               <div className={styles.code}>{cmd}</div>
               <div className={styles.buttons}>
-                <button className={styles.btnSmall} onClick={()=>{ setInput(cmd); }}>{t.use}</button>
-                <button className={styles.btnSmall} onClick={()=>copyText(cmd)}>{copied===cmd? t.copied : t.copy}</button>
-                <button className={styles.btnSmall} onClick={()=>runCommand(cmd)}>{t.run}</button>
+                <button type="button" className={styles.btnSmall} aria-label={`${t.use} ${cmd}`} title={`${t.use} ${cmd}`} onClick={()=>{ setInput(cmd); }}>{t.use}</button>
+                <button type="button" className={styles.btnSmall} aria-label={`${t.copy} ${cmd}`} title={`${t.copy} ${cmd}`} onClick={()=>copyText(cmd)}>{copied===cmd? t.copied : t.copy}</button>
+                <button type="button" className={styles.btnSmall} aria-label={`${t.run} ${cmd}`} title={`${t.run} ${cmd}`} onClick={()=>runCommand(cmd)}>{t.run}</button>
               </div>
             </div>
           ))}

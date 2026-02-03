@@ -10,7 +10,7 @@
   },
   {
     "title": "Commencez maintenant?",
-    "text": "Commencez maintenant? Découvrons geol en moins de 5 minutes. Commencez par installer geol avec Homebrew. Remarque : Homebrew fournit souvent des paquets plus à jour que d'autres sources, donc l'installation via brew vous donnera généralement une version plus récente. Comment installer? brew installé sur votre machine. Voir le site officiel Homebrew pour les instructions d'installation. brew install --cask opt-nc/homebrew-tap/geol Remarque : si l'installation via brew échoue, c'est peut-être parce que curl fourni par Homebrew n'est pas installé et que votre distribution utilise le curl du système (apt). Go go install github.com/opt-nc/geol@latest Script Shell curl -fsSL https://raw.githubusercontent.com/opt-nc/geol/main/install.sh | bash Obtenir la version de geol geol version En savoir plus sur geol geol about Obtenir de l'aide geol help man geol",
+    "text": "Commencez maintenant? Découvrons geol en moins de 5 minutes. Commencez par installer geol avec Homebrew. Remarque : Homebrew fournit souvent des paquets plus à jour que d'autres sources, donc l'installation via brew vous donnera généralement une version plus récente. Comment installer? brew installé sur votre machine. Voir le site officiel Homebrew pour les instructions d'installation. brew install --cask opt-nc/homebrew-tap/geol Remarque : si l'installation via brew échoue, c'est peut-être parce que curl fourni par Homebrew n'est pas installé et que votre distribution utilise le curl du système (apt). ➜ brew install --cask opt-nc/homebrew-tap/geol # attempts to install the 'geol' cask via Homebrew Output (example error): Error: Download failed on Cask 'geol' with message: Download failed: Homebrew-installed curl is not installed for: https://github.com/opt-nc/geol/releases/download/v0.3.0/geolLinuxx86_64.tar.gz # the archive couldn't be downloaded because the expected Homebrew-provided curl is missing Suggested solution: install curl via Homebrew, then retry brew install curl # install 'curl' via Homebrew brew install --cask opt-nc/homebrew-tap/geol # retry installing the 'geol' cask Ou installez avec : Go go install github.com/opt-nc/geol@latest Script Shell curl -fsSL https://raw.githubusercontent.com/opt-nc/geol/main/install.sh | bash Vous pouvez taper cette commande dans l'invite de commandes, le Terminal, ou tout autre terminal intégré de votre éditeur de code. Obtenir la version de geol geol version En savoir plus sur geol geol about Obtenir de l'aide geol help man geol",
     "url": "/fr/docs/intro/",
     "summary": "Commencez maintenant? Découvrons geol en moins de 5 minutes. Commencez par installer geol avec Homebrew. Remarque : Homebrew fournit souvent des paquets plus à jour que d'autres sources, donc l'installation via brew vous donnera généralement une version plus récente. Comment installer? brew installé",
     "tags": [],
@@ -136,7 +136,7 @@
   },
   {
     "title": "Fonctionnalités de `Markdown`",
-    "text": "Fonctionnalités de Markdown La documentation de geol prend en charge les fonctionnalités Markdown standard (GitHub Flavored Markdown). Exporter une liste de produits vers un fichier markdown Par exemple : geol list products > geol-report.md La chaîne d'outils pandoc pandoc est un convertisseur de documents permettant de transformer du Markdown en EPUB, PDF, DOCX, HTML, et plus encore. Flux de travail typique : Produire geol-report.md avec geol. Option A — export direct avec pandoc : pandoc geol-report.md -o geol-report.epub pandoc geol-report.md -o geol-report.pdf --pdf-engine=xelatex Option B — convertir en AsciiDoc puis utiliser Asciidoctor : pandoc geol-report.md -f markdown -t asciidoc -o geol-report.adoc Installer pandoc (exemple) : brew install pandoc Voir https://pandoc.org/installing.html pour les détails.",
+    "text": "Fonctionnalités de Markdown La documentation de geol prend en charge les fonctionnalités Markdown standard (GitHub Flavored Markdown). Exporter une liste de produits vers un fichier markdown Par exemple : geol list products > geol-report.md La chaîne d'outils pandoc pandoc est un convertisseur de documents permettant de transformer du Markdown en EPUB, PDF, DOCX, HTML, et plus encore. Flux de travail typique : Installer pandoc (exemple) : brew install pandoc Voir https://pandoc.org/installing.html pour les détails. Produire geol-report.md avec geol. Option A — export direct avec pandoc : pandoc geol-report.md -o geol-report.epub pandoc geol-report.md -o geol-report.pdf --pdf-engine=xelatex Option B — convertir en AsciiDoc puis utiliser Asciidoctor : pandoc geol-report.md -f markdown -t asciidoc -o geol-report.adoc",
     "url": "/fr/docs/tutorial-basics/markdown-features/",
     "summary": "Fonctionnalités de Markdown La documentation de geol prend en charge les fonctionnalités Markdown standard (GitHub Flavored Markdown). Exporter une liste de produits vers un fichier markdown Par exemple : geol list products > geol-report.md La chaîne d'outils pandoc pandoc est un convertisseur de do",
     "tags": [],
@@ -181,7 +181,7 @@
   },
   {
     "title": "Chaîne d'outils `asciidoc`",
-    "text": "Chaîne d'outils asciidoc AsciiDoc permet d'écrire une documentation lisible par l'humain et de la convertir en HTML, PDF, ou diaporama en utilisant des outils comme Asciidoctor. Voici deux commandes courantes pour convertir un rapport AsciiDoc en HTML (avec table des matières) et en PDF : asciidoctor -a toc -a toclevels=4 geol-report.adoc # convertir geol-report.adoc en HTML avec table des matières asciidoctor-pdf -a toc -a toclevels=4 geol-report.adoc # convertir en PDF Notes & exemples de workflow Si vous disposez d'un rapport Markdown (geol-report.md), vous pouvez : - Convertir en AsciiDoc et traiter avec Asciidoctor : pandoc geol-report.md -f markdown -t asciidoc -o geol-report.adoc asciidoctor -a toc -a toclevels=4 geol-report.adoc asciidoctor-pdf -a toc -a toclevels=4 geol-report.adoc Ou produire EPUB/PDF directement avec pandoc : pandoc geol-report.md -o geol-report.epub pandoc geol-report.md -o geol-report.pdf --pdf-engine=xelatex Voir https://pandoc.org/ et https://asciidoctor.org/ pour l'installation et les options.",
+    "text": "Chaîne d'outils asciidoc AsciiDoc permet d'écrire une documentation lisible par l'humain et de la convertir en HTML, PDF, ou diaporama en utilisant des outils comme Asciidoctor. Voici deux commandes courantes pour convertir un rapport AsciiDoc en HTML (avec table des matières) et en PDF : asciidoctor -a toc -a toclevels=4 geol-report.adoc # convertir geol-report.adoc en HTML avec table des matières asciidoctor-pdf -a toc -a toclevels=4 geol-report.adoc # convertir en PDF Voir https://pandoc.org/ et https://asciidoctor.org/ pour l'installation et les options. Notes & exemples de workflow Si vous disposez d'un rapport Markdown (geol-report.md), vous pouvez : - Convertir en AsciiDoc et traiter avec Asciidoctor : pandoc geol-report.md -f markdown -t asciidoc -o geol-report.adoc asciidoctor -a toc -a toclevels=4 geol-report.adoc asciidoctor-pdf -a toc -a toclevels=4 geol-report.adoc Ou produire EPUB/PDF directement avec pandoc : pandoc geol-report.md -o geol-report.epub pandoc geol-report.md -o geol-report.pdf --pdf-engine=xelatex",
     "url": "/fr/docs/tutorial-extras/asciidoc-toolchain/",
     "summary": "Chaîne d'outils asciidoc AsciiDoc permet d'écrire une documentation lisible par l'humain et de la convertir en HTML, PDF, ou diaporama en utilisant des outils comme Asciidoctor. Voici deux commandes courantes pour convertir un rapport AsciiDoc en HTML (avec table des matières) et en PDF : asciidocto",
     "tags": [],
@@ -207,18 +207,9 @@
     "type": "docs"
   },
   {
-    "title": "Versions",
-    "text": "v2.5.1 — 2026-01-07 Date : 2026-01-07 Version : 2.5.1 Résumé : Corrections de bugs et petites améliorations. Points forts Correction : journaliser un message de debug quand un fichier .geol existe (commit 26e5bc3) — closes #162. --- v2.5.0 — 2026-01-06 Date : 2026-01-06 Version : 2.5.0 Résumé : Nouvelles fonctionnalités et tâches diverses. Points forts Fonctionnalité : ajout de la sortie JSON pour la commande check — closes #163. Fonctionnalité : ajout du champ Is Latest / colonne Latest pour la sortie de check — closes #210. Divers : mises à jour de dépendances et corrections de tâches de build. --- v2.4.0 — 2026-01-04 Date : 2026-01-04 Version : 2.4.0 Résumé : Améliorations et mises à jour CI. Points forts Fonctionnalité : rendre name identifiant unique et ajouter l'option skip — closes #244. CI : ajout des workflows osv-scanner et corrections CI. --- v2.3.0 — 2025-12-30 Date : 2025-12-30 Version : 2.3.0 Résumé : Ajouts de base de données et support du tagging. Points forts Fonctionnalité : ajout du support des tags et categories et des tables de base de données associées — closes #96. --- v2.2.0 — 2025-12-29 Date : 2025-12-29 Version : 2.2.0 Résumé : Modèle de données et corrections de stabilité. Points forts Fonctionnalité : ajout des alias et des tables product_identifiers — closes #96. Corrections et refactorings pour l'efficacité de récupération des produits. --- v2.1.1 — 2025-12-28 Date : 2025-12-28 Version : 2.1.1 Résumé : Corrections de bugs. Points forts Correction : ajout de la gestion de app_id au traitement YAML et correction de la récupération des checksums — closes #212. --- v2.1.0 — 2025-12-24 Date : 2025-12-24 Version : 2.1.0 Résumé : Fonctionnalités pour de meilleurs exports et rapports. Points forts Fonctionnalité : ajout de la table details et de la commande duckdb — closes #96. Plusieurs corrections et améliorations CI/workflow. --- v2.0.1 — 2025-12-05 Date : 2025-12-05 Version : 2.0.1 Résumé : Corrections et maintenance. Points forts Correction : vérification de la version lors du refresh du cache et autres corrections de fiabilité — closes #170. --- v2.0.0 — 2025-11-28 Date : 2025-11-28 Version : 2.0.0 Résumé : Release majeure avec breaking changes et nouvelles fonctionnalités. Points forts Changement incompatible : suppression du champ critical dans le format YAML de check — closes #177. Fonctionnalités : améliorations des logs et autres améliorations visibles par l'utilisateur — closes #183. --- v1.5.0 — 2025-11-25 Date : 2025-11-25 Version : 1.5.0 Résumé : Identifiants de produit et améliorations d'export. Points forts Fonctionnalité : ajout des Product Identifiers et des pages produits JSON — closes #116 et #118. Fonctionnalité : ajout d'un flux iCalendar (ICS) — closes #119. --- v1.4.0 — 2025-11-17 Date : 2025-11-17 Version : 1.4.0 Résumé : Améliorations de l'affichage des catégories et corrections. Points forts Fonctionnalité : lister les produits associés à une catégorie — closes #132. Correction : correction du formatage des exemples et autres corrections mineures — closes #131. --- v1.3.0 — 2025-11-03 Date : 2025-11-03 Version : 1.3.0 Résumé : Nouvelle commande check et templates ; améliorations UX. Points forts Fonctionnalité : ajout de la commande check et du sous-commande templates (renommé en init). Corrections : flag strict, améliorations des couleurs/statuts et divers raffinements de logging. --- v1.2.0 — 2025-10-21 Date : 2025-10-21 Version : 1.2.0 Résumé : Redirection Markdown et mises à jour de dépendances. Points forts Fonctionnalité : ajout du support de redirection Markdown. Tâche : mises à jour de dépendances et améliorations CI. --- v1.1.0 — 2025-10-14 Date : 2025-10-14 Version : 1.1.0 Résumé : Nouvelles commandes et améliorations d'outils. Points forts Fonctionnalité : ajout de la commande tag ; lister les tags et catégories. Divers : améliorations d'outillage et de la commande refresh. --- v1.0.0 — 2025-10-06 Date : 2025-10-06 Version : 1.0.0 Résumé : Étape majeure avec breaking changes et fonctionnalités de base. Points forts Changement incompatible : geol list devient geol list products. Fonctionnalités : ajout des sous-commandes categories et tags ; sous-commande list products. --- v0.4.0 — 2025-10-01 Date : 2025-10-01 Version : 0.4.0 Résumé : Améliorations UI et utilisabilité. Points forts Fonctionnalité : ajout d'une vue en arbre pour la commande list ; corrections et mises à jour de dépendances. --- v0.3.0 — 2025-09-30 Date : 2025-09-30 Version : 0.3.0 Résumé : Ajustements visuels et corrections mineures. Divers : mises à jour de dépendances et corrections de tâches de build. --- v2.4.0 — 2026-01-04 Date : 2026-01-04 Version : 2.4.0 Résumé : Améliorations et mises à jour CI. Points forts Points forts Fonctionnalité : rendre name identifiant unique et ajouter l'option skip — closes #244. CI : ajout des workflows osv-scanner et corrections CI. --- v2.3.0 — 2025-12-30 Date : 2025-12-30 Version : 2.3.0 Résumé : Ajouts de base de données et support du tagging. Points forts Points forts Fonctionnalité : ajout du support des tags et categories et des tables de base de données associées — closes #96. --- v2.2.0 — 2025-12-29 Date : 2025-12-29 Version : 2.2.0 Résumé : Modèle de données et corrections de stabilité. Points forts Points forts Fonctionnalité : ajout des alias et des tables product_identifiers — closes #96. Corrections et refactorings pour l'efficacité de récupération des produits. --- v2.1.1 — 2025-12-28 Date : 2025-12-28 Version : 2.1.1 Résumé : Corrections de bugs. Points forts Points forts Correction : ajout de la gestion de app_id au traitement YAML et correction de la récupération des checksums — closes #212. --- v2.1.0 — 2025-12-24 Date : 2025-12-24 Version : 2.1.0 Résumé : Fonctionnalités pour de meilleurs exports et rapports. Points forts Points forts Fonctionnalité : ajout de la table details et de la commande duckdb — closes #96. Plusieurs corrections et améliorations CI/workflow. --- v2.0.1 — 2025-12-05 Date : 2025-12-05 Version : 2.0.1 Résumé : Corrections et maintenance. Points forts Points forts Correction : vérification de la version lors du refresh du cache et autres corrections de fiabilité — closes #170. --- v2.0.0 — 2025-11-28 Date : 2025-11-28 Version : 2.0.0 Résumé : Release majeure avec breaking changes et nouvelles fonctionnalités. Points forts Points forts Changement incompatible : suppression du champ critical dans le format YAML de check — closes #177. Fonctionnalités : améliorations des logs et autres améliorations visibles par l'utilisateur — closes #183. --- v1.5.0 — 2025-11-25 Date : 2025-11-25 Version : 1.5.0 Résumé : Identifiants de produit et améliorations d'export. Points forts Points forts Fonctionnalité : ajout des Product Identifiers et des pages produits JSON — closes #116 et #118. Fonctionnalité : ajout d'un flux iCalendar (ICS) — closes #119. --- v1.4.0 — 2025-11-17 Date : 2025-11-17 Version : 1.4.0 Résumé : Améliorations de l'affichage des catégories et corrections. Points forts Points forts Fonctionnalité : lister les produits associés à une catégorie — closes #132. Correction : correction du formatage des exemples et autres corrections mineures — closes #131. --- v1.3.0 — 2025-11-03 Date : 2025-11-03 Version : 1.3.0 Résumé : Nouvelle commande check et templates ; améliorations UX. Points forts Points forts Fonctionnalité : ajout de la commande check et du sous-commande templates (renommé en init). Corrections : flag strict, améliorations des couleurs/statuts et divers raffinements de logging. --- v1.2.0 — 2025-10-21 Date : 2025-10-21 Version : 1.2.0 Résumé : Redirection Markdown et mises à jour de dépendances. Points forts Points forts Fonctionnalité : ajout du support de redirection Markdown. Tâche : mises à jour de dépendances et améliorations CI. --- v1.1.0 — 2025-10-14 Date : 2025-10-14 Version : 1.1.0 Résumé : Nouvelles commandes et améliorations d'outils. Points forts Points forts Fonctionnalité : ajout de la commande tag ; lister les tags et catégories. Divers : améliorations d'outillage et de la commande refresh. --- v1.0.0 — 2025-10-06 Date : 2025-10-06 Version : 1.0.0 Résumé : Étape majeure avec breaking changes et fonctionnalités de base. Points forts Points forts Changement incompatible : geol list devient geol list products. Fonctionnalités : ajout des sous-commandes categories et tags ; sous-commande list products. --- v0.4.0 — 2025-10-01 Date : 2025-10-01 Version : 0.4.0 Résumé : Améliorations UI et utilisabilité. Points forts Points forts Fonctionnalité : ajout d'une vue en arbre pour la commande list ; corrections et mises à jour de dépendances. --- v0.3.0 — 2025-09-30 Date : 2025-09-30 Version : 0.3.0 Résumé : Ajustements visuels et corrections mineures. Points forts Points forts Fonctionnalité : ajout de couleurs et petites améliorations UI ; diverses corrections mineures. --- v0.2.4 — 2025-09-26 Date : 2025-09-26 Version : 0.2.4 Résumé : Mises à jour de dépendances et scripts. Points forts Points forts Tâche : mise à jour des dépendances et des scripts CI. --- v0.2.3 — 2025-09-26 Date : 2025-09-26 Version : 0.2.3 Résumé : Finalisation et améliorations de scripts. Points forts Points forts Correction : ajout de scripts et complétions ; mise à jour des permissions des scripts. --- v0.2.2 — 2025-09-26 Date : 2025-09-26 Version : 0.2.2 Résumé : Ajout des fichiers de complétion et corrections. Points forts Points forts Correction : ajout des fichiers de complétion shell. --- v0.2.1 — 2025-09-26 Date : 2025-09-26 Version : 0.2.1 Résumé : Corrections diverses et mises à jour CI. Points forts Points forts Correction : gestion du répertoire casks et mises à jour CI/dépendances. --- v0.2.0 — 2025-09-25 Date : 2025-09-25 Version : 0.2.0 Résumé : Fonctions de base ajoutées : about, clear, list et cache. Points forts Fonctionnalités : ajout des commandes about, clear, et list ; cache et améliorations de logging.",
-    "url": "/fr/site-src-pages-releases-md-7ef/",
-    "summary": "v2.5.1 — 2026-01-07 Date : 2026-01-07 Version : 2.5.1 Résumé : Corrections de bugs et petites améliorations. Points forts Correction : journaliser un message de debug quand un fichier .geol existe (commit 26e5bc3) — closes #162. --- v2.5.0 — 2026-01-06 Date : 2026-01-06 Version : 2.5.0 Résumé : Nouv",
-    "tags": [],
-    "locale": "fr",
-    "type": "page"
-  },
-  {
     "title": "v2.5.1 — 2026-01-07",
     "text": "Date : 2026-01-07 Version : 2.5.1 Résumé : Corrections de bugs et petites améliorations.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v251---2026-01-07",
+    "url": "/fr/releases/#v251---2026-01-07",
     "summary": "Date : 2026-01-07 Version : 2.5.1 Résumé : Corrections de bugs et petites améliorations.",
     "tags": [],
     "locale": "fr",
@@ -227,7 +218,7 @@
   {
     "title": "v2.5.0 — 2026-01-06",
     "text": "Date : 2026-01-06 Version : 2.5.0 Résumé : Nouvelles fonctionnalités et tâches diverses.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v250---2026-01-06",
+    "url": "/fr/releases/#v250---2026-01-06",
     "summary": "Date : 2026-01-06 Version : 2.5.0 Résumé : Nouvelles fonctionnalités et tâches diverses.",
     "tags": [],
     "locale": "fr",
@@ -236,7 +227,7 @@
   {
     "title": "v2.4.0 — 2026-01-04",
     "text": "Date : 2026-01-04 Version : 2.4.0 Résumé : Améliorations et mises à jour CI.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v240---2026-01-04",
+    "url": "/fr/releases/#v240---2026-01-04",
     "summary": "Date : 2026-01-04 Version : 2.4.0 Résumé : Améliorations et mises à jour CI.",
     "tags": [],
     "locale": "fr",
@@ -245,7 +236,7 @@
   {
     "title": "v2.3.0 — 2025-12-30",
     "text": "Date : 2025-12-30 Version : 2.3.0 Résumé : Ajouts de base de données et support du tagging.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v230---2025-12-30",
+    "url": "/fr/releases/#v230---2025-12-30",
     "summary": "Date : 2025-12-30 Version : 2.3.0 Résumé : Ajouts de base de données et support du tagging.",
     "tags": [],
     "locale": "fr",
@@ -254,7 +245,7 @@
   {
     "title": "v2.2.0 — 2025-12-29",
     "text": "Date : 2025-12-29 Version : 2.2.0 Résumé : Modèle de données et corrections de stabilité.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v220---2025-12-29",
+    "url": "/fr/releases/#v220---2025-12-29",
     "summary": "Date : 2025-12-29 Version : 2.2.0 Résumé : Modèle de données et corrections de stabilité.",
     "tags": [],
     "locale": "fr",
@@ -263,7 +254,7 @@
   {
     "title": "v2.1.1 — 2025-12-28",
     "text": "Date : 2025-12-28 Version : 2.1.1 Résumé : Corrections de bugs.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v211---2025-12-28",
+    "url": "/fr/releases/#v211---2025-12-28",
     "summary": "Date : 2025-12-28 Version : 2.1.1 Résumé : Corrections de bugs.",
     "tags": [],
     "locale": "fr",
@@ -272,7 +263,7 @@
   {
     "title": "v2.1.0 — 2025-12-24",
     "text": "Date : 2025-12-24 Version : 2.1.0 Résumé : Fonctionnalités pour de meilleurs exports et rapports.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v210---2025-12-24",
+    "url": "/fr/releases/#v210---2025-12-24",
     "summary": "Date : 2025-12-24 Version : 2.1.0 Résumé : Fonctionnalités pour de meilleurs exports et rapports.",
     "tags": [],
     "locale": "fr",
@@ -281,7 +272,7 @@
   {
     "title": "v2.0.1 — 2025-12-05",
     "text": "Date : 2025-12-05 Version : 2.0.1 Résumé : Corrections et maintenance.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v201---2025-12-05",
+    "url": "/fr/releases/#v201---2025-12-05",
     "summary": "Date : 2025-12-05 Version : 2.0.1 Résumé : Corrections et maintenance.",
     "tags": [],
     "locale": "fr",
@@ -290,7 +281,7 @@
   {
     "title": "v2.0.0 — 2025-11-28",
     "text": "Date : 2025-11-28 Version : 2.0.0 Résumé : Release majeure avec breaking changes et nouvelles fonctionnalités.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v200---2025-11-28",
+    "url": "/fr/releases/#v200---2025-11-28",
     "summary": "Date : 2025-11-28 Version : 2.0.0 Résumé : Release majeure avec breaking changes et nouvelles fonctionnalités.",
     "tags": [],
     "locale": "fr",
@@ -299,7 +290,7 @@
   {
     "title": "v1.5.0 — 2025-11-25",
     "text": "Date : 2025-11-25 Version : 1.5.0 Résumé : Identifiants de produit et améliorations d'export.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v150---2025-11-25",
+    "url": "/fr/releases/#v150---2025-11-25",
     "summary": "Date : 2025-11-25 Version : 1.5.0 Résumé : Identifiants de produit et améliorations d'export.",
     "tags": [],
     "locale": "fr",
@@ -308,7 +299,7 @@
   {
     "title": "v1.4.0 — 2025-11-17",
     "text": "Date : 2025-11-17 Version : 1.4.0 Résumé : Améliorations de l'affichage des catégories et corrections.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v140---2025-11-17",
+    "url": "/fr/releases/#v140---2025-11-17",
     "summary": "Date : 2025-11-17 Version : 1.4.0 Résumé : Améliorations de l'affichage des catégories et corrections.",
     "tags": [],
     "locale": "fr",
@@ -317,7 +308,7 @@
   {
     "title": "v1.3.0 — 2025-11-03",
     "text": "Date : 2025-11-03 Version : 1.3.0 Résumé : Nouvelle commande check et templates ; améliorations UX.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v130---2025-11-03",
+    "url": "/fr/releases/#v130---2025-11-03",
     "summary": "Date : 2025-11-03 Version : 1.3.0 Résumé : Nouvelle commande check et templates ; améliorations UX.",
     "tags": [],
     "locale": "fr",
@@ -326,7 +317,7 @@
   {
     "title": "v1.2.0 — 2025-10-21",
     "text": "Date : 2025-10-21 Version : 1.2.0 Résumé : Redirection Markdown et mises à jour de dépendances.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v120---2025-10-21",
+    "url": "/fr/releases/#v120---2025-10-21",
     "summary": "Date : 2025-10-21 Version : 1.2.0 Résumé : Redirection Markdown et mises à jour de dépendances.",
     "tags": [],
     "locale": "fr",
@@ -335,7 +326,7 @@
   {
     "title": "v1.1.0 — 2025-10-14",
     "text": "Date : 2025-10-14 Version : 1.1.0 Résumé : Nouvelles commandes et améliorations d'outils.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v110---2025-10-14",
+    "url": "/fr/releases/#v110---2025-10-14",
     "summary": "Date : 2025-10-14 Version : 1.1.0 Résumé : Nouvelles commandes et améliorations d'outils.",
     "tags": [],
     "locale": "fr",
@@ -344,7 +335,7 @@
   {
     "title": "v1.0.0 — 2025-10-06",
     "text": "Date : 2025-10-06 Version : 1.0.0 Résumé : Étape majeure avec breaking changes et fonctionnalités de base.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v100---2025-10-06",
+    "url": "/fr/releases/#v100---2025-10-06",
     "summary": "Date : 2025-10-06 Version : 1.0.0 Résumé : Étape majeure avec breaking changes et fonctionnalités de base.",
     "tags": [],
     "locale": "fr",
@@ -353,7 +344,7 @@
   {
     "title": "v0.4.0 — 2025-10-01",
     "text": "Date : 2025-10-01 Version : 0.4.0 Résumé : Améliorations UI et utilisabilité.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v040---2025-10-01",
+    "url": "/fr/releases/#v040---2025-10-01",
     "summary": "Date : 2025-10-01 Version : 0.4.0 Résumé : Améliorations UI et utilisabilité.",
     "tags": [],
     "locale": "fr",
@@ -362,7 +353,7 @@
   {
     "title": "v0.3.0 — 2025-09-30",
     "text": "Date : 2025-09-30 Version : 0.3.0 Résumé : Ajustements visuels et corrections mineures.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v030---2025-09-30",
+    "url": "/fr/releases/#v030---2025-09-30",
     "summary": "Date : 2025-09-30 Version : 0.3.0 Résumé : Ajustements visuels et corrections mineures.",
     "tags": [],
     "locale": "fr",
@@ -371,7 +362,7 @@
   {
     "title": "v0.2.4 — 2025-09-26",
     "text": "Date : 2025-09-26 Version : 0.2.4 Résumé : Mises à jour de dépendances et scripts.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v024---2025-09-26",
+    "url": "/fr/releases/#v024---2025-09-26",
     "summary": "Date : 2025-09-26 Version : 0.2.4 Résumé : Mises à jour de dépendances et scripts.",
     "tags": [],
     "locale": "fr",
@@ -380,7 +371,7 @@
   {
     "title": "v0.2.3 — 2025-09-26",
     "text": "Date : 2025-09-26 Version : 0.2.3 Résumé : Finalisation et améliorations de scripts.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v023---2025-09-26",
+    "url": "/fr/releases/#v023---2025-09-26",
     "summary": "Date : 2025-09-26 Version : 0.2.3 Résumé : Finalisation et améliorations de scripts.",
     "tags": [],
     "locale": "fr",
@@ -389,7 +380,7 @@
   {
     "title": "v0.2.2 — 2025-09-26",
     "text": "Date : 2025-09-26 Version : 0.2.2 Résumé : Ajout des fichiers de complétion et corrections.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v022---2025-09-26",
+    "url": "/fr/releases/#v022---2025-09-26",
     "summary": "Date : 2025-09-26 Version : 0.2.2 Résumé : Ajout des fichiers de complétion et corrections.",
     "tags": [],
     "locale": "fr",
@@ -398,7 +389,7 @@
   {
     "title": "v0.2.1 — 2025-09-26",
     "text": "Date : 2025-09-26 Version : 0.2.1 Résumé : Corrections diverses et mises à jour CI.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v021---2025-09-26",
+    "url": "/fr/releases/#v021---2025-09-26",
     "summary": "Date : 2025-09-26 Version : 0.2.1 Résumé : Corrections diverses et mises à jour CI.",
     "tags": [],
     "locale": "fr",
@@ -407,7 +398,7 @@
   {
     "title": "v0.2.0 — 2025-09-25",
     "text": "Date : 2025-09-25 Version : 0.2.0 Résumé : Fonctions de base ajoutées : about, clear, list et cache.",
-    "url": "/fr/site-src-pages-releases-md-7ef/#v020---2025-09-25",
+    "url": "/fr/releases/#v020---2025-09-25",
     "summary": "Date : 2025-09-25 Version : 0.2.0 Résumé : Fonctions de base ajoutées : about, clear, list et cache.",
     "tags": [],
     "locale": "fr",

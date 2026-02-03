@@ -172,6 +172,18 @@ function buildIndex() {
           pageUrl = path.posix.join('/', locale, pageUrl);
           if (!pageUrl.endsWith('/')) pageUrl = pageUrl + '/';
         }
+
+        // Normalize auto-generated page filenames created by Docusaurus i18n for pages
+        // Example: /fr/site-src-pages-releases-md-7ef/ should map to the canonical /fr/releases/
+        if (pageUrl.includes('site-src-pages-releases')) {
+          pageUrl = pageUrl.replace(/\/site-src-pages-releases[^\/]*\//, '/releases/');
+          if (locale !== defaultLocale) {
+            // ensure locale prefix remains (e.g. /fr/releases/)
+            pageUrl = path.posix.join('/', locale, 'releases/');
+          } else {
+            pageUrl = '/releases/';
+          }
+        }
         const excludePaths = ['/blog/2021-08-26-welcome', '/blog/welcome'];
         if (excludePaths.some(p => pageUrl.startsWith(p))) continue;
         items.push({ title, text, url: pageUrl, summary: fmDescription || summary, tags: tags || [], locale, type: src.prefix.replace(/\//g,'') || 'page' });
@@ -225,7 +237,9 @@ function buildIndex() {
     const pOld = priority(existing.url);
     if (pNew < pOld) map.set(key, it);
   }
-  const dedup = Array.from(map.values());
+  let dedup = Array.from(map.values());
+  // Remove any accidental aggregate page titled 'Versions' from the default index
+  dedup = dedup.filter(it => (it.title || '').toString().trim().toLowerCase() !== 'versions');
 
   if (!fs.existsSync(outDir)) fs.mkdirSync(outDir);
   fs.writeFileSync(outFile, JSON.stringify(dedup, null, 2));
@@ -240,7 +254,9 @@ function buildIndex() {
       const key = (it.title || '').toString().toLowerCase().trim();
       if (!mapLoc.has(key)) mapLoc.set(key, it);
     }
-    const dedupLoc = Array.from(mapLoc.values());
+    let dedupLoc = Array.from(mapLoc.values());
+    // Exclude the localized aggregate 'Versions' entry so it does not appear in search
+    dedupLoc = dedupLoc.filter(it => (it.title || '').toString().trim().toLowerCase() !== 'versions');
     const localeOutDir = path.join(outDir, locale);
     if (!fs.existsSync(localeOutDir)) fs.mkdirSync(localeOutDir, { recursive: true });
     const localeFile = path.join(localeOutDir, 'search-index.json');

@@ -11,6 +11,8 @@ Voici deux commandes courantes pour convertir un rapport `AsciiDoc` en HTML (ave
 asciidoctor -a toc -a toclevels=4 geol-report.adoc  # convertir geol-report.adoc en HTML avec table des matières
 asciidoctor-pdf -a toc -a toclevels=4 geol-report.adoc  # convertir en PDF
 ```
+ 
+Voir https://pandoc.org/ et https://asciidoctor.org/ pour l'installation et les options.
 
 ## Notes & exemples de workflow
 
@@ -30,5 +32,3 @@ asciidoctor-pdf -a toc -a toclevels=4 geol-report.adoc
 pandoc geol-report.md -o geol-report.epub
 pandoc geol-report.md -o geol-report.pdf --pdf-engine=xelatex
 ```
-
-Voir https://pandoc.org/ et https://asciidoctor.org/ pour l'installation et les options.

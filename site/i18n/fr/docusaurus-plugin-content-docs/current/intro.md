@@ -22,12 +22,28 @@ brew install --cask opt-nc/homebrew-tap/geol
 Remarque : si l'installation via `brew` échoue, c'est peut-être parce que `curl` fourni par Homebrew n'est pas installé et que votre distribution utilise le `curl` du système (apt).
 
 ```bash
+➜  ~ brew install --cask opt-nc/homebrew-tap/geol    # attempts to install the 'geol' cask via Homebrew
+# Output (example error):
+Error: Download failed on Cask 'geol' with message: Download failed:
+Homebrew-installed `curl` is not installed
+for: https://github.com/opt-nc/geol/releases/download/v0.3.0/geol_Linux_x86_64.tar.gz  # the archive couldn't be downloaded because the expected Homebrew-provided curl is missing
+
+# Suggested solution: install curl via Homebrew, then retry
+brew install curl    # install 'curl' via Homebrew
+brew install --cask opt-nc/homebrew-tap/geol    # retry installing the 'geol' cask
+```
+
+Ou installez avec :
+
+```bash
 # Go
 go install github.com/opt-nc/geol@latest
 
 # Script Shell
 curl -fsSL https://raw.githubusercontent.com/opt-nc/geol/main/install.sh | bash
 ```
+
+Vous pouvez taper cette commande dans l'invite de commandes, le Terminal, ou tout autre terminal intégré de votre éditeur de code.
 
 ## Obtenir la version de `geol`
 
