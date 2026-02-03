@@ -51,6 +51,13 @@ Vous pouvez taper cette commande dans l'invite de commandes, le Terminal, ou tou
 geol version
 ```
 
+Si votre version de `geol` n'est pas à jour, vous pouvez la mettre à jour avec Homebrew :
+
+```bash
+# Mettre à jour Homebrew et mettre à jour le cask geol
+brew update && brew upgrade --cask geol
+```
+
 ## En savoir plus sur `geol`
 
 ```bash
