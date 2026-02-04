@@ -60,7 +60,12 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			continue
 		}
 
-		eolDate, isLatest, latestVersion := lookupEolDate(item.IdEol, item.Version)
+		eolDate, isLatest, latestVersion, err := lookupEolDate(item.IdEol, item.Version)
+		if err != nil {
+			log.Error().Err(err).Msgf("Error looking up EOL date for %s %s", item.Name, item.Version)
+			errorOut = true
+			continue
+		}
 		var status string
 		var daysStr string
 		var daysInt int
@@ -72,7 +77,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			if daysInt < 0 {
 				status = "EOL"
 				errorOut = true
-				// Calculer la durée écoulée depuis EOL
+				// Calculate time elapsed since EOL
 				years := -daysInt / 365
 				months := (-daysInt % 365) / 30
 				days := (-daysInt % 365) % 30
@@ -141,19 +146,19 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 }
 
 // lookupEolDate should return the EOL date for a given id_eol and version (YYYY-MM-DD)
-func lookupEolDate(idEol, version string) (string, bool, string) {
+func lookupEolDate(idEol, version string) (string, bool, string, error) {
 	// Try to get products cache path
 	productsPath, err := utilities.GetProductsPath()
 	if err != nil {
 		log.Error().Err(err).Msg("Error retrieving products path")
-		return "", false, ""
+		return "", false, "", fmt.Errorf("error retrieving products path: %v", err)
 	}
 
 	// Get products from cache (refresh if needed)
 	products, err := utilities.GetProductsWithCacheRefresh(nil, productsPath)
 	if err != nil {
 		log.Error().Err(err).Msg("Error retrieving products from cache")
-		return "", false, ""
+		return "", false, "", fmt.Errorf("error retrieving products from cache: %v", err)
 	}
 
 	prod := idEol
@@ -179,29 +184,41 @@ func lookupEolDate(idEol, version string) (string, bool, string) {
 
 	if !found {
 		log.Error().Msgf("Product with id_eol %s not found in the API", idEol)
-		os.Exit(1)
+		return "", false, "", fmt.Errorf("product with id_eol %s not found in the API", idEol)
 	}
 
 	if len(prod) > 0 {
 		url := utilities.ApiUrl + "products/" + prod + "/releases/" + version
+
+		readBody := func(resp *http.Response, prod string) ([]byte, error) {
+			body, err := io.ReadAll(resp.Body)
+			if cerr := resp.Body.Close(); cerr != nil {
+				log.Error().Err(cerr).Msgf("Error closing HTTP body for %s", prod)
+				return nil, cerr
+			}
+			if err != nil {
+				log.Error().Err(err).Msgf("Error reading response for %s", prod)
+				return nil, err
+			}
+			return body, nil
+		}
+
 		resp, err := http.Get(url)
 		if err != nil {
 			log.Error().Err(err).Msgf("Error requesting %s", prod)
-			os.Exit(1)
+			return "", false, "", err
 		}
-		body, err := io.ReadAll(resp.Body)
-		if cerr := resp.Body.Close(); cerr != nil {
-			log.Error().Err(cerr).Msgf("Error closing HTTP body for %s", prod)
-			os.Exit(1)
-		}
+
+		body, err := readBody(resp, prod)
 		if err != nil {
-			log.Error().Err(err).Msgf("Error reading response for %s", prod)
-			os.Exit(1)
+			return "", false, "", err
 		}
+
 		if resp.StatusCode != 200 {
 			log.Error().Msgf("Product %s version %s not found (status %d)", prod, version, resp.StatusCode)
-			os.Exit(1)
+			return "", false, "", fmt.Errorf("product %s version %s not found (status %d)", prod, version, resp.StatusCode)
 		}
+
 		var apiResp struct {
 			Result struct {
 				Name    string `json:"name"`
@@ -212,28 +229,26 @@ func lookupEolDate(idEol, version string) (string, bool, string) {
 
 		if err := json.Unmarshal(body, &apiResp); err != nil {
 			log.Error().Err(err).Msgf("Error decoding JSON for %s", prod)
-			os.Exit(1)
+			return "", false, "", err
 		}
 
 		url = utilities.ApiUrl + "products/" + prod
 		resp, err = http.Get(url)
 		if err != nil {
 			log.Error().Err(err).Msgf("Error requesting %s", prod)
-			os.Exit(1)
+			return "", false, "", err
 		}
-		body, err = io.ReadAll(resp.Body)
-		if cerr := resp.Body.Close(); cerr != nil {
-			log.Error().Err(cerr).Msgf("Error closing HTTP body for %s", prod)
-			os.Exit(1)
-		}
+
+		body, err = readBody(resp, prod)
 		if err != nil {
-			log.Error().Err(err).Msgf("Error reading response for %s", prod)
-			os.Exit(1)
+			return "", false, "", err
 		}
+
 		if resp.StatusCode != 200 {
 			log.Error().Msgf("Product %s not found (status %d)", prod, resp.StatusCode)
-			os.Exit(1)
+			return "", false, "", fmt.Errorf("product %s not found (status %d)", prod, resp.StatusCode)
 		}
+
 		var apiRespProd struct {
 			Result struct {
 				Releases []struct {
@@ -244,7 +259,7 @@ func lookupEolDate(idEol, version string) (string, bool, string) {
 
 		if err := json.Unmarshal(body, &apiRespProd); err != nil {
 			log.Error().Err(err).Msgf("Error decoding JSON for %s", prod)
-			os.Exit(1)
+			return "", false, "", err
 		}
 
 		isLatest := false
@@ -256,9 +271,9 @@ func lookupEolDate(idEol, version string) (string, bool, string) {
 			}
 		}
 
-		return apiResp.Result.EolFrom, isLatest, latestVersion
+		return apiResp.Result.EolFrom, isLatest, latestVersion, nil
 	}
-	return "", false, ""
+	return "", false, "", nil
 }
 
 // renderStackTable renders the stack table using lipgloss/table
