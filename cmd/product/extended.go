@@ -300,19 +300,6 @@ func FetchProductData(productName string) (ProductReleases, error) {
 		return ProductReleases{}, fmt.Errorf("error decoding JSON for %s: %w", productName, err)
 	}
 
-	var releases []ReleaseInfo
-	for _, r := range apiResp.Result.Releases {
-		releases = append(releases, ReleaseInfo{
-			Name:        r.Name,
-			ReleaseDate: r.ReleaseDate,
-			LatestName:  r.Latest.Name,
-			LatestDate:  r.Latest.Date,
-			EoasFrom:    r.EoasFrom,
-			EolFrom:     r.EolFrom,
-			LTS:         r.IsLTS,
-		})
-	}
-
 	return ProductReleases{
 		Name:     apiResp.Result.Name,
 		Releases: releases,

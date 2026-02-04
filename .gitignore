@@ -49,7 +49,7 @@ manpages/
 geol-build/
 .docusaurus/
 build/
-rapport/
+rapport-repo/
 rapport.pdf
 # Drafts folder (ignored)
 Brouillon/

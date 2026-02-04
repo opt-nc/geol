@@ -8,6 +8,9 @@ sidebar_position: 2
 
 ## Get a product overview
 
+Displays detailed metadata for a product (description, version command,...); `ubuntu` is an example — replace it with any product name.
+
  ```bash
- geol product describe <product-name>   # detailed summary for a product
+ geol product describe ubuntu
  ```
+This output is a summary of the information available on endoflife.date — for Ubuntu see https://endoflife.date/ubuntu.

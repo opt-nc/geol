@@ -27,7 +27,7 @@ const config = {
 
   i18n: {
     defaultLocale: 'en',
-    locales: ['en', 'fr'],
+    locales: ['en'],
   },
 
   presets: [
@@ -55,7 +55,6 @@ const config = {
   clientModules: [
     require.resolve('./src/js/no-image-drag.js'),
     require.resolve('./src/js/lazy-images-client.js'),
-    require.resolve('./src/js/locale-fallback.js'),
     require.resolve('./src/js/left-panel-toggle.js'),
   ],
 
@@ -80,18 +79,17 @@ const config = {
             className: 'left-panel-dropdown',
             items: [
                 { type: 'docSidebar', sidebarId: 'tutorialSidebar', label: 'Tutorial' },
-                { to: '/releases', label: 'Releases' },
                 { to: '/blog', label: 'Blog' },
               ],
           },
           { href: 'https://github.com/opt-nc/geol', label: 'GitHub', position: 'right' },
-          { type: 'localeDropdown', position: 'right', className: 'only-icon-locale' },
+          // locale dropdown removed (only English site)
         ],
       },
-      footer: {
+        footer: {
         style: 'dark',
         links: [
-          { title: 'Docs', items: [{ label: 'Tutorial', to: '/docs/intro' }, { label: 'Releases', to: '/releases' }] },
+          { title: 'Docs', items: [{ label: 'Tutorial', to: '/docs/intro' }] },
           {
             title: 'Community',
             items: [

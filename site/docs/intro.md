@@ -15,35 +15,28 @@ Note: Homebrew often provides more up-to-date packages than other sources, so in
 - <code>brew</code> installed on your machine. See the official <a href="https://brew.sh/" target="_blank" rel="noreferrer noopener">Homebrew website</a> for installation instructions.
 
 ```bash
-brew install --cask opt-nc/homebrew-tap/geol
-```
-Note: If the `brew` installation fails, it may be because Homebrew's `curl` is not installed and your system is using the distribution `curl` (apt).
-
-```bash
-# Solution: install curl with brew then retry
 brew install curl
 brew install --cask opt-nc/homebrew-tap/geol
 ```
 
-
-
 ## Get `geol` version
-
 ```bash
 geol version
 ```
 
-
-
 ## Know a bit more about `geol`
-
+Displays a brief description and information about `geol`.
 ```bash
 geol about
 ```
 
 ## Get help
-
+Displays quick help and the main commands.
 ```bash
 geol help
+```
+
+Shows the full manual page: all commands and detailed help (includes the information from `geol help`).
+```bash
 man geol
 ```
