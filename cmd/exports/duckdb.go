@@ -17,8 +17,8 @@ import (
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 
-	"github.com/opt-nc/geol/cmd/product"
-	"github.com/opt-nc/geol/utilities"
+	"github.com/opt-nc/geol/v2/cmd/product"
+	"github.com/opt-nc/geol/v2/utilities"
 )
 
 const (
@@ -300,9 +300,9 @@ func createAboutTable(db *sql.DB) error {
 			git_commit TEXT,
 			go_version TEXT,
 			platform TEXT,
-			github_URL TEXT,
+			github_url TEXT,
 			generated_at TIMESTAMP DEFAULT date_trunc('second', CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
-			generated_at_TZ TIMESTAMPTZ DEFAULT date_trunc('second', CURRENT_TIMESTAMP)
+			generated_at_tz TIMESTAMPTZ DEFAULT date_trunc('second', CURRENT_TIMESTAMP)
 		)`)
 	if err != nil {
 		return fmt.Errorf("error creating 'about' table: %w", err)
@@ -320,20 +320,20 @@ func createAboutTable(db *sql.DB) error {
 		COMMENT ON COLUMN about.git_commit IS 'Git commit hash of geol used to generate this database';
 		COMMENT ON COLUMN about.go_version IS 'Go compiler version used to build geol';
 		COMMENT ON COLUMN about.platform IS 'Operating system and architecture where geol was executed';
-		COMMENT ON COLUMN about.github_URL IS 'GitHub repository URL for the geol project';
+		COMMENT ON COLUMN about.github_url IS 'GitHub repository URL for the geol project';
 		COMMENT ON COLUMN about.generated_at IS 'UTC timestamp when this database was generated';
-		COMMENT ON COLUMN about.generated_at_TZ IS 'Local timestamp with timezone when this database was generated';
+		COMMENT ON COLUMN about.generated_at_tz IS 'Local timestamp with timezone when this database was generated';
 	`)
 	if err != nil {
 		return fmt.Errorf("error adding comments to 'about' columns: %w", err)
 	}
 
 	// Insert values into 'about' table
-	_, err = db.Exec(`INSERT INTO about (git_version, git_commit, go_version, platform, github_URL) 
+	_, err = db.Exec(`INSERT INTO about (git_version, git_commit, go_version, platform, github_url) 
 		VALUES (?, ?, ?, ?, ?)`,
 		utilities.Version, utilities.Commit, utilities.GoVersion,
 		fmt.Sprintf("%s/%s", utilities.PlatformOs, utilities.PlatformArch),
-		"https://github.com/opt-nc/geol")
+		"https://github.com/opt-nc/geol/v2")
 	log.Info().Msg("Inserted metadata into \"about\" table")
 	if err != nil {
 		return fmt.Errorf("error inserting into 'about' table: %w", err)
@@ -427,6 +427,7 @@ func createDetailsTable(db *sql.DB) error {
 			latest TEXT,
 			latest_release_date DATE,
 			eol_date DATE,
+			PRIMARY KEY (product_id, cycle),
 			FOREIGN KEY (product_id) REFERENCES products(id)
 		)`)
 	if err != nil {
@@ -443,7 +444,8 @@ func createDetailsTable(db *sql.DB) error {
 			latest,
 			CASE WHEN latest_release = '' THEN NULL ELSE TRY_CAST(latest_release AS DATE) END,
 			CASE WHEN eol = '' THEN NULL ELSE TRY_CAST(eol AS DATE) END
-		FROM details_temp`)
+		FROM details_temp
+		ORDER BY product_id`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error inserting data into 'details' table")
 		return err
@@ -509,18 +511,55 @@ func createProductsTable(db *sql.DB, allData *allProductsData) error {
 		return err
 	}
 
-	// Insert product data from pre-fetched data
+	// Collect all products
+	type productEntry struct {
+		id         string
+		label      string
+		categoryID string
+		uri        string
+	}
+	var allProductsSlice []productEntry
+
 	for _, prodData := range allData.Products {
-		_, err = db.Exec(`INSERT INTO products (id, label, category_id, uri) 
-				VALUES (?, ?, ?, ?)`,
-			prodData.Name,
-			prodData.Label,
-			prodData.Category,
-			prodData.URI,
+		allProductsSlice = append(allProductsSlice, productEntry{
+			id:         prodData.Name,
+			label:      prodData.Label,
+			categoryID: prodData.Category,
+			uri:        prodData.URI,
+		})
+	}
+
+	// Sort products by id using DuckDB
+	// First insert all data into a temporary table, then insert sorted
+	_, err = db.Exec(`CREATE TEMP TABLE IF NOT EXISTS products_temp (
+			id TEXT,
+			label TEXT,
+			category_id TEXT,
+			uri TEXT
+		)`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating products_temp table")
+		return err
+	}
+
+	for _, entry := range allProductsSlice {
+		_, err = db.Exec(`INSERT INTO products_temp (id, label, category_id, uri) VALUES (?, ?, ?, ?)`,
+			entry.id,
+			entry.label,
+			entry.categoryID,
+			entry.uri,
 		)
 		if err != nil {
-			log.Error().Err(err).Msgf("Error inserting product data for %s", prodData.Name)
+			log.Error().Err(err).Msgf("Error inserting product %s into temp table", entry.id)
 		}
+	}
+
+	// Insert from temp table sorted by id
+	_, err = db.Exec(`INSERT INTO products (id, label, category_id, uri) 
+		SELECT id, label, category_id, uri FROM products_temp ORDER BY id`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error inserting sorted products")
+		return err
 	}
 
 	log.Info().Msg("Created and populated \"products\" table")
@@ -531,8 +570,9 @@ func createProductsTable(db *sql.DB, allData *allProductsData) error {
 func createAliasesTable(db *sql.DB, allData *allProductsData) error {
 	// Create 'aliases' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS aliases (
+			id TEXT,
 			product_id TEXT,
-			alias TEXT,
+			PRIMARY KEY (id, product_id),
 			FOREIGN KEY (product_id) REFERENCES products(id)
 		)`)
 	if err != nil {
@@ -548,8 +588,8 @@ func createAliasesTable(db *sql.DB, allData *allProductsData) error {
 	}
 	// Add comments to 'aliases' table columns
 	_, err = db.Exec(`
+		COMMENT ON COLUMN aliases.id IS 'Alternative name or alias for the product (primary key)';
 		COMMENT ON COLUMN aliases.product_id IS 'Product id referencing the products table';
-		COMMENT ON COLUMN aliases.alias IS 'Alternative name or alias for the product';
 	`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error adding comments to 'aliases' columns")
@@ -583,20 +623,51 @@ func createAliasesTable(db *sql.DB, allData *allProductsData) error {
 		return err
 	}
 
-	// Insert aliases for each product in the database
+	// Collect all aliases with their product IDs
+	type aliasEntry struct {
+		id        string
+		productID string
+	}
+	var allAliases []aliasEntry
+
 	for _, productID := range productIDs {
 		if prodData, exists := allData.Products[productID]; exists {
 			for _, alias := range prodData.Aliases {
-				_, err = db.Exec(`INSERT INTO aliases (product_id, alias) 
-						VALUES (?, ?)`,
-					productID,
-					alias,
-				)
-				if err != nil {
-					log.Error().Err(err).Msgf("Error inserting alias %s for product %s", alias, productID)
-				}
+				allAliases = append(allAliases, aliasEntry{
+					id:        alias,
+					productID: productID,
+				})
 			}
 		}
+	}
+
+	// Sort aliases by id using DuckDB
+	// First insert all data into a temporary table, then insert sorted
+	_, err = db.Exec(`CREATE TEMP TABLE IF NOT EXISTS aliases_temp (
+			id TEXT,
+			product_id TEXT
+		)`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating aliases_temp table")
+		return err
+	}
+
+	for _, entry := range allAliases {
+		_, err = db.Exec(`INSERT INTO aliases_temp (id, product_id) VALUES (?, ?)`,
+			entry.id,
+			entry.productID,
+		)
+		if err != nil {
+			log.Error().Err(err).Msgf("Error inserting alias %s into temp table", entry.id)
+		}
+	}
+
+	// Insert from temp table sorted by id
+	_, err = db.Exec(`INSERT INTO aliases (id, product_id) 
+		SELECT id, product_id FROM aliases_temp ORDER BY id`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error inserting sorted aliases")
+		return err
 	}
 
 	log.Info().Msg("Created and populated \"aliases\" table")
@@ -610,6 +681,7 @@ func createProductIdentifiersTable(db *sql.DB, allData *allProductsData) error {
 			product_id TEXT,
 			identifier_type TEXT,
 			identifier_value TEXT,
+			PRIMARY KEY (product_id, identifier_type, identifier_value),
 			FOREIGN KEY (product_id) REFERENCES products(id)
 		)`)
 	if err != nil {
@@ -661,7 +733,15 @@ func createProductIdentifiersTable(db *sql.DB, allData *allProductsData) error {
 		log.Error().Err(err).Msg("Error iterating over product rows")
 		return err
 	}
-	// Insert product identifiers for each product in the database
+
+	// Collect all product identifiers
+	type identifierEntry struct {
+		productID       string
+		identifierType  string
+		identifierValue string
+	}
+	var allIdentifiers []identifierEntry
+
 	for _, productID := range productIDs {
 		if prodData, exists := allData.Products[productID]; exists {
 			for _, identifier := range prodData.Identifiers {
@@ -671,17 +751,44 @@ func createProductIdentifiersTable(db *sql.DB, allData *allProductsData) error {
 					identifierValue = "https://repology.org/project/" + identifier.ID
 				}
 
-				_, err = db.Exec(`INSERT INTO product_identifiers (product_id, identifier_type, identifier_value)
-						VALUES (?, ?, ?)`,
-					productID,
-					identifier.Type,
-					identifierValue,
-				)
-				if err != nil {
-					log.Error().Err(err).Msgf("Error inserting identifier %s for product %s", identifier.ID, productID)
-				}
+				allIdentifiers = append(allIdentifiers, identifierEntry{
+					productID:       productID,
+					identifierType:  identifier.Type,
+					identifierValue: identifierValue,
+				})
 			}
 		}
+	}
+
+	// Sort product identifiers by product_id using DuckDB
+	// First insert all data into a temporary table, then insert sorted
+	_, err = db.Exec(`CREATE TEMP TABLE IF NOT EXISTS product_identifiers_temp (
+			product_id TEXT,
+			identifier_type TEXT,
+			identifier_value TEXT
+		)`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating product_identifiers_temp table")
+		return err
+	}
+
+	for _, entry := range allIdentifiers {
+		_, err = db.Exec(`INSERT INTO product_identifiers_temp (product_id, identifier_type, identifier_value) VALUES (?, ?, ?)`,
+			entry.productID,
+			entry.identifierType,
+			entry.identifierValue,
+		)
+		if err != nil {
+			log.Error().Err(err).Msgf("Error inserting identifier into temp table")
+		}
+	}
+
+	// Insert from temp table sorted by product_id
+	_, err = db.Exec(`INSERT INTO product_identifiers (product_id, identifier_type, identifier_value) 
+		SELECT product_id, identifier_type, identifier_value FROM product_identifiers_temp ORDER BY product_id`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error inserting sorted product identifiers")
+		return err
 	}
 
 	log.Info().Msg("Created and populated \"product_identifiers\" table")
@@ -693,7 +800,8 @@ func createTagsTable(db *sql.DB, allTags map[string]utilities.Tag) error {
 	// Create 'tags' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS tags (
 			id TEXT PRIMARY KEY,
-			uri TEXT
+			uri TEXT UNIQUE,
+			www TEXT
 		)`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'tags' table")
@@ -711,22 +819,58 @@ func createTagsTable(db *sql.DB, allTags map[string]utilities.Tag) error {
 	_, err = db.Exec(`
 		COMMENT ON COLUMN tags.id IS 'Unique tag identifier (primary key)';
 		COMMENT ON COLUMN tags.uri IS 'URI to the tag page on endoflife.date';
+		COMMENT ON COLUMN tags.www IS 'Human-readable web URL to the tag page on endoflife.date';
 	`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error adding comments to 'tags' columns")
 		return err
 	}
 
-	// Insert tags data
+	// Collect all tags
+	type tagEntry struct {
+		id  string
+		uri string
+		www string
+	}
+	var allTagsSlice []tagEntry
+
 	for _, tag := range allTags {
-		_, err = db.Exec(`INSERT INTO tags (id, uri) 
-				VALUES (?, ?)`,
-			tag.Name,
-			tag.Uri,
+		allTagsSlice = append(allTagsSlice, tagEntry{
+			id:  tag.Name,
+			uri: tag.Uri,
+			www: "https://endoflife.date/tags/" + tag.Name,
+		})
+	}
+
+	// Sort tags by id using DuckDB
+	// First insert all data into a temporary table, then insert sorted
+	_, err = db.Exec(`CREATE TEMP TABLE IF NOT EXISTS tags_temp (
+			id TEXT,
+			uri TEXT,
+			www TEXT
+		)`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating tags_temp table")
+		return err
+	}
+
+	for _, entry := range allTagsSlice {
+		_, err = db.Exec(`INSERT INTO tags_temp (id, uri, www) VALUES (?, ?, ?)`,
+			entry.id,
+			entry.uri,
+			entry.www,
 		)
 		if err != nil {
-			log.Error().Err(err).Msgf("Error inserting tag %s", tag.Name)
+			log.Error().Err(err).Msgf("Error inserting tag %s into temp table", entry.id)
 		}
+	}
+
+	// Insert from temp table sorted by id
+	_, err = db.Exec(`INSERT INTO tags (id, uri, www) 
+		SELECT id, uri, www FROM tags_temp ORDER BY id`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error inserting sorted tags")
+		return err
 	}
 
 	log.Info().Msg("Created and populated \"tags\" table")
@@ -762,16 +906,47 @@ func createCategoriesTable(db *sql.DB, allCategories map[string]utilities.Catego
 		return err
 	}
 
-	// Insert categories data
+	// Collect all categories
+	type categoryEntry struct {
+		id  string
+		uri string
+	}
+	var allCategoriesSlice []categoryEntry
+
 	for _, category := range allCategories {
-		_, err = db.Exec(`INSERT INTO categories (id, uri) 
-				VALUES (?, ?)`,
-			category.Name,
-			category.Uri,
+		allCategoriesSlice = append(allCategoriesSlice, categoryEntry{
+			id:  category.Name,
+			uri: category.Uri,
+		})
+	}
+
+	// Sort categories by id using DuckDB
+	// First insert all data into a temporary table, then insert sorted
+	_, err = db.Exec(`CREATE TEMP TABLE IF NOT EXISTS categories_temp (
+			id TEXT,
+			uri TEXT
+		)`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating categories_temp table")
+		return err
+	}
+
+	for _, entry := range allCategoriesSlice {
+		_, err = db.Exec(`INSERT INTO categories_temp (id, uri) VALUES (?, ?)`,
+			entry.id,
+			entry.uri,
 		)
 		if err != nil {
-			log.Error().Err(err).Msgf("Error inserting category %s", category.Name)
+			log.Error().Err(err).Msgf("Error inserting category %s into temp table", entry.id)
 		}
+	}
+
+	// Insert from temp table sorted by id
+	_, err = db.Exec(`INSERT INTO categories (id, uri) 
+		SELECT id, uri FROM categories_temp ORDER BY id`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error inserting sorted categories")
+		return err
 	}
 
 	log.Info().Msg("Created and populated \"categories\" table")
@@ -784,6 +959,7 @@ func createProductTagsTable(db *sql.DB, allData *allProductsData) error {
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS product_tags (
 			product_id TEXT,
 			tag_id TEXT,
+			PRIMARY KEY (product_id, tag_id),
 			FOREIGN KEY (product_id) REFERENCES products(id),
 			FOREIGN KEY (tag_id) REFERENCES tags(id)
 		)`)
@@ -809,18 +985,49 @@ func createProductTagsTable(db *sql.DB, allData *allProductsData) error {
 		return err
 	}
 
-	// Insert product-tag relationships
+	// Collect all product-tag relationships
+	type productTagEntry struct {
+		productID string
+		tagID     string
+	}
+	var allProductTags []productTagEntry
+
 	for _, prodData := range allData.Products {
 		for _, tag := range prodData.Tags {
-			_, err = db.Exec(`INSERT INTO product_tags (product_id, tag_id) 
-					VALUES (?, ?)`,
-				prodData.Name,
-				tag.Name,
-			)
-			if err != nil {
-				log.Error().Err(err).Msgf("Error inserting product-tag relationship for product %s and tag %s", prodData.Name, tag.Name)
-			}
+			allProductTags = append(allProductTags, productTagEntry{
+				productID: prodData.Name,
+				tagID:     tag.Name,
+			})
 		}
+	}
+
+	// Sort product-tag relationships by product_id using DuckDB
+	// First insert all data into a temporary table, then insert sorted
+	_, err = db.Exec(`CREATE TEMP TABLE IF NOT EXISTS product_tags_temp (
+			product_id TEXT,
+			tag_id TEXT
+		)`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error creating product_tags_temp table")
+		return err
+	}
+
+	for _, entry := range allProductTags {
+		_, err = db.Exec(`INSERT INTO product_tags_temp (product_id, tag_id) VALUES (?, ?)`,
+			entry.productID,
+			entry.tagID,
+		)
+		if err != nil {
+			log.Error().Err(err).Msgf("Error inserting product-tag into temp table")
+		}
+	}
+
+	// Insert from temp table sorted by product_id
+	_, err = db.Exec(`INSERT INTO product_tags (product_id, tag_id) 
+		SELECT product_id, tag_id FROM product_tags_temp ORDER BY product_id`)
+	if err != nil {
+		log.Error().Err(err).Msg("Error inserting sorted product-tags")
+		return err
 	}
 
 	log.Info().Msg("Created and populated \"product_tags\" table")

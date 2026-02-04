@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/tree"
-	"github.com/opt-nc/geol/utilities"
+	"github.com/opt-nc/geol/v2/utilities"
+	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 )
 
@@ -28,50 +28,41 @@ var tagCmd = &cobra.Command{
 geol tag canonical`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			fmt.Println("Please specify a tag.")
-			os.Exit(1)
+			log.Fatal().Msg("Please specify a tag")
 		}
 		if len(args) > 1 {
-			fmt.Println("Please specify only one tag.")
-			os.Exit(1)
+			log.Fatal().Msg("Please specify only one tag")
 		}
 		tag := args[0]
 
 		utilities.AnalyzeCacheProductsValidity(cmd)
 		tagsPath, err := utilities.GetTagsPath()
 		if err != nil {
-			fmt.Println("Error retrieving tags path:", err)
-			os.Exit(1)
+			log.Fatal().Err(err).Msg("Error retrieving tags path")
 		}
 		tags, err := utilities.GetTagsWithCacheRefresh(cmd, tagsPath)
 		if err != nil {
-			fmt.Println("Error retrieving tags from cache:", err)
-			os.Exit(1)
+			log.Fatal().Err(err).Msg("Error retrieving tags from cache")
 		}
 		if _, ok := tags[tag]; !ok {
-			fmt.Printf("Tag '%s' not found in cache.\n", tag)
-			os.Exit(1)
+			log.Fatal().Msgf("Tag '%s' not found in cache", tag)
 		}
 
 		url := utilities.ApiUrl + "tags/" + tag
 		resp, err := http.Get(url)
 		if err != nil {
-			fmt.Printf("Error requesting tag '%s': %v\n", tag, err)
-			os.Exit(1)
+			log.Fatal().Err(err).Msgf("Error requesting tag '%s'", tag)
 		}
 		body, err := io.ReadAll(resp.Body)
 		closeErr := resp.Body.Close()
 		if err != nil {
-			fmt.Printf("Error reading response for tag '%s': %v\n", tag, err)
-			os.Exit(1)
+			log.Fatal().Err(err).Msgf("Error reading response for tag '%s'", tag)
 		}
 		if closeErr != nil {
-			fmt.Printf("Error closing response body for tag '%s': %v\n", tag, closeErr)
-			os.Exit(1)
+			log.Fatal().Err(closeErr).Msgf("Error closing response body for tag '%s'", tag)
 		}
 		if resp.StatusCode != 200 {
-			fmt.Printf("Tag '%s' not found on the API.\n", tag)
-			os.Exit(1)
+			log.Fatal().Msgf("Tag '%s' not found on the API", tag)
 		}
 
 		var apiResp struct {
@@ -85,8 +76,7 @@ geol tag canonical`,
 			} `json:"result"`
 		}
 		if err := json.Unmarshal(body, &apiResp); err != nil {
-			fmt.Printf("Error decoding JSON for tag '%s': %v\n", tag, err)
-			os.Exit(1)
+			log.Fatal().Err(err).Msgf("Error decoding JSON for tag '%s'", tag)
 		}
 
 		treeRoot := tree.Root(".")
@@ -96,14 +86,12 @@ geol tag canonical`,
 		}
 		treeRoot.Child(tagNode)
 		if _, err := lipgloss.Println(treeRoot.String()); err != nil {
-			fmt.Printf("Error printing tree for tag '%s': %v\n", tag, err)
-			os.Exit(1)
+			log.Fatal().Err(err).Msgf("Error printing tree for tag '%s'", tag)
 		}
 		nbProducts := len(apiResp.Result)
 		nbProductsStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("2"))
 		if _, err := lipgloss.Printf("\n%s products listed for tag '%s'\n", nbProductsStyle.Render(fmt.Sprintf("%d", nbProducts)), tag); err != nil {
-			fmt.Printf("Error printing product count for tag '%s': %v\n", tag, err)
-			os.Exit(1)
+			log.Fatal().Err(err).Msgf("Error printing product count for tag '%s'", tag)
 		}
 	},
 }

@@ -12,11 +12,11 @@ import (
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 
-	"github.com/opt-nc/geol/cmd/cache"
-	"github.com/opt-nc/geol/cmd/exports"
-	"github.com/opt-nc/geol/cmd/list"
-	"github.com/opt-nc/geol/cmd/product"
-	"github.com/opt-nc/geol/utilities"
+	"github.com/opt-nc/geol/v2/cmd/cache"
+	"github.com/opt-nc/geol/v2/cmd/exports"
+	"github.com/opt-nc/geol/v2/cmd/list"
+	"github.com/opt-nc/geol/v2/cmd/product"
+	"github.com/opt-nc/geol/v2/utilities"
 )
 
 // rootCmd represents the base command when called without any subcommands

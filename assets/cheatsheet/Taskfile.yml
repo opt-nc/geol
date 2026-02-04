@@ -32,7 +32,7 @@ tasks:
 
     cmds:
       - mkdir -p {{.OUTPUT_DIR}}
-      - sed -e "s/__GEOL_COMMIT__/{{.COMMIT}}/g" -e "s/__GEOL_BRANCH__/{{.BRANCH}}/g" -e "s/__GEOL_VERSION__/{{.VERSION}}/g" {{.BASENAME}}.tex > {{.OUTPUT_DIR}}/.{{.BASENAME}}_tmp.tex
+      - sed -e "s|__GEOL_COMMIT__|{{.COMMIT}}|g" -e "s|__GEOL_BRANCH__|{{.BRANCH}}|g" -e "s|__GEOL_VERSION__|{{.VERSION}}|g" {{.BASENAME}}.tex > {{.OUTPUT_DIR}}/.{{.BASENAME}}_tmp.tex
       - xelatex -interaction=batchmode -jobname={{.BASENAME}} -output-directory={{.OUTPUT_DIR}} {{.OUTPUT_DIR}}/.{{.BASENAME}}_tmp.tex
       # - rm {{.OUTPUT_DIR}}/.{{.BASENAME}}_tmp.tex
       - |

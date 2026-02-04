@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
-	"github.com/opt-nc/geol/utilities"
+	"github.com/opt-nc/geol/v2/utilities"
 	"github.com/phuslu/log"
 
 	"github.com/common-nighthawk/go-figure"
@@ -60,11 +60,11 @@ var aboutCmd = &cobra.Command{
 			log.Error().Err(err).Msg("Error printing GitVersion value")
 		}
 
-		if _, err := lipgloss.Printf("%-20s ", "Git Commit:"); err != nil {
-			log.Error().Err(err).Msg("Error printing Git Commit label")
+		if _, err := lipgloss.Printf("%-20s ", "GitCommit:"); err != nil {
+			log.Error().Err(err).Msg("Error printing GitCommit label")
 		}
 		if _, err := lipgloss.Println(utilities.Commit); err != nil {
-			log.Error().Err(err).Msg("Error printing Git Commit value")
+			log.Error().Err(err).Msg("Error printing GitCommit value")
 		}
 
 		if _, err := lipgloss.Printf("%-20s ", "BuildDate:"); err != nil {

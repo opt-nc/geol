@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"github.com/opt-nc/geol/cmd/cache/local"
+	"github.com/opt-nc/geol/v2/cmd/cache/local"
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 )

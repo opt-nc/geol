@@ -59,6 +59,7 @@ To install:
 With `brew`:
 
 ```sh
+brew install curl
 brew install --cask opt-nc/homebrew-tap/geol
 ```
 

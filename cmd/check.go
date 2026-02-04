@@ -15,7 +15,7 @@ import (
 
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/table"
-	"github.com/opt-nc/geol/utilities"
+	"github.com/opt-nc/geol/v2/utilities"
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 )

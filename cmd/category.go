@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 
 	"charm.land/lipgloss/v2"
 	"charm.land/lipgloss/v2/tree"
-	"github.com/opt-nc/geol/utilities"
+	"github.com/opt-nc/geol/v2/utilities"
+	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 )
 
@@ -23,50 +23,41 @@ var categoryCmd = &cobra.Command{
 geol category cloud`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			fmt.Println("Please specify a category.")
-			os.Exit(1)
+			log.Fatal().Msg("Please specify a category")
 		}
 		if len(args) > 1 {
-			fmt.Println("Please specify only one category.")
-			os.Exit(1)
+			log.Fatal().Msg("Please specify only one category")
 		}
 		category := args[0]
 
 		utilities.AnalyzeCacheProductsValidity(cmd)
 		categoriesPath, err := utilities.GetCategoriesPath()
 		if err != nil {
-			fmt.Println("Error retrieving categories path:", err)
-			os.Exit(1)
+			log.Fatal().Err(err).Msg("Error retrieving categories path")
 		}
 		categories, err := utilities.GetCategoriesWithCacheRefresh(cmd, categoriesPath)
 		if err != nil {
-			fmt.Println("Error retrieving categories from cache:", err)
-			os.Exit(1)
+			log.Fatal().Err(err).Msg("Error retrieving categories from cache")
 		}
 		if _, ok := categories[category]; !ok {
-			fmt.Printf("Category '%s' not found in cache.\n", category)
-			os.Exit(1)
+			log.Fatal().Msgf("Category '%s' not found in cache", category)
 		}
 
 		url := utilities.ApiUrl + "categories/" + category
 		resp, err := http.Get(url)
 		if err != nil {
-			fmt.Printf("Error requesting category '%s': %v\n", category, err)
-			os.Exit(1)
+			log.Fatal().Err(err).Msgf("Error requesting category '%s'", category)
 		}
 		body, err := io.ReadAll(resp.Body)
 		closeErr := resp.Body.Close()
 		if err != nil {
-			fmt.Printf("Error reading response for category '%s': %v\n", category, err)
-			os.Exit(1)
+			log.Fatal().Err(err).Msgf("Error reading response for category '%s'", category)
 		}
 		if closeErr != nil {
-			fmt.Printf("Error closing response body for category '%s': %v\n", category, closeErr)
-			os.Exit(1)
+			log.Fatal().Err(closeErr).Msgf("Error closing response body for category '%s'", category)
 		}
 		if resp.StatusCode != 200 {
-			fmt.Printf("Category '%s' not found on the API.\n", category)
-			os.Exit(1)
+			log.Fatal().Msgf("Category '%s' not found on the API", category)
 		}
 
 		var apiResp struct {
@@ -80,8 +71,7 @@ geol category cloud`,
 			} `json:"result"`
 		}
 		if err := json.Unmarshal(body, &apiResp); err != nil {
-			fmt.Printf("Error decoding JSON for category '%s': %v\n", category, err)
-			os.Exit(1)
+			log.Fatal().Err(err).Msgf("Error decoding JSON for category '%s'", category)
 		}
 
 		treeRoot := tree.Root(".")
@@ -91,14 +81,12 @@ geol category cloud`,
 		}
 		treeRoot.Child(categoryNode)
 		if _, err := lipgloss.Println(treeRoot.String()); err != nil {
-			fmt.Printf("Error printing tree for category '%s': %v\n", category, err)
-			os.Exit(1)
+			log.Fatal().Err(err).Msgf("Error printing tree for category '%s'", category)
 		}
 		nbProducts := len(apiResp.Result)
 		nbProductsStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("2"))
 		if _, err := lipgloss.Printf("\n%s products listed for category '%s'\n", nbProductsStyle.Render(fmt.Sprintf("%d", nbProducts)), category); err != nil {
-			fmt.Printf("Error printing product count for category '%s': %v\n", category, err)
-			os.Exit(1)
+			log.Fatal().Err(err).Msgf("Error printing product count for category '%s'", category)
 		}
 	},
 }

@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/glamour/v2"
-	"github.com/opt-nc/geol/utilities"
+	"github.com/opt-nc/geol/v2/utilities"
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 )
@@ -32,22 +31,19 @@ geol product extended golang k8s
 geol product describe nodejs`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
-			log.Error().Msg("Please specify at least one product.")
-			os.Exit(1)
+			log.Fatal().Msg("Please specify at least one product")
 		}
 
 		utilities.AnalyzeCacheProductsValidity(cmd)
 
 		productsPath, err := utilities.GetProductsPath()
 		if err != nil {
-			log.Error().Err(err).Msg("Error retrieving products path")
-			os.Exit(1)
+			log.Fatal().Err(err).Msg("Error retrieving products path")
 		}
 
 		products, err := utilities.GetProductsWithCacheRefresh(cmd, productsPath)
 		if err != nil {
-			log.Error().Err(err).Msg("Error retrieving products from cache")
-			os.Exit(1)
+			log.Fatal().Err(err).Msg("Error retrieving products from cache")
 		}
 
 		var results []productResult
@@ -80,21 +76,17 @@ geol product describe nodejs`,
 			url := utilities.ApiUrl + "products/" + prod
 			resp, err := http.Get(url)
 			if err != nil {
-				log.Error().Err(err).Msgf("Error requesting %s", prod)
-				os.Exit(1)
+				log.Fatal().Err(err).Msgf("Error requesting %s", prod)
 			}
 			body, err := io.ReadAll(resp.Body)
 			if cerr := resp.Body.Close(); cerr != nil {
-				log.Error().Err(cerr).Msgf("Error closing HTTP body for %s", prod)
-				os.Exit(1)
+				log.Fatal().Err(cerr).Msgf("Error closing HTTP body for %s", prod)
 			}
 			if err != nil {
-				log.Error().Err(err).Msgf("Error reading response for %s", prod)
-				os.Exit(1)
+				log.Fatal().Err(err).Msgf("Error reading response for %s", prod)
 			}
 			if resp.StatusCode != 200 {
-				log.Warn().Msgf("Product %s not found on the API.", prod)
-				os.Exit(1)
+				log.Fatal().Msgf("Product %s not found on the API", prod)
 			}
 
 			// JSON decoding
@@ -112,8 +104,7 @@ geol product describe nodejs`,
 				} `json:"result"`
 			}
 			if err := json.Unmarshal(body, &apiResp); err != nil {
-				log.Error().Err(err).Msgf("Error decoding JSON for %s", prod)
-				os.Exit(1)
+				log.Fatal().Err(err).Msgf("Error decoding JSON for %s", prod)
 			}
 			var relName, relDate, relEol string
 			if len(apiResp.Result.Releases) > 0 {
@@ -132,8 +123,7 @@ geol product describe nodejs`,
 
 		// Display markdown table with glamour
 		if len(results) == 0 {
-			log.Error().Msg("None of the products were found in the API.")
-			os.Exit(1)
+			log.Fatal().Msg("None of the products were found in the API")
 		}
 		var buf bytes.Buffer
 		// Header

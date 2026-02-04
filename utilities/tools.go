@@ -6,23 +6,11 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
-)
-
-// Variables injected at build time with ldflags
-var (
-	Commit       = "none"
-	Date         = "unknown"
-	BuiltBy      = "GoReleaser"
-	GoVersion    = runtime.Version()
-	Version      = "dev"
-	PlatformOs   = runtime.GOOS
-	PlatformArch = runtime.GOARCH
 )
 
 // CheckCacheTimeAndUpdateGeneric logs the cache mod time and updates the cache if older than maxAge using RefreshAllCaches.

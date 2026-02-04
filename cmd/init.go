@@ -4,7 +4,7 @@ Copyright © 2025 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"github.com/opt-nc/geol/cmd/templates"
+	"github.com/opt-nc/geol/v2/cmd/templates"
 	"github.com/spf13/cobra"
 )
 

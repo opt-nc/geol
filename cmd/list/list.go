@@ -5,7 +5,7 @@ import (
 
 	"github.com/phuslu/log"
 
-	"github.com/opt-nc/geol/cmd/list/items"
+	"github.com/opt-nc/geol/v2/cmd/list/items"
 )
 
 func init() {
