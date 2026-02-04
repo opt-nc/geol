@@ -192,10 +192,6 @@ func lookupEolDate(idEol, version string) (string, bool, string, error) {
 
 		readBody := func(resp *http.Response, prod string) ([]byte, error) {
 			body, err := io.ReadAll(resp.Body)
-			if cerr := resp.Body.Close(); cerr != nil {
-				log.Error().Err(cerr).Msgf("Error closing HTTP body for %s", prod)
-				return nil, cerr
-			}
 			if err != nil {
 				log.Error().Err(err).Msgf("Error reading response for %s", prod)
 				return nil, err
@@ -208,6 +204,11 @@ func lookupEolDate(idEol, version string) (string, bool, string, error) {
 			log.Error().Err(err).Msgf("Error requesting %s", prod)
 			return "", false, "", err
 		}
+		defer func() {
+			if cerr := resp.Body.Close(); cerr != nil {
+				log.Error().Err(cerr).Msgf("Error closing HTTP body for %s", prod)
+			}
+		}()
 
 		body, err := readBody(resp, prod)
 		if err != nil {
@@ -238,6 +239,11 @@ func lookupEolDate(idEol, version string) (string, bool, string, error) {
 			log.Error().Err(err).Msgf("Error requesting %s", prod)
 			return "", false, "", err
 		}
+		defer func() {
+			if cerr := resp.Body.Close(); cerr != nil {
+				log.Error().Err(cerr).Msgf("Error closing HTTP body for %s", prod)
+			}
+		}()
 
 		body, err = readBody(resp, prod)
 		if err != nil {
