@@ -48,8 +48,9 @@ type stackTableRow struct {
 	LatestVersion string `json:"latest_version"`
 }
 
-// getStackTableRows returns a slice of StackTableRow for a given stack and today date
-// Returns: rows, hasEolProducts, hasLookupErrors
+// getStackTableRows returns a slice of stackTableRow for a given stack and today's date.
+// The second return value indicates whether any products are past EOL.
+// The third return value indicates whether any lookup errors occurred.
 func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, bool, bool) {
 	rows := []stackTableRow{}
 	hasEolProducts := false
