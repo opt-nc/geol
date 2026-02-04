@@ -8,9 +8,6 @@ sidebar_position: 2
 
 ## Get a product overview
 
-Common commands:
-
-```shell
-geol product describe <product-name>   # detailed summary for a product
-geol export                            # exports products info into a DuckDB database
-```
+ ```bash
+ geol product describe <product-name>   # detailed summary for a product
+ ```

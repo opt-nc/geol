@@ -10,15 +10,19 @@ Il existe de nombreuses clés utilisées par endoflife.date ; elles associent au
 
 Un produit est défini par l'API endoflife.date ; `geol` utilise cette API et ne définit pas les produits lui-même (par exemple : Windows, Ubuntu, iPhone...).
 
+Affiche les commandes disponibles pour un produit spécifique :
 ```shell
-geol list products    # liste les produits disponibles
-geol help product     # affiche les commandes pour un produit spécifique
+geol help product
 ```
-Pour choisir le nombre de cycles de versions à afficher, utilisez `extended` avec l'option `-n`. Par exemple :
+
+Liste les produits disponibles :
 ```shell
-geol product extended <product-name> -n20
+geol list products
 ```
-Cela affiche les 20 cycles de versions les plus récents (chacun avec sa date de sortie), la dernière version de chaque cycle est toujours affichée en premier.
+Pour choisir le nombre de cycles de versions à afficher, utilisez `extended` avec l'option `-n`. Par exemple (avec ubuntu) :
+```shell
+geol product extended ubuntu -n20
+```
 
 ## Catégories
 

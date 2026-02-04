@@ -8,9 +8,6 @@ sidebar_position: 2
 
 ## Obtenir un aperçu d'un produit
 
-Commandes courantes :
-
-```shell
-geol product describe <product-name>   # résumé détaillé d'un produit
-geol export                            # exporte les informations produits vers une base DuckDB
-```
+ ```bash
+ geol product describe <product-name>   # résumé détaillé d'un produit
+ ```

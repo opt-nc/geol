@@ -10,15 +10,19 @@ There are a lot of keys used by endoflife.date; they map products to metadata su
 
 A product is defined by the endoflife.date API; `geol` uses that API and does not define products itself (for example: Windows, Ubuntu, iPhone...).
 
+Show available product commands:
 ```shell
-geol list products    # lists available products
-geol help product     # show commands for a specific product
+geol help product
 ```
-To choose how many release cycles to display, use `extended` with the `-n` flag. For example:
+
+List available products:
 ```shell
-geol product extended <product-name> -n20
+geol list products
 ```
-This shows the most recent 20 release cycles (each with its release date), always listing the latest version for each cycle first.
+To choose how many release cycles to display, use `extended` with the `-n` flag. For example ( with ubuntu ):
+```shell
+geol product extended ubuntu -n20
+```
 
 ## Categories
 

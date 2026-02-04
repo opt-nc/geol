@@ -6,34 +6,18 @@ sidebar_position: 4
 
 La documentation de `geol` prend en charge les fonctionnalités Markdown standard (GitHub Flavored Markdown).
 
-## Exporter une liste de produits vers un fichier `markdown`
-Par exemple :
-```shell
-geol list products > geol-report.md
-```
-
 ## La chaîne d'outils `pandoc`
 
 `pandoc` est un convertisseur de documents permettant de transformer du Markdown en EPUB, PDF, DOCX, HTML, et plus encore. Flux de travail typique :
 
-Installer `pandoc` (exemple) :
-
-```bash
-brew install pandoc
-```
-
-Voir https://pandoc.org/installing.html pour les détails.
+Installez `pandoc`. Voir https://pandoc.org/installing.html pour plus de détails.
 
 - Produire `geol-report.md` avec `geol`.
-- Option A — export direct avec `pandoc` :
 
+Exemples — d'autres formats de sortie sont possibles :
 ```bash
 pandoc geol-report.md -o geol-report.epub
-pandoc geol-report.md -o geol-report.pdf --pdf-engine=xelatex
 ```
-
-- Option B — convertir en AsciiDoc puis utiliser Asciidoctor :
-
 ```bash
-pandoc geol-report.md -f markdown -t asciidoc -o geol-report.adoc
+pandoc geol-report.md -o geol-report.pdf --pdf-engine=xelatex
 ```

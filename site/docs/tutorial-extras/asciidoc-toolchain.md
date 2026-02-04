@@ -1,16 +1,10 @@
 ---
-sidebar_position: 1
+sidebar_position: 2
 ---
 
 # `asciidoc` Toolchain
 
-`AsciiDoc` lets you write human-readable documentation and convert it to HTML, PDF, or slides using tools like `Asciidoctor`.
-Here are two common commands to convert an `AsciiDoc` report to HTML (with a table of contents) and to PDF:
-
-```bash
-asciidoctor -a toc -a toclevels=4 geol-report.adoc  # convert geol-report.adoc to HTML with a table of contents
-asciidoctor-pdf -a toc -a toclevels=4 geol-report.adoc  # convert geol-report.adoc to PDF
-```
+`asciidoc` lets you write human-readable documentation and convert it to HTML, PDF, or slides using tools like `asciidoctor`.
  
 See https://pandoc.org/ and https://asciidoctor.org/ for installation and options.
 
@@ -18,17 +12,15 @@ See https://pandoc.org/ and https://asciidoctor.org/ for installation and option
 
 If you have a Markdown report (`geol-report.md`) you can:
 
- - Convert to AsciiDoc and process with `Asciidoctor`:
-
+Convert to asciidoc with `pandoc`:
 ```bash
 pandoc geol-report.md -f markdown -t asciidoc -o geol-report.adoc
-asciidoctor -a toc -a toclevels=4 geol-report.adoc
-asciidoctor-pdf -a toc -a toclevels=4 geol-report.adoc
 ```
 
-- Or produce EPUB/PDF directly with `pandoc`:
-
+Process asciidoc (.adoc) files with `asciidoctor`:
 ```bash
-pandoc geol-report.md -o geol-report.epub
-pandoc geol-report.md -o geol-report.pdf --pdf-engine=xelatex
+asciidoctor -a toc -a toclevels=4 geol-report.adoc
+```
+```bash
+asciidoctor-pdf -a toc -a toclevels=4 geol-report.adoc
 ```
