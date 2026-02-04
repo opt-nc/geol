@@ -49,9 +49,11 @@ type stackTableRow struct {
 }
 
 // getStackTableRows returns a slice of StackTableRow for a given stack and today date
-func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, bool) {
+// Returns: rows, hasEolProducts, hasLookupErrors
+func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, bool, bool) {
 	rows := []stackTableRow{}
-	errorOut := false
+	hasEolProducts := false
+	hasLookupErrors := false
 
 	for _, item := range stack {
 		// Skip items marked with skip: true
@@ -63,7 +65,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 		eolDate, isLatest, latestVersion, err := lookupEolDate(item.IdEol, item.Version)
 		if err != nil {
 			log.Error().Err(err).Msgf("Error looking up EOL date for %s %s", item.Name, item.Version)
-			errorOut = true
+			hasLookupErrors = true
 			continue
 		}
 		var status string
@@ -76,7 +78,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			daysStr = fmt.Sprintf("%d", daysInt)
 			if daysInt < 0 {
 				status = "EOL"
-				errorOut = true
+				hasEolProducts = true
 				// Calculate time elapsed since EOL
 				years := -daysInt / 365
 				months := (-daysInt % 365) / 30
@@ -142,7 +144,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 		// fallback to lexicographical if problem
 		return rows[i].Days < rows[j].Days
 	})
-	return rows, errorOut
+	return rows, hasEolProducts, hasLookupErrors
 }
 
 // lookupEolDate should return the EOL date for a given id_eol and version (YYYY-MM-DD)
@@ -439,7 +441,7 @@ geol check --json`,
 
 		utilities.AnalyzeCacheProductsValidity(cmd)
 		today := time.Now()
-		rows, errorOut := getStackTableRows(config.Stack, today)
+		rows, hasEolProducts, hasLookupErrors := getStackTableRows(config.Stack, today)
 
 		if jsonOutput {
 			output := struct {
@@ -464,7 +466,13 @@ geol check --json`,
 			_, _ = lipgloss.Println(tableStr)
 		}
 
-		if errorOut && strict {
+		// Always exit with error if there were lookup errors
+		if hasLookupErrors {
+			os.Exit(1)
+		}
+
+		// Exit with error if products are EOL and strict mode is enabled
+		if hasEolProducts && strict {
 			os.Exit(1)
 		}
 	},
