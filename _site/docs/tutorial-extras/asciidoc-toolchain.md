@@ -6,7 +6,9 @@ sidebar_position: 1
 
 `asciidoc` lets you write human-readable documentation and convert it to HTML, PDF, or slides using tools like `asciidoctor`.
 
-Requirements: `asciidoctor` — install with Homebrew using the following command:
+### Requirements
+
+- `asciidoctor` — install with Homebrew using the following command:
 ```bash
 brew install asciidoc
 ```

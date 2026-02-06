@@ -1,9 +1,9 @@
 [
   {
-    "title": "Getting Started?",
-    "text": "Getting Started? Let's discover geol in less than 5 minutes. Get started by installing with brew. Note: Homebrew often provides more up-to-date packages than other sources, so installing via brew will typically give you a newer version. How to install? brew installed on your machine. See the official Homebrew website for installation instructions. brew install curl brew install --cask opt-nc/homebrew-tap/geol Get geol version geol version Know a bit more about geol Displays a brief description and information about geol. geol about Get help Displays quick help and the main commands. geol help Shows the full manual page: all commands and detailed help (includes the information from geol help). man geol",
+    "title": "Getting Started",
+    "text": "Getting Started Let's discover geol in less than 5 minutes. Get started by installing with brew. Note: Homebrew often provides more up-to-date packages than other sources, so installing via brew will typically give you a newer version. How to install? brew installed on your machine. See the official Homebrew website for installation instructions. brew install curl brew install --cask opt-nc/homebrew-tap/geol If your installed geol version is out of date, you can update it (Homebrew) with: Update Homebrew and upgrade the geol cask brew update && brew upgrade --cask geol Get geol version geol version Know a bit more about geol Displays a brief description and information about geol. geol about Get help Displays quick help and the main commands. geol help Shows the full man page: all commands and detailed help (includes the information from geol help). man geol",
     "url": "/docs/intro/",
-    "summary": "Getting Started? Let's discover geol in less than 5 minutes. Get started by installing with brew. Note: Homebrew often provides more up-to-date packages than other sources, so installing via brew will typically give you a newer version. How to install? brew installed on your machine. See the officia",
+    "summary": "Getting Started Let's discover geol in less than 5 minutes. Get started by installing with brew. Note: Homebrew often provides more up-to-date packages than other sources, so installing via brew will typically give you a newer version. How to install? brew installed on your machine. See the official",
     "tags": [],
     "locale": "en",
     "type": "docs"
@@ -46,7 +46,7 @@
   },
   {
     "title": "Learn the `check` command",
-    "text": "Learn the check command Quickly check your stack for end-of-life (EOL) statuses. The geol check command scans products from your .geol.yaml and reports support status and EOL dates. Get help for check Use geol help check to display help and available options for the check command. geol help check Initialize a check file Run the command to create a template .geol.yaml in the current directory: geol check init Edit the generated .geol.yaml to list the products you want to monitor. Minimal example .geol.yaml (created by geol check init): stack: - name: ubuntu version: \"25.10\" id_eol: ubuntu - name: java temurin version: \"21\" id_eol: eclipse-temurin etc ... name: non-existent-product version: \"1.0\" id_eol: non-existent-product skip: true Statuses and warnings Run the check to view statuses and warnings: geol check Use this flag to make geol check return a non-zero exit code when any product is past its EOL. geol check --strict Run the following command to print the exit status (a non-zero value indicates an error): echo $?",
+    "text": "Learn the check command Quickly check your stack for end-of-life (EOL) statuses. The geol check command scans products from your .geol.yaml and reports support status and EOL dates. Get help for check Use geol help check to display help and available options for the check command. geol help check Initialize a check file Run the command to create a template .geol.yaml in the current directory: geol check init Edit the generated .geol.yaml to list the products you want to monitor. Minimal example .geol.yaml (created by geol check init): stack: - name: ubuntu version: \"25.10\" id_eol: ubuntu - name: java temurin version: \"21\" id_eol: eclipse-temurin name: non-existent-product version: \"1.0\" id_eol: non-existent-product skip: true Statuses and warnings Run the check to view statuses and warnings: geol check Use this flag to make geol check return a non-zero exit code when any product is past its EOL. geol check --strict Run the following command to print the exit status (a non-zero value indicates an error): echo $?",
     "url": "/docs/tutorial-basics/check-command/",
     "summary": "Learn the check command Quickly check your stack for end-of-life (EOL) statuses. The geol check command scans products from your .geol.yaml and reports support status and EOL dates. Get help for check Use geol help check to display help and available options for the check command. geol help check In",
     "tags": [],
@@ -136,7 +136,7 @@
   },
   {
     "title": "`Markdown` Features",
-    "text": "Markdown Features geol documentation supports standard Markdown features : it is optimized for Github-flavored variant. The pandoc toolchain pandoc is a document converter that can transform Markdown (which is useful for our workflow) and many other input formats into various output formats such as EPUB, PDF, DOCX, HTML, and more. Typical workflow: Requirements: pandoc — install with Homebrew using the following command: brew install pandoc See https://pandoc.org/installing.html for more details. Produce and convert a report Produce geol-report.md with geol. For example, generate a description of Ubuntu and save it to a Markdown file: geol product describe ubuntu > geol-report.md Convert the Markdown report to other formats with pandoc: pandoc geol-report.md -o geol-report.epub pandoc geol-report.md -o geol-report.pdf --pdf-engine=xelatex",
+    "text": "Markdown Features geol documentation supports standard Markdown features : it is optimized for Github-flavored variant. The pandoc toolchain pandoc is a document converter that can transform Markdown (which is useful for our workflow) and many other input formats into various output formats such as EPUB, PDF, DOCX, HTML, and more. Typical workflow: Requirements pandoc — install with Homebrew using the following command: brew install pandoc See https://pandoc.org/installing.html for more details. Produce and convert a report Produce geol-report.md with geol. For example, generate a description of Ubuntu and save it to a Markdown file: geol product describe ubuntu > geol-report.md This command also accepts multiple products — for example: geol product extended ubuntu linux windows > geol-report.md Convert the Markdown report to other formats with pandoc: This command converts the Markdown file into an EPUB e-book. pandoc geol-report.md -o geol-report.epub This command converts the Markdown file into a standalone HTML file (-s). pandoc geol-report.md -s -o geol-report.html This command converts the Markdown file into a PDF using XeLaTeX (--pdf-engine=xelatex) to generate the PDF output. pandoc geol-report.md -o geol-report.pdf --pdf-engine=xelatex",
     "url": "/docs/tutorial-basics/markdown-features/",
     "summary": "Markdown Features geol documentation supports standard Markdown features : it is optimized for Github-flavored variant. The pandoc toolchain pandoc is a document converter that can transform Markdown (which is useful for our workflow) and many other input formats into various output formats such as",
     "tags": [],
@@ -153,10 +153,19 @@
     "type": "docs"
   },
   {
+    "title": "Requirements",
+    "text": "pandoc — install with Homebrew using the following command: brew install pandoc",
+    "url": "/docs/tutorial-basics/markdown-features/#requirements",
+    "summary": "pandoc — install with Homebrew using the following command: brew install pandoc",
+    "tags": [],
+    "locale": "en",
+    "type": "docs"
+  },
+  {
     "title": "Produce and convert a report",
-    "text": "Produce geol-report.md with geol. For example, generate a description of Ubuntu and save it to a Markdown file: geol product describe ubuntu > geol-report.md",
+    "text": "Produce geol-report.md with geol. For example, generate a description of Ubuntu and save it to a Markdown file: geol product describe ubuntu > geol-report.md This command also accepts multiple products — for example: geol product extended ubuntu linux windows > geol-report.md",
     "url": "/docs/tutorial-basics/markdown-features/#produce-and-convert-a-report",
-    "summary": "Produce geol-report.md with geol. For example, generate a description of Ubuntu and save it to a Markdown file: geol product describe ubuntu > geol-report.md",
+    "summary": "Produce geol-report.md with geol. For example, generate a description of Ubuntu and save it to a Markdown file: geol product describe ubuntu > geol-report.md This command also accepts multiple product",
     "tags": [],
     "locale": "en",
     "type": "docs"
@@ -181,9 +190,9 @@
   },
   {
     "title": "`asciidoc` Toolchain",
-    "text": "asciidoc Toolchain asciidoc lets you write human-readable documentation and convert it to HTML, PDF, or slides using tools like asciidoctor. Requirements: asciidoctor — install with Homebrew using the following command: brew install asciidoc See https://asciidoctor.org/ for installation and options. Note: Asciidoctor often produces more polished rendering than Pandoc. Notes & workflow examples If you have a Markdown report (geol-report.md) you can: Convert to asciidoc with pandoc: pandoc geol-report.md -f markdown -t asciidoc -o geol-report.adoc Generate HTML from the .adoc input: asciidoctor -a toc -a toclevels=4 geol-report.adoc Generate PDF from the .adoc input: asciidoctor-pdf -a toc -a toclevels=4 geol-report.adoc",
+    "text": "asciidoc Toolchain asciidoc lets you write human-readable documentation and convert it to HTML, PDF, or slides using tools like asciidoctor. Requirements asciidoctor — install with Homebrew using the following command: brew install asciidoc See https://asciidoctor.org/ for installation and options. Note: Asciidoctor often produces more polished rendering than Pandoc. Notes & workflow examples If you have a Markdown report (geol-report.md) you can: Convert to asciidoc with pandoc: pandoc geol-report.md -f markdown -t asciidoc -o geol-report.adoc Generate HTML from the .adoc input: asciidoctor -a toc -a toclevels=4 geol-report.adoc Generate PDF from the .adoc input: asciidoctor-pdf -a toc -a toclevels=4 geol-report.adoc",
     "url": "/docs/tutorial-extras/asciidoc-toolchain/",
-    "summary": "asciidoc Toolchain asciidoc lets you write human-readable documentation and convert it to HTML, PDF, or slides using tools like asciidoctor. Requirements: asciidoctor — install with Homebrew using the following command: brew install asciidoc See https://asciidoctor.org/ for installation and options.",
+    "summary": "asciidoc Toolchain asciidoc lets you write human-readable documentation and convert it to HTML, PDF, or slides using tools like asciidoctor. Requirements asciidoctor — install with Homebrew using the following command: brew install asciidoc See https://asciidoctor.org/ for installation and options.",
     "tags": [],
     "locale": "en",
     "type": "docs"
@@ -199,7 +208,7 @@
   },
   {
     "title": "Data Engineering with `geol`",
-    "text": "Data Engineering with geol Data Engineering with geol explains how to collect, normalize, and analyze product metadata (versions, release dates, end-of-life) for downstream analytics. It covers ingestion, storage, querying and exporting workflows (CSV, DuckDB) to build repeatable ETL pipelines and reports. Requirements: install DuckDB — you can install via Homebrew with the following command: brew install duckdb See https://duckdb.org/ for more installation options and details. Export to DuckDB You can export product information to a DuckDB database using the following command: geol export This command produces the file geol.duckdb containing the exported product information. Basic DuckDB examples Show DuckDB help: duckdb -help Open the database in the DuckDB CLI (opens geol.duckdb): duckdb geol.duckdb Inside the DuckDB CLI you can run SQL. For example, list tags: from tags; Count the number of products: select count(*) from products;",
+    "text": "Data Engineering with geol Data Engineering with geol explains how to collect, normalize, and analyze product metadata (versions, release dates, end-of-life) for downstream analytics. It covers ingestion, storage, querying and exporting workflows (CSV, DuckDB) to build repeatable ETL pipelines and reports. Requirements duckdb — install with Homebrew using the following command: brew install duckdb See https://duckdb.org/ for more installation options and details. Export to DuckDB You can export product information to a DuckDB database using the following command: geol export file geol.duckdb This command produces the file geol.duckdb containing the exported product information. Basic DuckDB examples Show DuckDB help: duckdb -help Run a single SQL command (The tags table can be replaced with products, categories, ...) without opening the interactive CLI: duckdb geol.duckdb -c \"select * from tags;\" Open the database in the DuckDB CLI (opens geol.duckdb): duckdb geol.duckdb Inside the DuckDB CLI you can run SQL. For example, list tags: from tags; Count the number of products: select count(*) from products;",
     "url": "/docs/tutorial-extras/dataengineering/",
     "summary": "Data Engineering with geol Data Engineering with geol explains how to collect, normalize, and analyze product metadata (versions, release dates, end-of-life) for downstream analytics. It covers ingestion, storage, querying and exporting workflows (CSV, DuckDB) to build repeatable ETL pipelines and r",
     "tags": [],
@@ -208,27 +217,18 @@
   },
   {
     "title": "Export to DuckDB",
-    "text": "You can export product information to a DuckDB database using the following command: geol export This command produces the file geol.duckdb containing the exported product information.",
+    "text": "You can export product information to a DuckDB database using the following command: geol export file geol.duckdb This command produces the file geol.duckdb containing the exported product information.",
     "url": "/docs/tutorial-extras/dataengineering/#export-to-duckdb",
-    "summary": "You can export product information to a DuckDB database using the following command: geol export This command produces the file geol.duckdb containing the exported product information.",
+    "summary": "You can export product information to a DuckDB database using the following command: geol export file geol.duckdb This command produces the file geol.duckdb containing the exported product information",
     "tags": [],
     "locale": "en",
     "type": "docs"
   },
   {
     "title": "Basic DuckDB examples",
-    "text": "Show DuckDB help: duckdb -help Open the database in the DuckDB CLI (opens geol.duckdb): duckdb geol.duckdb Inside the DuckDB CLI you can run SQL. For example, list tags: from tags; Count the number of products: select count(*) from products;",
+    "text": "Show DuckDB help: duckdb -help Run a single SQL command (The tags table can be replaced with products, categories, ...) without opening the interactive CLI: duckdb geol.duckdb -c \"select * from tags;\" Open the database in the DuckDB CLI (opens geol.duckdb): duckdb geol.duckdb Inside the DuckDB CLI you can run SQL. For example, list tags: from tags; Count the number of products: select count(*) from products;",
     "url": "/docs/tutorial-extras/dataengineering/#basic-duckdb-examples",
-    "summary": "Show DuckDB help: duckdb -help Open the database in the DuckDB CLI (opens geol.duckdb): duckdb geol.duckdb Inside the DuckDB CLI you can run SQL. For example, list tags: from tags; Count the number of",
-    "tags": [],
-    "locale": "en",
-    "type": "docs"
-  },
-  {
-    "title": "Update `geol`",
-    "text": "Update geol If your installed geol version is out of date, you can update it (Homebrew) with: Update Homebrew and upgrade the geol cask brew update && brew upgrade --cask geol",
-    "url": "/docs/tutorial-extras/update-geol/",
-    "summary": "Update geol If your installed geol version is out of date, you can update it (Homebrew) with: Update Homebrew and upgrade the geol cask brew update && brew upgrade --cask geol",
+    "summary": "Show DuckDB help: duckdb -help Run a single SQL command (The tags table can be replaced with products, categories, ...) without opening the interactive CLI: duckdb geol.duckdb -c \"select * from tags;\"",
     "tags": [],
     "locale": "en",
     "type": "docs"

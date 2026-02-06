@@ -2,7 +2,7 @@
 sidebar_position: 1
 ---
 
-# Getting Started?
+# Getting Started
 
 Let's discover **geol in less than 5 minutes**.
 
@@ -17,6 +17,13 @@ Note: Homebrew often provides more up-to-date packages than other sources, so in
 ```bash
 brew install curl
 brew install --cask opt-nc/homebrew-tap/geol
+```
+
+If your installed `geol` version is out of date, you can update it (Homebrew) with:
+
+```bash
+# Update Homebrew and upgrade the geol cask
+brew update && brew upgrade --cask geol
 ```
 
 ## Get `geol` version
@@ -36,7 +43,7 @@ Displays quick help and the main commands.
 geol help
 ```
 
-Shows the full manual page: all commands and detailed help (includes the information from `geol help`).
+Shows the full man page: all commands and detailed help (includes the information from `geol help`).
 ```bash
 man geol
 ```

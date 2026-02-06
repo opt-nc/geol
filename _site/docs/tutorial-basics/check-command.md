@@ -31,7 +31,7 @@ stack:
   - name: java temurin
     version: "21"
     id_eol: eclipse-temurin
-etc ...
+    
 - name: non-existent-product
     version: "1.0"
     id_eol: non-existent-product

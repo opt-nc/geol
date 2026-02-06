@@ -13,10 +13,13 @@ optimized for Github-flavored variant.
 
 `pandoc` is a document converter that can transform Markdown (which is useful for our workflow) and many other input formats into various output formats such as EPUB, PDF, DOCX, HTML, and more. Typical workflow:
 
-Requirements: `pandoc` — install with Homebrew using the following command:
+### Requirements
+
+- `pandoc` — install with Homebrew using the following command:
 ```bash
 brew install pandoc
 ```
+
 See https://pandoc.org/installing.html for more details.
 
 ## Produce and convert a report
@@ -25,11 +28,24 @@ Produce `geol-report.md` with `geol`. For example, generate a description of Ubu
 ```bash
 geol product describe ubuntu > geol-report.md
 ```
+This command also accepts multiple products — for example:
+```bash
+geol product extended ubuntu linux windows > geol-report.md
+```
 
 Convert the Markdown report to other formats with `pandoc`:
+
+This command converts the Markdown file into an EPUB e-book.
 ```bash
 pandoc geol-report.md -o geol-report.epub
 ```
+
+This command converts the Markdown file into a standalone HTML file (`-s`).
+```bash
+pandoc geol-report.md -s -o geol-report.html
+```
+
+This command converts the Markdown file into a PDF using XeLaTeX (`--pdf-engine=xelatex`) to generate the PDF output.
 ```bash
 pandoc geol-report.md -o geol-report.pdf --pdf-engine=xelatex
 ```
