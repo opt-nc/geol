@@ -300,8 +300,20 @@ func FetchProductData(productName string) (ProductReleases, error) {
 		return ProductReleases{}, fmt.Errorf("error decoding JSON for %s: %w", productName, err)
 	}
 
+	releases := make([]ReleaseInfo, len(apiResp.Result.Releases))
+	for i, r := range apiResp.Result.Releases {
+    	releases[i] = ReleaseInfo{
+    	    Name:        r.Name,
+    	    ReleaseDate: r.ReleaseDate,
+    	    LatestName:  r.Latest.Name,
+    	    LatestDate:  r.Latest.Date,
+    	    EoasFrom:    r.EoasFrom,
+    	    EolFrom:     r.EolFrom,
+    	    LTS:         r.IsLTS,
+    	}
+    }
 	return ProductReleases{
-		Name:     apiResp.Result.Name,
-		Releases: releases,
+    	Name:     apiResp.Result.Name,
+    	Releases: releases,
 	}, nil
 }

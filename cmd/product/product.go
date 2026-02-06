@@ -17,7 +17,6 @@ import (
 )
 
 func init() {
-	ProductCmd.AddCommand(extendedCmd)
 	ProductCmd.AddCommand(describeCmd)
 }
 

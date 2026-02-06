@@ -6,6 +6,9 @@ import (
 	"os"
 	"strings"
 	"time"
+	"net/http"
+	"encoding/json"
+	"io"
 
 	"charm.land/bubbles/v2/progress"
 	tea "charm.land/bubbletea/v2"
@@ -14,7 +17,6 @@ import (
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
 
-	"github.com/opt-nc/geol/cmd/product"
 	"github.com/opt-nc/geol/utilities"
 )
 
@@ -159,27 +161,71 @@ func createTempDetailsTable(cmd *cobra.Command, db *sql.DB) error {
 	// Process products in a goroutine
 	go func() {
 		for productName := range products.Products {
-			prodData, err := product.FetchProductData(productName)
+			// Query product API and extract latest release information (first release)
+			url := utilities.ApiUrl + "products/" + productName
+			resp, err := http.Get(url)
 			if err != nil {
 				log.Warn().Err(err).Msgf("Error fetching product data for %s, skipping", productName)
 				p.Send(productProcessedMsg(productName))
 				continue
 			}
+			body, err := io.ReadAll(resp.Body)
+			if cerr := resp.Body.Close(); cerr != nil {
+				log.Warn().Err(cerr).Msgf("Error closing HTTP body for %s", productName)
+			}
+			if err != nil {
+				log.Warn().Err(err).Msgf("Error reading response for %s, skipping", productName)
+				p.Send(productProcessedMsg(productName))
+				continue
+			}
+			if resp.StatusCode != 200 {
+				log.Warn().Msgf("Product %s not found on the API (status %d), skipping", productName, resp.StatusCode)
+				p.Send(productProcessedMsg(productName))
+				continue
+			}
 
-			// Insert each release into the details_temp table
-			for _, release := range prodData.Releases {
-				_, err = db.Exec(`INSERT INTO details_temp (product_id, cycle, release, latest, latest_release, eol) 
+			var apiResp struct {
+				Result struct {
+					Name     string `json:"name"`
+					Releases []struct {
+						Name        string `json:"name"`
+						ReleaseDate string `json:"releaseDate"`
+						Latest      struct {
+							Name string `json:"name"`
+							Date string `json:"date"`
+						} `json:"latest"`
+						EolFrom string `json:"eolFrom"`
+					} `json:"releases"`
+				} `json:"result"`
+			}
+			if err := json.Unmarshal(body, &apiResp); err != nil {
+				log.Warn().Err(err).Msgf("Error decoding JSON for %s, skipping", productName)
+				p.Send(productProcessedMsg(productName))
+				continue
+			}
+
+			// Use first release if present
+			var relName, relDate, relLatest, relLatestDate, relEol string
+			if len(apiResp.Result.Releases) > 0 {
+				rel := apiResp.Result.Releases[0]
+				relName = rel.Name
+				relDate = rel.ReleaseDate
+				relLatest = rel.Latest.Name
+				relLatestDate = rel.Latest.Date
+				relEol = rel.EolFrom
+			}
+
+			_, err = db.Exec(`INSERT INTO details_temp (product_id, cycle, release, latest, latest_release, eol) 
 						VALUES (?, ?, ?, ?, ?, ?)`,
-					prodData.Name,
-					release.Name,
-					release.ReleaseDate,
-					release.LatestName,
-					release.LatestDate,
-					release.EolFrom,
-				)
-				if err != nil {
-					log.Error().Err(err).Msgf("Error inserting release data for %s", productName)
-				}
+				apiResp.Result.Name,
+				relName,
+				relDate,
+				relLatest,
+				relLatestDate,
+				relEol,
+			)
+			if err != nil {
+				log.Error().Err(err).Msgf("Error inserting release data for %s", productName)
 			}
 			p.Send(productProcessedMsg(productName))
 		}
