@@ -20,7 +20,11 @@
     }
   },
 
-  "postCreateCommand": "curl -fsSL https://raw.githubusercontent.com/opt-nc/geol/main/install.sh | bash && echo 'export PATH=\"$PATH:$HOME/.local/bin\"' >> ~/.bashrc",
+  "postCreateCommand": "curl -fsSL https://raw.githubusercontent.com/opt-nc/geol/main/install.sh | bash",
+
+  "remoteEnv": {
+    "PATH": "${containerEnv:PATH}:${containerEnv:HOME}/bin:${containerEnv:HOME}/.local/bin"
+  },
 
   "remoteUser": "vscode"
 }
