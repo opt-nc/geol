@@ -1,0 +1,26 @@
+{
+  "name": "geol Development Environment",
+  "image": "mcr.microsoft.com/devcontainers/go:1-1.23-bookworm",
+  
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go"
+      ],
+      "settings": {
+        "go.toolsManagement.checkForUpdates": "local",
+        "go.useLanguageServer": true,
+        "go.gopath": "/go"
+      }
+    }
+  },
+
+  "postCreateCommand": "curl -fsSL https://raw.githubusercontent.com/opt-nc/geol/main/install.sh | bash && echo 'export PATH=\"$PATH:$HOME/.local/bin\"' >> ~/.bashrc",
+
+  "remoteUser": "vscode"
+}
