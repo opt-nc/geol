@@ -22,7 +22,7 @@
     }
   },
 
-  "postCreateCommand": "curl -fsSL https://raw.githubusercontent.com/opt-nc/geol/main/install.sh | bash",
+  "postCreateCommand": "curl -fsSL https://raw.githubusercontent.com/opt-nc/geol/main/install.sh | bash && echo 'export PATH=\"$HOME/bin:$PATH\"' >> ~/.bashrc",
 
   "remoteEnv": {
     "PATH": "${containerEnv:PATH}:${containerEnv:HOME}/bin:${containerEnv:HOME}/.local/bin"
