@@ -1,8 +1,11 @@
 {
   "name": "geol Development Environment",
-  "image": "mcr.microsoft.com/devcontainers/go:1-ubuntu-24.04",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
   
   "features": {
+    "ghcr.io/devcontainers/features/go:1": {
+      "version": "latest"
+    },
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
