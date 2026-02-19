@@ -35,8 +35,8 @@ That's it! No manual installation required. 🎉
 
 The repository includes a `.devcontainer/devcontainer.json` configuration file that:
 
-1. Sets up a Go development environment
-2. Automatically runs the `install.sh` script during Codespace creation
+1. Sets up an Ubuntu 24.04 development environment (includes GLIBC 2.39 for binary compatibility)
+2. Automatically runs the `install.sh` script during Codespace creation to install the latest prebuilt geol binary
 3. Adds `geol` to your PATH
 
 This means `geol` is ready to use as soon as your Codespace is created!
