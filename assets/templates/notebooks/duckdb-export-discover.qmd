@@ -1,5 +1,5 @@
 ---
-title: "geol duckdb full export exploration"
+title: "End of Life geol export database discovery"
 format:
   html:
     embed-resources: true
