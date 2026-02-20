@@ -55,7 +55,7 @@ func FetchAndSaveProducts(cmd *cobra.Command) error {
 	}
 
 	// Ensure the directory exists
-	if err := createDirectoryIfNotExists(productsPath); err != nil {
+	if err := createDirectoryIfNotExists(filepath.Dir(productsPath)); err != nil {
 		log.Error().Err(err).Msg("Error ensuring directory exists")
 		return err
 	}
@@ -133,7 +133,7 @@ func GetProductsWithCacheRefresh(cmd *cobra.Command, productsPath string) (Produ
 	return products, nil
 }
 
-// readAndUnmarshalProducts lit le fichier et fait l'unmarshal JSON dans products.
+// readAndUnmarshalProducts reads the file and unmarshals the JSON into products.
 func readAndUnmarshalProducts(productsPath string, products *ProductsFile) error {
 	data, err := os.ReadFile(productsPath)
 	if err != nil {
