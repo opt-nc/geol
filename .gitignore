@@ -48,4 +48,5 @@ manpages/
 /assets/logos/package-lock.json
 /assets/cheatsheet/.task/
 *.duckdb
+*.sqlite
 geol-build/
