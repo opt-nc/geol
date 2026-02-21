@@ -10,6 +10,11 @@ tasks:
     deps:
       - install-python-deps
       - generate-duckdb
+    sources:
+      - duckdb-export-discover.qmd
+      - geol.duckdb
+    generates:
+      - duckdb-export-discover.html
     cmds:
       - |
         echo "Rendering Quarto notebook..."
@@ -29,7 +34,8 @@ tasks:
     desc: "Ensures Python virtual environment is set up and all dependencies are installed."
 
   generate-duckdb:
-    generates: [geol.duckdb]
+    generates:
+      - geol.duckdb
     cmds:
       - |
         if command -v geol &> /dev/null; then
@@ -40,3 +46,8 @@ tasks:
           exit 1
         fi
     desc: "Generates or updates the geol.duckdb file using 'geol export --force'."
+
+  clean:
+    cmds:
+      - rm -f geol.duckdb duckdb-export-discover.html
+    desc: "Deletes all generated output files (geol.duckdb and HTML report)."
