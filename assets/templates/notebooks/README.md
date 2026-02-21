@@ -6,14 +6,26 @@ This Quarto notebook connects to a DuckDB database, discovers the schema, and ge
 
 *   [Quarto CLI](https://quarto.org/docs/get-started/)
 *   [Python 3.10+](https://www.python.org/downloads/)
+*   [uv](https://docs.astral.sh/uv/)
+*   [go-task](https://taskfile.dev/installation/)
 *   [Graphviz](https://graphviz.org/download/)
 *   A DuckDB database file (e.g., `geol.duckdb`)
 
+## Quick Start
+
+The easiest way to set up the environment and render the notebook is to use [task](https://taskfile.dev/):
+
+```bash
+task
+```
+
+This command will automatically create the virtual environment, install dependencies, generate the database (if `geol` is installed), and render the notebook.
+
 ## Installation
 
-1.  **Install Quarto, Python, and Graphviz:**
+1.  **Install Quarto, Python, uv, and Graphviz:**
 
-    Follow the instructions on the respective websites to install Quarto and Python for your operating system.
+    Follow the instructions on the respective websites to install Quarto, Python, and uv for your operating system.
 
     To install Graphviz on macOS or Linux using Homebrew, run:
     ```bash
@@ -25,7 +37,7 @@ This Quarto notebook connects to a DuckDB database, discovers the schema, and ge
 
     It is recommended to use a virtual environment to manage the Python dependencies for this project.
     ```bash
-    python3 -m venv .venv
+    uv venv
     ```
 
 3.  **Activate the virtual environment:**
@@ -41,9 +53,9 @@ This Quarto notebook connects to a DuckDB database, discovers the schema, and ge
 
 4.  **Install the required Python packages:**
 
-    With the virtual environment activated, install the necessary packages using pip:
+    With the virtual environment activated, install the necessary packages using uv:
     ```bash
-    pip install duckdb plotly pandas itables graphviz networkx pyyaml
+    uv pip install jupyter duckdb plotly pandas itables graphviz networkx pyyaml
     ```
 
 ## Usage
