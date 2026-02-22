@@ -1,0 +1,53 @@
+version: '3'
+
+tasks:
+  default:
+    cmds:
+      - task: build-notebook
+    desc: "Builds the Quarto notebook and ensures all dependencies are met."
+
+  build-notebook:
+    deps:
+      - install-python-deps
+      - generate-duckdb
+    sources:
+      - duckdb-export-discover.qmd
+      - geol.duckdb
+    generates:
+      - duckdb-export-discover.html
+    cmds:
+      - |
+        echo "Rendering Quarto notebook..."
+        zsh -c 'source .venv/bin/activate && quarto render duckdb-export-discover.qmd'
+    desc: "Renders the Quarto notebook to HTML."
+
+  install-python-deps:
+    cmds:
+      - |
+        if [ ! -d ".venv" ]; then
+          echo "Creating Python virtual environment..."
+          uv venv
+        fi
+      - echo "Activating virtual environment and installing Python dependencies..."
+      - zsh -c 'source .venv/bin/activate && uv pip install jupyter pyyaml duckdb plotly pandas itables graphviz networkx'
+      - echo "Ensure Graphviz system package is installed (e.g., 'brew install graphviz' on macOS/Linux)."
+    desc: "Ensures Python virtual environment is set up and all dependencies are installed."
+
+  generate-duckdb:
+    generates:
+      - geol.duckdb
+    cmds:
+      - |
+        if command -v geol &> /dev/null; then
+          echo "Running 'geol export --force' to create/update geol.duckdb."
+          geol export --force
+        else
+          echo "ERROR: 'geol' command not found. Please install 'geol' to generate 'geol.duckdb'."
+          exit 1
+        fi
+    desc: "Generates or updates the geol.duckdb file using 'geol export --force'."
+
+  clean:
+    cmds:
+      - rm -f geol.duckdb duckdb-export-discover.html
+    desc: "Deletes all generated output files (geol.duckdb and HTML report)."
