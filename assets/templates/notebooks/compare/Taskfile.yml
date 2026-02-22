@@ -1,0 +1,39 @@
+version: '3'
+
+vars:
+  PYTHON_BIN: .venv/bin/python
+  NOTEBOOK: product_lifecycle_comparison.qmd
+  DB: geol.duckdb
+  # Default products to compare (Note: parameters currently require papermill in system path)
+  PRODUCT_1: postgresql
+  PRODUCT_2: mariadb
+
+tasks:
+  default:
+    cmds:
+      - task: build
+
+  geol:
+    desc: Generate geol.duckdb database if it does not exist
+    cmds:
+      - geol export
+    status:
+      - test -f {{.DB}}
+
+  build:
+    desc: Render the Quarto notebook
+    deps: [geol]
+    cmds:
+      - QUARTO_PYTHON={{.PYTHON_BIN}} quarto render {{.NOTEBOOK}} -P product1={{.PRODUCT_1}} -P product2={{.PRODUCT_2}} -P db_path={{.DB}}
+
+  export:
+    desc: Force update the DuckDB database using geol
+    cmds:
+      - geol export --force
+
+  clean:
+    desc: Clean generated files
+    cmds:
+      - rm -f {{.NOTEBOOK | replace ".qmd" ".html"}}
+      - rm -f {{.DB}}
+      - rm -rf _freeze/
