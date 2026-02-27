@@ -4,6 +4,6 @@ app_name: geol stack
 
 stack:
   - name: Go
-    version: "1.25"
+    version: "1.26"
     id_eol: go
     always-latest: true

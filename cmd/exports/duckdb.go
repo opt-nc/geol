@@ -55,7 +55,7 @@ type productData struct {
 	Releases    []product.ReleaseInfo `json:"releases"`
 }
 
-type allProductsData struct {
+type productDataMap struct {
 	Products map[string]*productData
 }
 
@@ -113,7 +113,7 @@ func (m model) View() tea.View {
 }
 
 // fetchAllProductData retrieves all product information and details from the API in a single pass
-func fetchAllProductData(cmd *cobra.Command) (*allProductsData, error) {
+func fetchAllProductData(cmd *cobra.Command) (*productDataMap, error) {
 	// Get products from cache
 	productsPath, err := utilities.GetProductsPath()
 	if err != nil {
@@ -127,7 +127,7 @@ func fetchAllProductData(cmd *cobra.Command) (*allProductsData, error) {
 		return nil, err
 	}
 
-	allData := &allProductsData{
+	allData := &productDataMap{
 		Products: make(map[string]*productData),
 	}
 
@@ -343,7 +343,7 @@ func createAboutTable(db *sql.DB) error {
 }
 
 // createTempDetailsTable creates the 'details_temp' table and inserts product details
-func createTempDetailsTable(db *sql.DB, allData *allProductsData) error {
+func createTempDetailsTable(db *sql.DB, allData *productDataMap) error {
 	// Create 'details_temp' table if not exists
 	_, err := db.Exec(`CREATE TEMP TABLE IF NOT EXISTS details_temp (
 			product_id TEXT,
@@ -478,7 +478,7 @@ func createDetailsTable(db *sql.DB) error {
 }
 
 // createProductsTable creates the 'products' table and inserts product information
-func createProductsTable(db *sql.DB, allData *allProductsData) error {
+func createProductsTable(db *sql.DB, allData *productDataMap) error {
 	// Create 'products' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS products (
 			id TEXT PRIMARY KEY,
@@ -567,7 +567,7 @@ func createProductsTable(db *sql.DB, allData *allProductsData) error {
 	return nil
 }
 
-func createAliasesTable(db *sql.DB, allData *allProductsData) error {
+func createAliasesTable(db *sql.DB, allData *productDataMap) error {
 	// Create 'aliases' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS aliases (
 			id TEXT,
@@ -675,7 +675,7 @@ func createAliasesTable(db *sql.DB, allData *allProductsData) error {
 	return nil
 }
 
-func createProductIdentifiersTable(db *sql.DB, allData *allProductsData) error {
+func createProductIdentifiersTable(db *sql.DB, allData *productDataMap) error {
 	// Create 'product_identifiers' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS product_identifiers (
 			product_id TEXT,
@@ -954,7 +954,7 @@ func createCategoriesTable(db *sql.DB, allCategories map[string]utilities.Catego
 	return nil
 }
 
-func createProductTagsTable(db *sql.DB, allData *allProductsData) error {
+func createProductTagsTable(db *sql.DB, allData *productDataMap) error {
 	// Create 'product_tags' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS product_tags (
 			product_id TEXT,
@@ -1071,64 +1071,8 @@ If the file already exists, use the --force flag to overwrite it.`,
 			}
 		}()
 
-		// Fetch all product data from API in a single pass
-		allProductsData, err := fetchAllProductData(cmd)
-		if err != nil {
-			log.Fatal().Err(err).Msg("Error fetching product data from API")
-		}
-
-		allTags, err := fetchAllTags()
-		if err != nil {
-			log.Fatal().Err(err).Msg("Error fetching tags from API")
-		}
-
-		allCategories, err := fetchAllCategories()
-		if err != nil {
-			log.Fatal().Err(err).Msg("Error fetching categories from API")
-		}
-
-		// Create 'tags' table and insert tags
-		if err := createTagsTable(db, allTags); err != nil {
-			log.Fatal().Err(err).Msg("Error creating and populating 'tags' table")
-		}
-
-		// Create 'categories' table and insert categories
-		if err := createCategoriesTable(db, allCategories); err != nil {
-			log.Fatal().Err(err).Msg("Error creating and populating 'categories' table")
-		}
-		// Create 'products' table and insert product information
-		if err := createProductsTable(db, allProductsData); err != nil {
-			log.Fatal().Err(err).Msg("Error creating and populating 'products' table")
-		}
-
-		// Create 'details_temp' table and insert product details
-		if err := createTempDetailsTable(db, allProductsData); err != nil {
-			log.Fatal().Err(err).Msg("Error creating and populating 'details_temp' table")
-		}
-
-		// Create 'details' table from 'details_temp' with proper date types
-		if err := createDetailsTable(db); err != nil {
-			log.Fatal().Err(err).Msg("Error creating and populating 'details' table")
-		}
-
-		// Create 'aliases' table and insert product aliases
-		if err := createAliasesTable(db, allProductsData); err != nil {
-			log.Fatal().Err(err).Msg("Error creating and populating 'aliases' table")
-		}
-
-		// Create 'product_identifiers' table and insert product identifiers
-		if err := createProductIdentifiersTable(db, allProductsData); err != nil {
-			log.Fatal().Err(err).Msg("Error creating and populating 'product_identifiers' table")
-		}
-
-		// Create 'product_tags' junction table
-		if err := createProductTagsTable(db, allProductsData); err != nil {
-			log.Fatal().Err(err).Msg("Error creating and populating 'product_tags' table")
-		}
-
-		// Create 'about' table and insert metadata
-		if err := createAboutTable(db); err != nil {
-			log.Fatal().Err(err).Msg("Error creating and populating 'about' table")
+		if err := populateDuckDB(cmd, db); err != nil {
+			log.Fatal().Err(err).Msg("Error populating DuckDB database")
 		}
 
 		duration := time.Since(startTime)
@@ -1137,6 +1081,55 @@ If the file already exists, use the --force flag to overwrite it.`,
 		log.Info().Msgf("Example CLI command: duckdb %s", dbPath)
 		log.Info().Msg("Check https://github.com/davidgasquez/awesome-duckdb for more tools and clients.")
 	},
+}
+
+// populateDuckDB fetches all data from the API and creates all tables in the given DuckDB database.
+// This function is shared by both the duckdb and sqlite export commands.
+func populateDuckDB(cmd *cobra.Command, db *sql.DB) error {
+	allProductsData, err := fetchAllProductData(cmd)
+	if err != nil {
+		return fmt.Errorf("error fetching product data from API: %w", err)
+	}
+
+	allTags, err := fetchAllTags()
+	if err != nil {
+		return fmt.Errorf("error fetching tags from API: %w", err)
+	}
+
+	allCategories, err := fetchAllCategories()
+	if err != nil {
+		return fmt.Errorf("error fetching categories from API: %w", err)
+	}
+
+	if err := createTagsTable(db, allTags); err != nil {
+		return fmt.Errorf("error creating 'tags' table: %w", err)
+	}
+	if err := createCategoriesTable(db, allCategories); err != nil {
+		return fmt.Errorf("error creating 'categories' table: %w", err)
+	}
+	if err := createProductsTable(db, allProductsData); err != nil {
+		return fmt.Errorf("error creating 'products' table: %w", err)
+	}
+	if err := createTempDetailsTable(db, allProductsData); err != nil {
+		return fmt.Errorf("error creating 'details_temp' table: %w", err)
+	}
+	if err := createDetailsTable(db); err != nil {
+		return fmt.Errorf("error creating 'details' table: %w", err)
+	}
+	if err := createAliasesTable(db, allProductsData); err != nil {
+		return fmt.Errorf("error creating 'aliases' table: %w", err)
+	}
+	if err := createProductIdentifiersTable(db, allProductsData); err != nil {
+		return fmt.Errorf("error creating 'product_identifiers' table: %w", err)
+	}
+	if err := createProductTagsTable(db, allProductsData); err != nil {
+		return fmt.Errorf("error creating 'product_tags' table: %w", err)
+	}
+	if err := createAboutTable(db); err != nil {
+		return fmt.Errorf("error creating 'about' table: %w", err)
+	}
+
+	return nil
 }
 
 func init() {

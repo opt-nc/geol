@@ -13,12 +13,12 @@
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11239/badge)](https://www.bestpractices.dev/projects/11239)
 [![📊 OSS Insights](https://img.shields.io/badge/OSS%20Insights-%F0%9F%93%8A-blue)](https://ossinsight.io/analyze/opt-nc/geol#overview)
 
-# ❔ About
+## ❔ About
 
 `geol` is a Go based alternative to the famous [`hugovk/norwegianblue`](https://github.com/hugovk/norwegianblue) python
 based `cli`.
 
-Its ambitions are to : 
+Its ambitions are to :
 
 1. Deliver a at least UX as good as `hugovk/norwegianblue` aka. `geol` does,
 2. First class terminal based UX
@@ -26,7 +26,7 @@ Its ambitions are to :
 4. Enhance with new custom awaited features
 5. Create innovative ways to manager EOLs for more security, for all
 
-# 🧑‍🤝‍🧑 Core team and roles
+## 🧑‍🤝‍🧑 Core team and roles
 
 | Person                                     | 🎯 Product Manager | 👩‍💻 Lead Dev | 📊 Data Scientist | 🛠️ Data Engineer | 🎤 Storyteller | 🧪 End-user & Tester | 🧑‍🤝‍🧑 Other role |
 |--------------------------------------------|--------------------|---------------|-----------------|------------------|----------------|-----------------------|---------------|
@@ -36,8 +36,7 @@ Its ambitions are to :
 | [@Draks898](https://github.com/Draks898)   |                    |               |                 |                  |                |           ✅         |                |
 | [@aymanbagabas](https://github.com/aymanbagabas) |              |               |                 |                  |                |                      | [`charmbracelet`](https://github.com/charmbracelet/) expert
 
-
-# 📑 Resources
+## 📑 Resources
 
 - [endoflife API](https://endoflife.date/docs/api/v1/)
 - [⌛ Manage EoLs like a boss with endoflife.date 🛑](https://dev.to/adriens/manage-eols-like-a-boss-with-endoflifedate-2ikf)
@@ -47,7 +46,7 @@ Its ambitions are to :
 - [endoflife.date Series' Articles](https://dev.to/adriens/series/21232)
 - [⏳ Managing EOLs w. `geol`: the impossible `1'` Mux demo](https://dev.to/adriens/managing-eols-w-geol-the-impossible-1-mux-demo-cnl)
 
-# 🚀 QuickStart
+## 🚀 QuickStart
 
 To install:
 
@@ -62,6 +61,13 @@ With `brew`:
 brew install curl
 brew install --cask opt-nc/homebrew-tap/geol
 ```
+
+> [!WARNING]
+> For macos users, you will have to allow the execution of `geol` in your security settings, as it is not signed with an Apple Developer account. You can do this by going to `System Preferences > Security & Privacy > General` and clicking on `Allow Anyway` for `geol`.
+> or you can run the following command in your terminal to allow the execution of `geol`:
+>```sh
+>xattr -d com.apple.quarantine $(which geol)
+>```
 
 Or simply with `go`:
 
@@ -86,7 +92,7 @@ geol version
 
 If the autocompletion is not working yet, you need to update your fpath.
 
-For `zsh` you need to add the following lines to your `.zshrc` file : 
+For `zsh` you need to add the following lines to your `.zshrc` file :
 
 ```sh
 # === Homebrew completions ===
@@ -101,7 +107,7 @@ compinit
 zstyle ':completion:*' verbose yes
 ```
 
-Then restart your terminal or source your `.zshrc` file : 
+Then restart your terminal or source your `.zshrc` file :
 
 ```sh
 source ~/.zshrc
@@ -118,16 +124,15 @@ man geol
 
 ## 🤓 Build it yourself
 
-To build it youself : 
+To build it youself :
 
 ```sh
 go build -o geol ./cmd/geol
 ```
+
 ## 🍿 See it in action
 
 <a href= "https://www.youtube.com/watch?v=vhFXWGqB_-g"><img width="1280" height="720" alt="geol-unboxing-video-thumbnail" src="https://github.com/user-attachments/assets/427e704a-d3ac-4be9-8bf8-7ece98d302cc" /></a>
-
-
 
 ## 🙏 Acknowledgments
 
@@ -135,12 +140,12 @@ go build -o geol ./cmd/geol
 
 ## 💡 More around `endoflife.date` ecosystem
 
-`endoflife` is an ever-growing ecosystem, below some resources to be aware of them : 
+`endoflife` is an ever-growing ecosystem, below some resources to be aware of them :
 
 - Official [`endoflife.date` Known users](https://github.com/endoflife-date/endoflife.date/wiki/Known-Users)
 - [`hugovk/norwegianblue`](https://github.com/hugovk/norwegianblue)
 - [`xeol`](https://github.com/xeol-io/xeol) _"A scanner for end-of-life (EOL) software and dependencies in container images, filesystems, and SBOMs"_
 
-# 📈 Star History
+## 📈 Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=opt-nc/geol&type=date&legend=top-left)](https://www.star-history.com/#opt-nc/geol&type=date&legend=top-left)

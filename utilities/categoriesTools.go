@@ -105,7 +105,7 @@ func GetCategoriesWithCacheRefresh(cmd *cobra.Command, categoriesPath string) (C
 	return categories, nil
 }
 
-// readAndUnmarshalCategories lit le fichier et fait l'unmarshal JSON dans categories.
+// readAndUnmarshalCategories reads the file and unmarshals the JSON into categories.
 func readAndUnmarshalCategories(categoriesPath string, categories *CategoriesFile) error {
 	data, err := os.ReadFile(categoriesPath)
 	if err != nil {

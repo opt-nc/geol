@@ -74,7 +74,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			if daysInt < 0 {
 				status = "EOL"
 				errorOut = true
-				// Calculer la durée écoulée depuis EOL
+				// Calculate the time elapsed since EOL
 				years := -daysInt / 365
 				months := (-daysInt % 365) / 30
 				days := (-daysInt % 365) % 30

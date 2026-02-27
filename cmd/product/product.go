@@ -134,7 +134,7 @@ geol product describe nodejs`,
 			relName := strings.ReplaceAll(r.ReleaseName, "|", "\\|")
 			relDate := strings.ReplaceAll(r.ReleaseDate, "|", "\\|")
 			relEol := strings.ReplaceAll(r.EolFrom, "|", "\\|")
-			buf.WriteString(fmt.Sprintf("| %s | %s | %s | %s |\n", name, relName, relDate, relEol))
+			fmt.Fprintf(&buf, "| %s | %s | %s | %s |\n", name, relName, relDate, relEol)
 		}
 
 		out, err := glamour.RenderWithEnvironmentConfig(buf.String())
