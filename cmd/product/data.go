@@ -1,18 +1,18 @@
 package product
 
 type ReleaseInfo struct {
-	Name        string
-	ReleaseDate string
-	LatestName  string
-	LatestDate  string
-	EoasFrom    string
-	EolFrom     string
-	LTS         bool
+	Name        string `json:"cycle"`
+	ReleaseDate string `json:"releaseDate"`
+	LatestName  string `json:"latest"`
+	LatestDate  string `json:"latestReleaseDate"`
+	EoasFrom    string `json:"-"`
+	EolFrom     string `json:"eolFrom"`
+	LTS         bool   `json:"isLts"`
 }
 
 type ProductReleases struct {
-	Name     string
-	Releases []ReleaseInfo
+	Name     string        `json:"name"`
+	Releases []ReleaseInfo `json:"releases"`
 }
 
 type productResult struct {
