@@ -19,6 +19,6 @@ Available formats:
 }
 
 func init() {
-	ExportCmd.Flags().StringP("output", "o", "geol.duckdb", "Output DuckDB database file path")
-	ExportCmd.Flags().BoolP("force", "f", false, "Overwrites the DuckDB database file if it already exists")
+	ExportCmd.Flags().StringP("output", "o", "geol.duckdb", "Output database file path")
+	ExportCmd.Flags().BoolP("force", "f", false, "Overwrites the output database file if it already exists")
 }
