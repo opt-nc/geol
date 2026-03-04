@@ -18,6 +18,7 @@ import (
 
 func init() {
 	extendedCmd.Flags().IntP("number", "n", 10, "Number of latest versions to display (default: 10, 0 to show all)")
+	extendedCmd.Flags().Bool("json", false, "Output results in JSON format")
 }
 
 // extendedCmd represents the extended command
@@ -29,11 +30,14 @@ geol product extended golang k8s
 # Show the latest 15 versions of Quarkus
 geol product extended quarkus -n 15
 # Redirect output to a markdown file
-geol product extended quarkus > quarkus-eol.md`,
+geol product extended quarkus > quarkus-eol.md
+# Export as JSON
+geol product extended golang --json`,
 	Short: "Display extended release information for specified products (latest 10 versions by default).",
 	Long:  `Retrieve and display detailed release data for one or more products, including cycle, release dates, support periods, and end-of-life information. By default, the latest 10 versions are shown for each product; use the --number flag to display the latest n versions instead. Results are formatted in a styled table for easy reading. Products must exist in the local cache or be available via the API.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		numberFlag, _ := cmd.Flags().GetInt("number")
+		jsonFlag, _ := cmd.Flags().GetBool("json")
 		mdFlag := !term.IsTerminal(os.Stdout.Fd()) // detect if output is not a terminal
 
 		if numberFlag < 0 {
@@ -93,11 +97,35 @@ geol product extended quarkus > quarkus-eol.md`,
 			log.Fatal().Msg("None of the products were found in the API.")
 		}
 
+		// JSON output
+		if jsonFlag {
+			renderProductsJSON(allProducts, numberFlag)
+			return
+		}
+
 		// Render tables for all products
 		for i, prod := range allProducts {
 			renderProductTable(prod, numberFlag, mdFlag, i == 0)
 		}
 	},
+}
+
+// renderProductsJSON outputs product release data as JSON
+func renderProductsJSON(allProducts []ProductReleases, numberFlag int) {
+	// Apply the number limit to each product's releases
+	for i, prod := range allProducts {
+		displayCount := numberFlag
+		if displayCount == 0 || displayCount > len(prod.Releases) {
+			displayCount = len(prod.Releases)
+		}
+		allProducts[i].Releases = prod.Releases[:displayCount]
+	}
+
+	output, err := json.MarshalIndent(allProducts, "", "  ")
+	if err != nil {
+		log.Fatal().Err(err).Msg("Error encoding JSON")
+	}
+	fmt.Println(string(output))
 }
 
 // renderProductTable displays a formatted table for a single product's release information

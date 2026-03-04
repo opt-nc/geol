@@ -309,20 +309,20 @@ func createAboutTable(db *sql.DB) error {
 	}
 
 	// Add comment to 'about' table
-	_, err = db.Exec(`COMMENT ON TABLE about IS 'Metadata about the geol version and platform that generated this database'`)
+	_, err = db.Exec(`COMMENT ON TABLE about IS '` + CommentTableAbout + `'`)
 	if err != nil {
 		return fmt.Errorf("error adding comment to 'about' table: %w", err)
 	}
 
 	// Add comments to 'about' table columns
 	_, err = db.Exec(`
-		COMMENT ON COLUMN about.git_version IS 'Git tag version of geol used to generate this database';
-		COMMENT ON COLUMN about.git_commit IS 'Git commit hash of geol used to generate this database';
-		COMMENT ON COLUMN about.go_version IS 'Go compiler version used to build geol';
-		COMMENT ON COLUMN about.platform IS 'Operating system and architecture where geol was executed';
-		COMMENT ON COLUMN about.github_url IS 'GitHub repository URL for the geol project';
-		COMMENT ON COLUMN about.generated_at IS 'UTC timestamp when this database was generated';
-		COMMENT ON COLUMN about.generated_at_tz IS 'Local timestamp with timezone when this database was generated';
+		COMMENT ON COLUMN about.git_version IS '` + CommentColAboutGitVersion + `';
+		COMMENT ON COLUMN about.git_commit IS '` + CommentColAboutGitCommit + `';
+		COMMENT ON COLUMN about.go_version IS '` + CommentColAboutGoVersion + `';
+		COMMENT ON COLUMN about.platform IS '` + CommentColAboutPlatform + `';
+		COMMENT ON COLUMN about.github_url IS '` + CommentColAboutGithubURL + `';
+		COMMENT ON COLUMN about.generated_at IS '` + CommentColAboutGeneratedAt + `';
+		COMMENT ON COLUMN about.generated_at_tz IS '` + CommentColAboutGeneratedTz + `';
 	`)
 	if err != nil {
 		return fmt.Errorf("error adding comments to 'about' columns: %w", err)
@@ -348,6 +348,7 @@ func createTempDetailsTable(db *sql.DB, allData *productDataMap) error {
 	_, err := db.Exec(`CREATE TEMP TABLE IF NOT EXISTS details_temp (
 			product_id TEXT,
 			cycle TEXT,
+			is_lts BOOLEAN,
 			release TEXT,
 			latest TEXT,
 			latest_release TEXT,
@@ -359,7 +360,7 @@ func createTempDetailsTable(db *sql.DB, allData *productDataMap) error {
 	}
 
 	// Add comment to 'details_temp' table
-	_, err = db.Exec(`COMMENT ON TABLE details_temp IS 'Temporary table for storing raw product release details before type conversion'`)
+	_, err = db.Exec(`COMMENT ON TABLE details_temp IS '` + CommentTableDetailsTemp + `'`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error adding comment to 'details_temp' table")
 		return err
@@ -397,10 +398,11 @@ func createTempDetailsTable(db *sql.DB, allData *productDataMap) error {
 		if prodData, exists := allData.Products[productID]; exists {
 			// Insert each release into the details_temp table
 			for _, release := range prodData.Releases {
-				_, err = db.Exec(`INSERT INTO details_temp (product_id, cycle, release, latest, latest_release, eol) 
-						VALUES (?, ?, ?, ?, ?, ?)`,
+				_, err = db.Exec(`INSERT INTO details_temp (product_id, cycle, is_lts, release, latest, latest_release, eol) 
+						VALUES (?, ?, ?, ?, ?, ?, ?)`,
 					productID,
 					release.Name,
+					release.LTS,
 					release.ReleaseDate,
 					release.LatestName,
 					release.LatestDate,
@@ -423,6 +425,7 @@ func createDetailsTable(db *sql.DB) error {
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS details (
 			product_id TEXT,
 			cycle TEXT,
+			is_lts BOOLEAN,
 			release_date DATE,
 			latest TEXT,
 			latest_release_date DATE,
@@ -436,10 +439,11 @@ func createDetailsTable(db *sql.DB) error {
 	}
 
 	// Insert data from details_temp, converting empty strings to NULL and casting to DATE
-	_, err = db.Exec(`INSERT INTO details (product_id, cycle, release_date, latest, latest_release_date, eol_date)
+	_, err = db.Exec(`INSERT INTO details (product_id, cycle, is_lts, release_date, latest, latest_release_date, eol_date)
 		SELECT 
 			product_id,
 			cycle,
+			is_lts,
 			CASE WHEN release = '' THEN NULL ELSE TRY_CAST(release AS DATE) END,
 			latest,
 			CASE WHEN latest_release = '' THEN NULL ELSE TRY_CAST(latest_release AS DATE) END,
@@ -452,7 +456,7 @@ func createDetailsTable(db *sql.DB) error {
 	}
 
 	// Add comment to 'details' table
-	_, err = db.Exec(`COMMENT ON TABLE details IS 'Product release lifecycle details including release dates, latest versions, and end-of-life (EOL) dates'`)
+	_, err = db.Exec(`COMMENT ON TABLE details IS '` + CommentTableDetails + `'`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error adding comment to 'details' table")
 		return err
@@ -460,12 +464,13 @@ func createDetailsTable(db *sql.DB) error {
 
 	// Add comments to 'details' table columns
 	_, err = db.Exec(`
-		COMMENT ON COLUMN details.product_id IS 'Product id referencing the products table';
-		COMMENT ON COLUMN details.cycle IS 'Product release cycle or version number';
-		COMMENT ON COLUMN details.release_date IS 'Initial release date for this cycle';
-		COMMENT ON COLUMN details.latest IS 'Latest patch version within this cycle';
-		COMMENT ON COLUMN details.latest_release_date IS 'Release date of the latest patch version';
-		COMMENT ON COLUMN details.eol_date IS 'End-of-life date when this cycle stops receiving support';
+		COMMENT ON COLUMN details.product_id IS '` + CommentColDetailsProductID + `';
+		COMMENT ON COLUMN details.cycle IS '` + CommentColDetailsCycle + `';
+		COMMENT ON COLUMN details.is_lts IS '` + CommentColDetailsIsLTS + `';
+		COMMENT ON COLUMN details.release_date IS '` + CommentColDetailsReleaseDate + `';
+		COMMENT ON COLUMN details.latest IS '` + CommentColDetailsLatest + `';
+		COMMENT ON COLUMN details.latest_release_date IS '` + CommentColDetailsLatestReleaseDate + `';
+		COMMENT ON COLUMN details.eol_date IS '` + CommentColDetailsEOLDate + `';
 	`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error adding comments to 'details' columns")
@@ -493,7 +498,7 @@ func createProductsTable(db *sql.DB, allData *productDataMap) error {
 	}
 
 	// Add comment to 'products' table
-	_, err = db.Exec(`COMMENT ON TABLE products IS 'Catalog of all products tracked by geol with their labels, categories, and documentation URIs'`)
+	_, err = db.Exec(`COMMENT ON TABLE products IS '` + CommentTableProducts + `'`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error adding comment to 'products' table")
 		return err
@@ -501,10 +506,10 @@ func createProductsTable(db *sql.DB, allData *productDataMap) error {
 
 	// Add comments to 'products' table columns
 	_, err = db.Exec(`
-		COMMENT ON COLUMN products.id IS 'Unique product id (primary key)';
-		COMMENT ON COLUMN products.label IS 'Human-readable display name for the product';
-		COMMENT ON COLUMN products.category_id IS 'Category id grouping related products';
-		COMMENT ON COLUMN products.uri IS 'URI to the product documentation on endoflife.date';
+		COMMENT ON COLUMN products.id IS '` + CommentColProductsID + `';
+		COMMENT ON COLUMN products.label IS '` + CommentColProductsLabel + `';
+		COMMENT ON COLUMN products.category_id IS '` + CommentColProductsCategoryID + `';
+		COMMENT ON COLUMN products.uri IS '` + CommentColProductsURI + `';
 	`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error adding comments to 'products' columns")
@@ -581,15 +586,15 @@ func createAliasesTable(db *sql.DB, allData *productDataMap) error {
 	}
 
 	// Add comment to 'aliases' table
-	_, err = db.Exec(`COMMENT ON TABLE aliases IS 'Alternative names or aliases for products to facilitate searching and identification'`)
+	_, err = db.Exec(`COMMENT ON TABLE aliases IS '` + CommentTableAliases + `'`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error adding comment to 'aliases' table")
 		return err
 	}
 	// Add comments to 'aliases' table columns
 	_, err = db.Exec(`
-		COMMENT ON COLUMN aliases.id IS 'Alternative name or alias for the product (primary key)';
-		COMMENT ON COLUMN aliases.product_id IS 'Product id referencing the products table';
+		COMMENT ON COLUMN aliases.id IS '` + CommentColAliasesID + `';
+		COMMENT ON COLUMN aliases.product_id IS '` + CommentColAliasesProductID + `';
 	`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error adding comments to 'aliases' columns")
@@ -690,7 +695,7 @@ func createProductIdentifiersTable(db *sql.DB, allData *productDataMap) error {
 	}
 
 	// Add comment to 'product_identifiers' table
-	_, err = db.Exec(`COMMENT ON TABLE product_identifiers IS 'Various identifiers for products such as SKUs, model numbers, or codes used by manufacturers'`)
+	_, err = db.Exec(`COMMENT ON TABLE product_identifiers IS '` + CommentTableProductIdentifiers + `'`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error adding comment to 'product_identifiers' table")
 		return err
@@ -698,9 +703,9 @@ func createProductIdentifiersTable(db *sql.DB, allData *productDataMap) error {
 
 	// Add comments to 'product_identifiers' table columns
 	_, err = db.Exec(`
-		COMMENT ON COLUMN product_identifiers.product_id IS 'Product id referencing the products table';
-		COMMENT ON COLUMN product_identifiers.identifier_type IS 'Type of identifier (e.g., repology, purl, cpe)';
-		COMMENT ON COLUMN product_identifiers.identifier_value IS 'Value of the identifier';
+		COMMENT ON COLUMN product_identifiers.product_id IS '` + CommentColProductIdentifiersProductID + `';
+		COMMENT ON COLUMN product_identifiers.identifier_type IS '` + CommentColProductIdentifiersType + `';
+		COMMENT ON COLUMN product_identifiers.identifier_value IS '` + CommentColProductIdentifiersValue + `';
 	`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error adding comments to 'product_identifiers' columns")
@@ -809,7 +814,7 @@ func createTagsTable(db *sql.DB, allTags map[string]utilities.Tag) error {
 	}
 
 	// Add comment to 'tags' table
-	_, err = db.Exec(`COMMENT ON TABLE tags IS 'Tags used to categorize and group products by common characteristics or use cases'`)
+	_, err = db.Exec(`COMMENT ON TABLE tags IS '` + CommentTableTags + `'`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error adding comment to 'tags' table")
 		return err
@@ -817,9 +822,9 @@ func createTagsTable(db *sql.DB, allTags map[string]utilities.Tag) error {
 
 	// Add comments to 'tags' table columns
 	_, err = db.Exec(`
-		COMMENT ON COLUMN tags.id IS 'Unique tag identifier (primary key)';
-		COMMENT ON COLUMN tags.uri IS 'URI to the tag page on endoflife.date';
-		COMMENT ON COLUMN tags.www IS 'Human-readable web URL to the tag page on endoflife.date';
+		COMMENT ON COLUMN tags.id IS '` + CommentColTagsID + `';
+		COMMENT ON COLUMN tags.uri IS '` + CommentColTagsURI + `';
+		COMMENT ON COLUMN tags.www IS '` + CommentColTagsWWW + `';
 	`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error adding comments to 'tags' columns")
@@ -890,7 +895,7 @@ func createCategoriesTable(db *sql.DB, allCategories map[string]utilities.Catego
 	}
 
 	// Add comment to 'categories' table
-	_, err = db.Exec(`COMMENT ON TABLE categories IS 'Categories used to group products by their primary function or domain'`)
+	_, err = db.Exec(`COMMENT ON TABLE categories IS '` + CommentTableCategories + `'`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error adding comment to 'categories' table")
 		return err
@@ -898,8 +903,8 @@ func createCategoriesTable(db *sql.DB, allCategories map[string]utilities.Catego
 
 	// Add comments to 'categories' table columns
 	_, err = db.Exec(`
-		COMMENT ON COLUMN categories.id IS 'Unique category identifier (primary key)';
-		COMMENT ON COLUMN categories.uri IS 'URI to the category page on endoflife.date';
+		COMMENT ON COLUMN categories.id IS '` + CommentColCategoriesID + `';
+		COMMENT ON COLUMN categories.uri IS '` + CommentColCategoriesURI + `';
 	`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error adding comments to 'categories' columns")
@@ -969,7 +974,7 @@ func createProductTagsTable(db *sql.DB, allData *productDataMap) error {
 	}
 
 	// Add comment to 'product_tags' table
-	_, err = db.Exec(`COMMENT ON TABLE product_tags IS 'Junction table linking products to their associated tags for many-to-many relationships'`)
+	_, err = db.Exec(`COMMENT ON TABLE product_tags IS '` + CommentTableProductTags + `'`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error adding comment to 'product_tags' table")
 		return err
@@ -977,8 +982,8 @@ func createProductTagsTable(db *sql.DB, allData *productDataMap) error {
 
 	// Add comments to 'product_tags' table columns
 	_, err = db.Exec(`
-		COMMENT ON COLUMN product_tags.product_id IS 'Product id referencing the products table';
-		COMMENT ON COLUMN product_tags.tag_id IS 'Tag id referencing the tags table';
+		COMMENT ON COLUMN product_tags.product_id IS '` + CommentColProductTagsProductID + `';
+		COMMENT ON COLUMN product_tags.tag_id IS '` + CommentColProductTagsTagID + `';
 	`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error adding comments to 'product_tags' columns")
