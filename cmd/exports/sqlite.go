@@ -148,6 +148,7 @@ func exportDuckDBToSQLite(db *sql.DB, sqlitePath string) error {
 		`CREATE TABLE sqlite_db.details(
 			product_id TEXT,
 			cycle TEXT,
+			is_lts INTEGER,
 			release_date TEXT,
 			latest TEXT,
 			latest_release_date TEXT,
@@ -197,6 +198,7 @@ func exportDuckDBToSQLite(db *sql.DB, sqlitePath string) error {
 		`INSERT INTO sqlite_db.details
 		SELECT
 			product_id, cycle,
+			CAST(is_lts AS INTEGER),
 			CAST(release_date AS VARCHAR),
 			latest,
 			CAST(latest_release_date AS VARCHAR),
@@ -282,6 +284,7 @@ func addSQLiteForeignKeys(sqlitePath string) error {
 				`CREATE TABLE details(
 					product_id TEXT,
 					cycle TEXT,
+					is_lts INTEGER,
 					release_date TEXT,
 					latest TEXT,
 					latest_release_date TEXT,
