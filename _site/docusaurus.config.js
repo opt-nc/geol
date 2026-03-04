@@ -66,7 +66,7 @@ const config = {
         {name: 'og:type', content: 'website'},
         {name: 'twitter:card', content: 'summary_large_image'},
       ],
-      image: 'img/docusaurus-social-card.jpg',
+      image: 'img/geol.png',
       colorMode: { respectPrefersColorScheme: true },
       navbar: {
         title: 'geol',
