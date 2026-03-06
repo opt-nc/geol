@@ -26,7 +26,25 @@ The exported database contains multiple tables including `products`, `categories
 
 You are now ready to play with the `duckdb` file.
 
+## Export to SQLite
+
+`geol` also supports `sqlite` export: you can export product information to a SQLite database using the following command:
+
+```bash title="Export to SQLite"
+geol export sqlite
+```
+
+This command produces a SQLite database file containing the whole [`endoflife.date`](https://endoflife.date/) dataset as a single structured database.
+
+:::tip
+SQLite is perfect for lightweight applications, embedded systems, and scenarios where you need a portable, self-contained database without a separate server process.
+:::
+
+You can query the SQLite database using the `sqlite3` command-line tool or any SQLite-compatible client.
+
 ## Requirements
+
+### DuckDB
 
 To play with the `duckdb` file, you need to have `duckdb` setup and ready (recommended install option below):
 
@@ -38,8 +56,26 @@ brew install duckdb
 See [DuckDB Installation](https://duckdb.org/install/?platform=linux&environment=cli) for more installation options on Linux, Windows, and other platforms.
 :::
 
+### SQLite
 
-## Basic DuckDB examples
+To work with SQLite databases, you need the `sqlite3` command-line tool. It's often pre-installed on most systems:
+
+```bash title="Check if SQLite is installed"
+sqlite3 --version
+```
+
+If not installed, you can install it:
+
+```bash title="Install SQLite (brew install)"
+brew install sqlite
+```
+
+:::info
+See [SQLite Download](https://www.sqlite.org/download.html) for more installation options on different platforms.
+:::
+
+
+## Basic DuckDB Examples
 
 Show DuckDB help:
 
@@ -74,6 +110,42 @@ Count the number of products:
 
 ```sql title="Count products"
 select count(*) from products;
+```
+
+## Basic SQLite Examples
+
+Run a single SQL command without opening the interactive CLI:
+
+```bash title="Run a single query"
+sqlite3 geol.db "SELECT * FROM products LIMIT 10;"
+```
+
+:::tip
+Use the `-header` and `-column` flags for prettier output: `sqlite3 -header -column geol.db "SELECT * FROM products LIMIT 10;"`
+:::
+
+Open the database in the SQLite interactive CLI:
+
+```shell title="Open interactive CLI"
+sqlite3 geol.db
+```
+
+Inside the SQLite CLI, you can run SQL commands:
+
+```sql title="List all tables"
+.tables
+```
+
+```sql title="Show table schema"
+.schema products
+```
+
+```sql title="Count products"
+SELECT COUNT(*) FROM products;
+```
+
+```sql title="Exit SQLite CLI"
+.quit
 ```
 
 ## Understand database structure with `schemacrawler`
@@ -181,7 +253,9 @@ df = con.execute("SELECT * FROM products WHERE eol_date < CURRENT_DATE").df()
 print(f"Found {len(df)} products past EOL")
 ```
 
-### 📹 Video Tutorial: Exploring with Quarto
+### 📹 Video Tutorials
+
+#### Exploring with Quarto
 
 Watch this hands-on video tutorial that demonstrates how to use **Quarto** to explore and analyze the DuckDB export interactively:
 
@@ -190,6 +264,12 @@ Watch this hands-on video tutorial that demonstrates how to use **Quarto** to ex
 :::tip[Why Quarto?]
 Quarto combines the power of markdown, code execution, and beautiful output rendering. It's perfect for creating reproducible EOL analysis reports that mix SQL queries, visualizations, and narrative documentation.
 :::
+
+#### endoflife.date as SQLite
+
+Watch this tutorial to learn how to work with endoflife.date data using SQLite with geol:
+
+<iframe width="100%" height="415" src="https://www.youtube.com/embed/SojNndY8vrk" title="endoflife.date as SQLite with geol" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
 ### 📈 Export to Other Formats
 
