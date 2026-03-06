@@ -296,13 +296,13 @@ func createAboutTable(db *sql.DB) error {
 
 	// Create 'about' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS about (
-			git_version TEXT,
-			git_commit TEXT,
-			go_version TEXT,
-			platform TEXT,
-			github_url TEXT,
-			generated_at TIMESTAMP DEFAULT date_trunc('second', CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
-			generated_at_tz TIMESTAMPTZ DEFAULT date_trunc('second', CURRENT_TIMESTAMP)
+			git_version TEXT NOT NULL,
+			git_commit TEXT NOT NULL,
+			go_version TEXT NOT NULL,
+			platform TEXT NOT NULL,
+			github_url TEXT NOT NULL,
+			generated_at TIMESTAMP DEFAULT date_trunc('second', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') NOT NULL,
+			generated_at_tz TIMESTAMPTZ DEFAULT date_trunc('second', CURRENT_TIMESTAMP) NOT NULL
 		)`)
 	if err != nil {
 		return fmt.Errorf("error creating 'about' table: %w", err)
