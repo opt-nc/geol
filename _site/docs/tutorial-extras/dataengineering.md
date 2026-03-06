@@ -212,27 +212,6 @@ The HTML output provides an interactive, browsable documentation of your databas
 
 Now that you have your EOL data in DuckDB, the possibilities are endless! Here are some exciting things you can explore:
 
-### 📊 Advanced Analytics
-
-Combine multiple tables to gain deeper insights:
-
-```sql title="Find products with specific EOL patterns"
-SELECT p.name, p.eol_date, c.name as category
-FROM products p
-JOIN categories c ON p.category_id = c.id
-WHERE p.eol_date BETWEEN '2024-01-01' AND '2024-12-31'
-ORDER BY p.eol_date;
-```
-
-```sql title="Analyze EOL trends by category"
-SELECT c.name, COUNT(p.id) as product_count, 
-       MIN(p.eol_date) as earliest_eol,
-       MAX(p.eol_date) as latest_eol
-FROM categories c
-LEFT JOIN products p ON c.id = p.category_id
-GROUP BY c.name
-ORDER BY product_count DESC;
-```
 
 ### 🔗 Integration Possibilities
 
