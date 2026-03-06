@@ -126,13 +126,13 @@ func exportDuckDBToSQLite(db *sql.DB, sqlitePath string) error {
 			www TEXT
 		)`,
 		`CREATE TABLE sqlite_db.about(
-			git_version TEXT,
-			git_commit TEXT,
-			go_version TEXT,
-			platform TEXT,
-			github_url TEXT,
-			generated_at TEXT,
-			generated_at_tz TEXT
+			git_version TEXT NOT NULL,
+			git_commit TEXT NOT NULL,
+			go_version TEXT NOT NULL,
+			platform TEXT NOT NULL,
+			github_url TEXT NOT NULL,
+			generated_at TEXT NOT NULL,
+			generated_at_tz TEXT NOT NULL
 		)`,
 		`CREATE TABLE sqlite_db.products(
 			id TEXT PRIMARY KEY,
