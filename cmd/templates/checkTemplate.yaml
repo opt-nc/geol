@@ -39,7 +39,9 @@ stack:
     id_eol: non-existent-product
     skip: true
 
-  # Example: Using the always-latest flag for products that should always be on the latest version
+  # Example: Using the always-latest flag for products that should always be
+  # on the latest version
+  #
   # The always-latest field allows you to:
   # - Mark products that your organization requires to be on the latest version
   # - Get warnings/alerts when not using the most recent release
