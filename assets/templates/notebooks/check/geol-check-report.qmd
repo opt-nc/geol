@@ -55,11 +55,58 @@ format:
         .finding-safe { background-color: rgba(80, 250, 123, 0.1); border-color: #50fa7b; color: #50fa7b; }
         .finding-icon { font-size: 1.5rem; }
         .finding-text { font-size: 1.1rem; font-weight: 500; }
+
+        /* Pro Tip Visibility */
+        .protip-box code {
+            background-color: #444 !important;
+            color: #fff !important;
+            padding: 2px 5px !important;
+            border-radius: 3px !important;
+        }
+
         .report-header { text-align: center; margin-bottom: 30px; }
         .report-header h1 { font-size: 2.5rem; font-weight: 700; }
+        
+        /* Executive One-Pager Print Mode */
+        @media print {
+            body, .quarto-container, #quarto-content {
+                background-color: white !important;
+                color: black !important;
+            }
+            .report-header h1 { color: black !important; margin-top: 0; }
+            .metric-card {
+                background: white !important;
+                border: 2px solid #333 !important;
+                color: black !important;
+                break-inside: avoid;
+            }
+            .metric-label { color: #444 !important; }
+            .status-ok, .status-eol, .status-warning, .status-skip { color: black !important; font-weight: bold !important; }
+            
+            /* Hide interactive/digital-only elements */
+            .dt-buttons, .dataTables_filter, .dataTables_length, .dataTables_paginate, .dataTables_info,
+            #quarto-sidebar, .toc-actions, #TOC, .navbar, .quarto-color-scheme-toggle {
+                display: none !important;
+            }
+            
+            /* Expand tables to full length */
+            table { width: 100% !important; border-collapse: collapse !important; }
+            table.dataTable tbody tr { background-color: white !important; color: black !important; }
+            .thead-dark th { background-color: #eee !important; color: black !important; border: 1px solid #333 !important; }
+            td { border: 1px solid #ddd !important; }
+            
+            /* Ensure charts are visible (or consider hiding sunburst if too complex for print) */
+            .js-plotly-plot { margin-bottom: 20px; }
+            
+            /* Add page break control */
+            h2 { page-break-before: always; margin-top: 30px !important; }
+            h2:first-of-type { page-break-before: avoid; }
+            .finding-box { border: 2px solid black !important; background: transparent !important; color: black !important; }
+        }
         </style>
+
         <script>
-        // Definitive FA Loader
+        // Runtime FA loader (required because embed-resources cannot inline webfonts)
         (function() {
             var link = document.createElement('link');
             link.rel = 'stylesheet';
@@ -85,108 +132,243 @@ additional_context = ""
 
 ```{python}
 #| echo: false
-#| output: asis
-import subprocess, shutil, sys, yaml, json, os, hashlib, time
+# --- Imports & Constants ---
+import subprocess, shutil, sys, yaml, json, os, hashlib, time, html, logging
 from datetime import datetime, timezone as dt_timezone
 from IPython.display import display, HTML, Markdown
 from packaging.version import parse as parse_v
+import pandas as pd
+import plotly.express as px
+
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger("geol-report")
+
+RISK_THRESHOLD_DAYS = 180
+SUBPROCESS_TIMEOUT = 30
+
+COLORS = {
+    "healthy": "#50fa7b",
+    "warning": "#ffb86c",
+    "critical": "#ff5555",
+    "info": "#8be9fd",
+}
+
+SUNBURST_COLOR_MAP = {
+    "EOL": COLORS["critical"],
+    "Healthy": COLORS["healthy"],
+    "Upcoming Risk": COLORS["warning"],
+    "Untracked": COLORS["info"],
+}
+
+TIMELINE_COLOR_MAP = {
+    "EOL": COLORS["critical"],
+    "Active": COLORS["healthy"],
+    "Upcoming": COLORS["info"],
+}
 
 start_time = time.time()
+```
 
-# 1. Check geol
+```{python}
+#| echo: false
+# --- Tool Detection & Config Loading ---
+
 if not shutil.which("geol"):
     display(HTML("<h2><span class='fa-solid fa-triangle-exclamation'></span> [CRITICAL ERROR] geol is NOT installed</h2>"))
-    sys.exit(1)
+    raise RuntimeError("geol CLI is not installed. Install from https://github.com/opt-nc/geol")
 
-# Get versions
 try:
-    geol_version = subprocess.run(['geol', 'version'], capture_output=True, text=True).stdout.strip()
-    quarto_version = subprocess.run(['quarto', '--version'], capture_output=True, text=True).stdout.strip()
-    uv_version = subprocess.run(['uv', '--version'], capture_output=True, text=True).stdout.strip().replace('uv ', '')
+    geol_version = subprocess.run(
+        ['geol', 'version'], capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT
+    ).stdout.strip()
+    quarto_version = subprocess.run(
+        ['quarto', '--version'], capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT
+    ).stdout.strip()
+    uv_version = subprocess.run(
+        ['uv', '--version'], capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT
+    ).stdout.strip().replace('uv ', '')
     import packaging
     packaging_version = packaging.__version__
-except: geol_version = quarto_version = uv_version = packaging_version = "Unknown"
+except Exception as e:
+    logger.warning("Failed to detect tool versions: %s", e)
+    geol_version = quarto_version = uv_version = packaging_version = "Unknown"
 
 # Git Detection
 git_commit = None
 config_git_commit = None
 try:
     if shutil.which("git"):
-        is_git = subprocess.run(['git', 'rev-parse', '--is-inside-work-tree'], capture_output=True, text=True)
+        is_git = subprocess.run(
+            ['git', 'rev-parse', '--is-inside-work-tree'],
+            capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT,
+        )
         if is_git.returncode == 0:
-            git_commit = subprocess.run(['git', 'rev-parse', 'HEAD'], capture_output=True, text=True).stdout.strip()
-            config_git_res = subprocess.run(['git', 'log', '-n', '1', '--format=%H', '--', config_file], capture_output=True, text=True)
+            git_commit = subprocess.run(
+                ['git', 'rev-parse', 'HEAD'],
+                capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT,
+            ).stdout.strip()
+            config_git_res = subprocess.run(
+                ['git', 'log', '-n', '1', '--format=%H', '--', config_file],
+                capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT,
+            )
             if config_git_res.returncode == 0 and config_git_res.stdout.strip():
                 config_git_commit = config_git_res.stdout.strip()
-except: pass
+except Exception as e:
+    logger.warning("Git detection failed: %s", e)
 
-# 2. Load Config
+# Load Config
 with open(config_file, 'rb') as f:
     config_bytes = f.read()
     config_sha256 = hashlib.sha256(config_bytes).hexdigest()
-    config_md5 = hashlib.md5(config_bytes).hexdigest()
     config_raw = config_bytes.decode('utf-8')
     config_data = yaml.safe_load(config_raw)
 
-app_name = config_data.get('app_name', 'Unnamed Project')
+app_name = html.escape(config_data.get('app_name', 'Unnamed Project'))
+```
 
-# Run geol check
-result = subprocess.run(['geol', 'check', config_file, '--json'], capture_output=True, text=True)
-import pandas as pd
-df_raw = pd.DataFrame(json.loads(result.stdout)['software_components'])
+```{python}
+#| echo: false
+# --- Data Fetching & Enrichment ---
 
-# Collect LTS Data
-lts_map = {} 
-name_to_id = {str(item.get('name')).strip().lower(): item.get('id_eol') for item in config_data.get('stack', [])}
-ids_to_check = list(set([item['id_eol'] for item in config_data.get('stack', []) if 'id_eol' in item and not item.get('skip', False)]))
+# Run geol check with output validation
+result = subprocess.run(
+    ['geol', 'check', config_file, '--json'],
+    capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT,
+)
+try:
+    check_data = json.loads(result.stdout)
+    df_raw = pd.DataFrame(check_data['software_components'])
+except (json.JSONDecodeError, KeyError) as e:
+    display(HTML(
+        f"<h2><span class='fa-solid fa-triangle-exclamation'></span> geol check failed</h2>"
+        f"<pre>{html.escape(result.stderr or str(e))}</pre>"
+    ))
+    raise RuntimeError(f"geol check produced invalid output: {e}")
 
-for prod_id in ids_to_check:
+# Build ID mapping and fetch product extended data ONCE (cached)
+name_to_id = {
+    str(item.get('name')).strip().lower(): item.get('id_eol')
+    for item in config_data.get('stack', [])
+}
+ids_to_check = list(set([
+    item['id_eol']
+    for item in config_data.get('stack', [])
+    if 'id_eol' in item and not item.get('skip', False)
+]))
+
+product_extended_cache = {}
+for product_id in ids_to_check:
     try:
-        res = subprocess.run(['geol', 'product', 'extended', prod_id, '--json'], capture_output=True, text=True)
+        res = subprocess.run(
+            ['geol', 'product', 'extended', product_id, '--json'],
+            capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT,
+        )
         if res.returncode == 0:
-            p_ext_data = json.loads(res.stdout)
-            if p_ext_data: lts_map[prod_id] = [str(rel.get('cycle')).strip() for rel in p_ext_data[0].get('releases', []) if rel.get('isLts')]
-    except: pass
+            data = json.loads(res.stdout)
+            if data:
+                product_extended_cache[product_id] = data[0]
+    except Exception as e:
+        logger.warning("Failed to fetch extended data for %s: %s", product_id, e)
+
+# Build LTS map from cached data
+lts_map = {}
+for product_id, product_data in product_extended_cache.items():
+    lts_cycles = [
+        str(rel.get('cycle')).strip()
+        for rel in product_data.get('releases', [])
+        if rel.get('isLts')
+    ]
+    if lts_cycles:
+        lts_map[product_id] = lts_cycles
+
 
 def enrich_row(row):
-    sn, pid, v_str = str(row['software']).strip().lower(), name_to_id.get(str(row['software']).strip().lower()), str(row['version']).strip()
+    software_name = str(row['software']).strip().lower()
+    product_id = name_to_id.get(software_name)
+    version_str = str(row['version']).strip()
+
+    # LTS detection
     row['is_lts'] = False
-    if pid in lts_map:
-        if v_str in lts_map[pid] or any(v_str.startswith(c + '.') for c in lts_map[pid]): row['is_lts'] = True
-    cur, lat = v_str, str(row['latest_version']).strip()
-    if not lat or lat == '-' or cur == lat: row['lag'] = 'Current'
+    if product_id in lts_map:
+        cycles = lts_map[product_id]
+        if version_str in cycles or any(version_str.startswith(c + '.') for c in cycles):
+            row['is_lts'] = True
+
+    # Version lag analysis
+    latest_str = str(row['latest_version']).strip()
+    if not latest_str or latest_str == '-' or version_str == latest_str:
+        row['lag'] = 'Current'
     else:
         try:
-            cv, lv = parse_v(cur), parse_v(lat)
-            if lv > cv:
-                if (getattr(cv, 'major', None) is not None and getattr(lv, 'major', None) is not None and cv.major != lv.major) or (cv.release and lv.release and cv.release[0] != lv.release[0]): row['lag'] = 'Major Lag'
-                else: row['lag'] = 'Minor Lag'
-            else: row['lag'] = 'Current'
-        except: row['lag'] = 'Major Lag' if cur.split('.')[0] != lat.split('.')[0] else 'Minor Lag'
-    row['soft_html'] = f'<a href="https://endoflife.date/{pid if pid else sn}" target="_blank">{row["software"]}</a>' if row['status'] != 'UNKNOWN' else row['software']
+            current_ver = parse_v(version_str)
+            latest_ver = parse_v(latest_str)
+            if latest_ver > current_ver:
+                current_major = current_ver.release[0] if current_ver.release else None
+                latest_major = latest_ver.release[0] if latest_ver.release else None
+                row['lag'] = 'Major Lag' if current_major != latest_major else 'Minor Lag'
+            else:
+                row['lag'] = 'Current'
+        except Exception:
+            row['lag'] = 'Major Lag' if version_str.split('.')[0] != latest_str.split('.')[0] else 'Minor Lag'
+
+    # Software link
+    if row['status'] != 'UNKNOWN':
+        eol_slug = product_id if product_id else software_name
+        row['soft_html'] = f'<a href="https://endoflife.date/{eol_slug}" target="_blank">{html.escape(row["software"])}</a>'
+    else:
+        row['soft_html'] = html.escape(row['software'])
+
     return row
+
 
 df_raw = df_raw.apply(enrich_row, axis=1)
 
-# Add skipped
+# Add skipped products
 skipped_products = [item for item in config_data.get('stack', []) if item.get('skip', False)]
 if skipped_products:
-    skipped_rows = [{'software': i.get('name', 'Unknown'), 'version': i.get('version', ''), 'status': 'UNKNOWN', 'eol_date': '', 'days': '', 'latest_version': '', 'is_latest': False, 'lag': 'Untracked', 'is_lts': False, 'soft_html': i.get('name', 'Unknown')} for i in skipped_products]
+    skipped_rows = [{
+        'software': item.get('name', 'Unknown'),
+        'version': item.get('version', ''),
+        'status': 'UNKNOWN',
+        'eol_date': '',
+        'days': '',
+        'latest_version': '',
+        'is_latest': False,
+        'lag': 'Untracked',
+        'is_lts': False,
+        'soft_html': html.escape(item.get('name', 'Unknown')),
+    } for item in skipped_products]
     df_raw = pd.concat([df_raw, pd.DataFrame(skipped_rows)], ignore_index=True)
 
-# Metrics
-df_raw['days_num'] = pd.to_numeric(df_raw['days'], errors='coerce').fillna(9999)
-total_comp, eol_comp = len(df_raw), len(df_raw[df_raw['status'] == 'EOL'])
-upcoming_risks = df_raw[(df_raw['status'] == 'OK') & (df_raw['days_num'] > 0) & (df_raw['days_num'] < 180)]
+# Compute metrics
+df_raw['days_num'] = pd.to_numeric(df_raw['days'], errors='coerce').fillna(float('inf'))
+total_comp = len(df_raw)
+eol_comp = len(df_raw[df_raw['status'] == 'EOL'])
+upcoming_risks = df_raw[
+    (df_raw['status'] == 'OK') & (df_raw['days_num'] > 0) & (df_raw['days_num'] < RISK_THRESHOLD_DAYS)
+]
 upcoming_count = len(upcoming_risks)
-ok_comp, untracked_comp = len(df_raw[df_raw['status'] == 'OK']) - upcoming_count, len(df_raw[df_raw['status'] == 'UNKNOWN'])
+ok_comp = len(df_raw[df_raw['status'] == 'OK']) - upcoming_count
+untracked_comp = len(df_raw[df_raw['status'] == 'UNKNOWN'])
+```
 
-# UI
+```{python}
+#| echo: false
+#| output: asis
+# --- Dashboard Header & Metrics ---
+
 print(f'<script>document.title = "{app_name} geol EoL stack reporting";</script>')
 display(HTML(f'<div class="report-header"><h1><span class="fa-solid fa-hourglass-half"></span> {app_name} Geol EoL stack reporting</h1></div>'))
 display(HTML(f'<div style="text-align: center; margin: 20px 0;"><a href="https://github.com/opt-nc/geol" target="_blank"><img src="https://github.com/opt-nc/geol/blob/main/assets/logos/dist/logo-with-name-gradient-black.jpeg?raw=true" alt="Geol Logo" style="max-width: 300px; border-radius: 8px;"></a></div>'))
 display(Markdown("## <span class='fa-solid fa-circle-info'></span> Abstract"))
 print(f"This report provides an EOL analysis for **{app_name}**. Generated using [geol](https://opt-nc.github.io/geol/).")
+
+display(HTML(f"""
+<div class="protip-box" style="font-size: 0.85rem; background: rgba(80, 250, 123, 0.05); border: 1px solid {COLORS['healthy']}; padding: 10px; border-radius: 5px; margin: 15px 0;">
+    <span class="fa-solid fa-file-pdf"></span> <strong>Pro Tip:</strong> Want a PDF? Simply press <code>Ctrl+P</code> (or <code>Cmd+P</code>) in your browser. The report will automatically switch to a clean, white "Executive Print Mode" optimized for paper and PDF sharing.
+</div>
+"""))
+
 if additional_context and str(additional_context).strip():
     display(HTML("<h2><span class='fa-solid fa-note-sticky'></span> Additional context</h2>"))
     print(additional_context)
@@ -203,12 +385,13 @@ display(HTML(f"""
 display(Markdown(f"""
 - <span class='fa-solid fa-layer-group'></span> **Total Stack:** Complete inventory of software components.
 - <span class='fa-solid fa-circle-check status-ok'></span> **Healthy:** Supported components with a safe timeframe.
-- <span class='fa-solid fa-triangle-exclamation status-warning'></span> **Upcoming Risks:** Reaching EOL within 180 days.
+- <span class='fa-solid fa-triangle-exclamation status-warning'></span> **Upcoming Risks:** Reaching EOL within {RISK_THRESHOLD_DAYS} days.
 - <span class='fa-solid fa-fire-flame-curved status-eol'></span> **End of Life:** Critical items requiring immediate replacement.
 """))
 
 display(Markdown("## <span class='fa-solid fa-database'></span> Report Metadata"))
-now_local, now_utc = datetime.now().astimezone(), datetime.now(dt_timezone.utc)
+now_local = datetime.now().astimezone()
+now_utc = datetime.now(dt_timezone.utc)
 
 metadata_items = []
 metadata_items.append(f"<li><span class='fa-solid fa-clock'></span> <strong>Local:</strong> {now_local.strftime('%Y-%m-%d %H:%M:%S %Z')}</li>")
@@ -224,7 +407,7 @@ metadata_items.append(f"<li><span class='fa-solid fa-bolt'></span> <strong><a hr
 metadata_items.append(f"<li><span class='fa-solid fa-gears'></span> <strong><a href='https://github.com/opt-nc/geol' target='_blank'>Geol</a>:</strong> {geol_version}</li>")
 metadata_items.append(f"<li><span class='fa-solid fa-box-open'></span> <strong><a href='https://pypi.org/project/packaging/' target='_blank'>Packaging</a>:</strong> {packaging_version} (used for robust SemVer and Calendar version comparison, following the <a href='https://peps.python.org/pep-0440/' target='_blank'>PEP 440</a> initiative)</li>")
 metadata_items.append(f"<li><span class='fa-solid fa-book-open'></span> <strong><a href='https://quarto.org/' target='_blank'>Quarto</a>:</strong> {quarto_version}</li>")
-metadata_items.append(f"<li><span class='fa-solid fa-file-code'></span> <strong>geol input check file:</strong> <code>{config_file}</code> (SHA-256: <code>{config_sha256[:12]}...</code> | MD5: <code>{config_md5}</code>)</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-file-code'></span> <strong>geol input check file:</strong> <code>{config_file}</code> (SHA-256: <code>{config_sha256[:12]}...</code>)</li>")
 metadata_items.append(f"<li><span class='fa-solid fa-link'></span> <strong>Data Source:</strong> <a href='https://endoflife.date/docs/api/v1' target='_blank'>endoflife.date API</a></li>")
 
 display(HTML("<ul>" + "".join(metadata_items) + "</ul>"))
@@ -234,93 +417,165 @@ display(HTML("<ul>" + "".join(metadata_items) + "</ul>"))
 #| echo: false
 #| message: false
 #| warning: false
-from IPython.display import display, HTML
+# --- Status Overview (Sunburst Chart) ---
+
 display(Markdown("## <span class='fa-solid fa-chart-pie'></span> Status Overview"))
-import plotly.express as px
 
 if not df_raw.empty:
     df_raw['Root'] = app_name
-    df_raw['Chart_Status'] = df_raw.apply(lambda r: 'EOL' if r['status'] == 'EOL' else 'Untracked' if r['status'] == 'UNKNOWN' else 'Upcoming Risk' if r['days_num'] < 180 else 'Healthy', axis=1)
-    fig_sun = px.sunburst(df_raw, path=['Root', 'Chart_Status', 'software'], color='Chart_Status', color_discrete_map={"EOL": "#ff5555", "Healthy": "#50fa7b", "Upcoming Risk": "#ffb86c", "Untracked": "#8be9fd"})
-    fig_sun.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=0, b=0, l=0, r=0), height=450)
+    df_raw['Chart_Status'] = df_raw.apply(
+        lambda r: 'EOL' if r['status'] == 'EOL'
+        else 'Untracked' if r['status'] == 'UNKNOWN'
+        else 'Upcoming Risk' if r['days_num'] < RISK_THRESHOLD_DAYS
+        else 'Healthy',
+        axis=1,
+    )
+    fig_sun = px.sunburst(
+        df_raw,
+        path=['Root', 'Chart_Status', 'software'],
+        color='Chart_Status',
+        color_discrete_map=SUNBURST_COLOR_MAP,
+    )
+    fig_sun.update_layout(
+        template="plotly_dark",
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(t=0, b=0, l=0, r=0),
+        height=450,
+    )
     display(fig_sun)
-    
+
     findings = ""
-    if eol_comp > 0: findings += f'<div class="finding-box finding-critical"><div class="finding-icon"><span class="fa-solid fa-fire-flame-curved"></span></div><div class="finding-text"><strong>Critical Risk:</strong> {eol_comp} past EOL.</div></div>'
-    if upcoming_count > 0: findings += f'<div class="finding-box finding-warning"><div class="finding-icon"><span class="fa-solid fa-triangle-exclamation"></span></div><div class="finding-text"><strong>Upcoming:</strong> {upcoming_count} reach EOL soon.</div></div>'
-    if not findings: findings = '<div class="finding-box finding-safe"><div class="finding-icon"><span class="fa-solid fa-circle-check"></span></div><div class="finding-text"><strong>Healthy:</strong> All components are supported.</div></div>'
+    if eol_comp > 0:
+        findings += f'<div class="finding-box finding-critical"><div class="finding-icon"><span class="fa-solid fa-fire-flame-curved"></span></div><div class="finding-text"><strong>Critical Risk:</strong> {eol_comp} past EOL.</div></div>'
+    if upcoming_count > 0:
+        findings += f'<div class="finding-box finding-warning"><div class="finding-icon"><span class="fa-solid fa-triangle-exclamation"></span></div><div class="finding-text"><strong>Upcoming:</strong> {upcoming_count} reach EOL soon.</div></div>'
+    if not findings:
+        findings = '<div class="finding-box finding-safe"><div class="finding-icon"><span class="fa-solid fa-circle-check"></span></div><div class="finding-text"><strong>Healthy:</strong> All components are supported.</div></div>'
     display(HTML(findings))
 ```
 
 ```{python}
 #| echo: false
 #| output: asis
-from IPython.display import display, HTML
+# --- Stack Status (DataTable) ---
+
 display(Markdown("## <span class='fa-solid fa-list-check'></span> Stack Status"))
 
 try:
     df = df_raw.copy()
-    df['sort_rank'] = df.apply(lambda r: 0 if r['status'] == 'EOL' else 1 if (r['status'] == 'OK' and r['days_num'] < 180) else 2 if r['status'] == 'OK' else 3, axis=1)
+    df['sort_rank'] = df.apply(
+        lambda r: 0 if r['status'] == 'EOL'
+        else 1 if (r['status'] == 'OK' and r['days_num'] < RISK_THRESHOLD_DAYS)
+        else 2 if r['status'] == 'OK'
+        else 3,
+        axis=1,
+    )
     df = df.sort_values(by=['sort_rank', 'days_num'], ascending=[True, True])
 
     def style_status(row):
-        v, d = row['status'], row['days_num']
-        if v == 'EOL': return f'<span class="fa-solid fa-circle-exclamation"></span> <span style="color:#ff5555; font-weight:bold;">{v}</span>'
-        if v == 'UNKNOWN': return f'<span class="fa-solid fa-circle-question"></span> <span style="color:#8be9fd;">{v}</span>'
-        if d < 180: return f'<span class="fa-solid fa-triangle-exclamation"></span> <span style="color:#ffb86c; font-weight:bold;">WARNING</span>'
-        return f'<span class="fa-solid fa-circle-check"></span> <span style="color:#50fa7b;">{v}</span>'
+        status, days = row['status'], row['days_num']
+        if status == 'EOL':
+            return f'<span class="fa-solid fa-circle-exclamation"></span> <span style="color:{COLORS["critical"]}; font-weight:bold;">{status}</span>'
+        if status == 'UNKNOWN':
+            return f'<span class="fa-solid fa-circle-question"></span> <span style="color:{COLORS["info"]};">{status}</span>'
+        if days < RISK_THRESHOLD_DAYS:
+            return f'<span class="fa-solid fa-triangle-exclamation"></span> <span style="color:{COLORS["warning"]}; font-weight:bold;">WARNING</span>'
+        return f'<span class="fa-solid fa-circle-check"></span> <span style="color:{COLORS["healthy"]};">{status}</span>'
 
     def style_version(row):
-        v = str(row['version'])
-        if row.get('is_lts') == True:
-            return f'{v} <span class="fa-solid fa-shield-halved" title="Long Term Support (LTS)"></span>'
-        return v
+        version = str(row['version'])
+        if row.get('is_lts') is True:
+            return f'{html.escape(version)} <span class="fa-solid fa-shield-halved" title="Long Term Support (LTS)"></span>'
+        return html.escape(version)
 
-    def style_lag(val):
-        c = "#50fa7b" if val == 'Current' else "#ffb86c" if val == 'Minor Lag' else "#ff5555" if val == 'Major Lag' else "#8be9fd"
-        ic = "fa-circle-check" if val == "Current" else "fa-circle-chevron-up"
-        return f'<span style="color:{c};"><span class="fa-solid {ic}"></span> {val}</span>'
+    def style_lag(lag_value):
+        if lag_value == 'Current':
+            color = COLORS["healthy"]
+        elif lag_value == 'Minor Lag':
+            color = COLORS["warning"]
+        elif lag_value == 'Major Lag':
+            color = COLORS["critical"]
+        else:
+            color = COLORS["info"]
+        icon = "fa-circle-check" if lag_value == "Current" else "fa-circle-chevron-up"
+        return f'<span style="color:{color};"><span class="fa-solid {icon}"></span> {lag_value}</span>'
 
     df['Stat'] = df.apply(style_status, axis=1)
     df['Ver'] = df.apply(style_version, axis=1)
     df['Lag'] = df['lag'].apply(style_lag)
-    
-    html = '<table id="stack-table" class="display table nowrap" style="width:100%"><thead><tr class="thead-dark"><th>Software</th><th>Version</th><th>Status</th><th>Lag</th><th>EOL Date</th><th>Latest</th></tr></thead><tbody>'
-    for _, r in df.iterrows():
-        html += f'<tr><td>{r["soft_html"]}</td><td>{r["Ver"]}</td><td>{r["Stat"]}</td><td>{r["Lag"]}</td><td>{r["eol_date"]}</td><td>{r["latest_version"]}</td></tr>'
-    html += '</tbody></table><script>$(document).ready(function() { if (!$.fn.DataTable.isDataTable("#stack-table")) { $("#stack-table").DataTable({ dom: "Bfrtip", buttons: ["copy", "csv", "excel", "print", "colvis"], pageLength: 15, responsive: true, order: [] }); } });</script>'
-    display(HTML(html))
-except Exception as e: print(f"Error: {e}")
+
+    table_html = '<table id="stack-table" class="display table nowrap" style="width:100%"><thead><tr class="thead-dark"><th>Software</th><th>Version</th><th>Status</th><th>Lag</th><th>EOL Date</th><th>Latest</th></tr></thead><tbody>'
+    for _, row in df.iterrows():
+        table_html += f'<tr><td>{row["soft_html"]}</td><td>{row["Ver"]}</td><td>{row["Stat"]}</td><td>{row["Lag"]}</td><td>{row["eol_date"]}</td><td>{row["latest_version"]}</td></tr>'
+    table_html += '</tbody></table>'
+    table_html += '<script>$(document).ready(function() { if (!$.fn.DataTable.isDataTable("#stack-table")) { $("#stack-table").DataTable({ dom: "Bfrtip", buttons: ["copy", "csv", "excel", "print", "colvis"], pageLength: 15, responsive: true, order: [] }); } });</script>'
+    display(HTML(table_html))
+except Exception as e:
+    logger.error("Failed to render Stack Status table: %s", e)
+    print(f"Error: {e}")
 ```
 
 ```{python}
 #| echo: false
 #| message: false
 #| warning: false
-from IPython.display import display, HTML
+# --- Lifecycle Timeline (using cached data) ---
+
 display(Markdown("## <span class='fa-solid fa-calendar-days'></span> Lifecycle Timeline"))
-import plotly.express as px
+
 lifecycle_events = []
-for prod_id in ids_to_check:
+for product_id, product_data in product_extended_cache.items():
     try:
-        res = subprocess.run(['geol', 'product', 'extended', prod_id, '--json'], capture_output=True, text=True)
-        if res.returncode == 0:
-            p_ext_data = json.loads(res.stdout)
-            if p_ext_data:
-                for rel in p_ext_data[0].get('releases', [])[:6]:
-                    s, e, c = rel.get('releaseDate'), rel.get('eolFrom'), rel.get('cycle', 'unknown')
-                    if s and e and e != "false":
-                        try:
-                            s_dt, e_dt, today = datetime.strptime(s, '%Y-%m-%d'), datetime.strptime(e, '%Y-%m-%d'), datetime.now()
-                            st = "EOL" if e_dt < today else "Active" if s_dt <= today <= e_dt else "Upcoming"
-                            lifecycle_events.append({"Product": p_ext_data[0]['name'], "Cycle": str(c), "Start": s, "End": e, "Status": st, "Label": f"{p_ext_data[0]['name']} {c}"})
-                        except: continue
-    except: pass
+        for release in product_data.get('releases', [])[:6]:
+            start_date = release.get('releaseDate')
+            end_date = release.get('eolFrom')
+            cycle = release.get('cycle', 'unknown')
+            if start_date and end_date and end_date != "false":
+                try:
+                    start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+                    end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+                    today = datetime.now()
+                    if end_dt < today:
+                        status = "EOL"
+                    elif start_dt <= today <= end_dt:
+                        status = "Active"
+                    else:
+                        status = "Upcoming"
+                    lifecycle_events.append({
+                        "Product": product_data['name'],
+                        "Cycle": str(cycle),
+                        "Start": start_date,
+                        "End": end_date,
+                        "Status": status,
+                        "Label": f"{product_data['name']} {cycle}",
+                    })
+                except (ValueError, KeyError) as e:
+                    logger.warning("Skipping malformed release for %s cycle %s: %s", product_id, cycle, e)
+    except Exception as e:
+        logger.warning("Failed to process timeline for %s: %s", product_id, e)
+
 if lifecycle_events:
-    df_lc = pd.DataFrame(lifecycle_events)
-    fig = px.timeline(df_lc, x_start="Start", x_end="End", y="Product", color="Status", hover_name="Label", text="Cycle", color_discrete_map={"EOL": "#ff5555", "Active": "#50fa7b", "Upcoming": "#8be9fd"}, category_orders={"Status": ["Active", "Upcoming", "EOL"]})
+    df_lifecycle = pd.DataFrame(lifecycle_events)
+    fig = px.timeline(
+        df_lifecycle,
+        x_start="Start",
+        x_end="End",
+        y="Product",
+        color="Status",
+        hover_name="Label",
+        text="Cycle",
+        color_discrete_map=TIMELINE_COLOR_MAP,
+        category_orders={"Status": ["Active", "Upcoming", "EOL"]},
+    )
     fig.update_yaxes(autorange="reversed")
-    fig.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=400 + (len(df_lc['Product'].unique()) * 30), xaxis_title="")
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        height=400 + (len(df_lifecycle['Product'].unique()) * 30),
+        xaxis_title="",
+    )
     fig.add_vline(x=datetime.now().timestamp() * 1000, line_dash="dash", line_color="white")
     display(fig)
 ```
@@ -328,7 +583,8 @@ if lifecycle_events:
 ```{python}
 #| echo: false
 #| output: asis
-from IPython.display import display, HTML
+# --- Configuration Source & Footer ---
+
 display(Markdown("## <span class='fa-solid fa-code'></span> Configuration Source"))
 print(f"""
 <details>
@@ -342,7 +598,6 @@ print("</details>")
 
 display(Markdown("## <span class='fa-solid fa-handshake-angle'></span> License & Contribution"))
 
-# Duration calculation
 generation_duration = round(time.time() - start_time, 2)
 generation_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S %Z')
 
