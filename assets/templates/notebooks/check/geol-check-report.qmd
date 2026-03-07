@@ -1,4 +1,5 @@
 ---
+title: "geol EoL Stack Report"
 author: "geol"
 subtitle: "Automated Technology Lifecycle Audit"
 date: last-modified
@@ -103,7 +104,33 @@ format:
             h2 { page-break-before: always; margin-top: 30px !important; }
             h2:first-of-type { page-break-before: avoid; }
             .finding-box { border: 2px solid black !important; background: transparent !important; color: black !important; }
+            #back-to-top { display: none !important; }
         }
+
+        /* Back to top button */
+        #back-to-top {
+            position: fixed; bottom: 30px; right: 30px; z-index: 9999;
+            width: 44px; height: 44px; border-radius: 50%;
+            background: rgba(80, 250, 123, 0.85); color: #222;
+            border: none; cursor: pointer; font-size: 1.3rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            opacity: 0; transition: opacity 0.3s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #back-to-top.visible { opacity: 1; }
+        #back-to-top:hover { background: #50fa7b; transform: scale(1.1); }
+
+        /* Metric card tooltip */
+        .metric-card { position: relative; cursor: default; }
+        .metric-card .metric-tooltip {
+            visibility: hidden; opacity: 0;
+            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+            background: #333; color: #eee; padding: 6px 10px; border-radius: 5px;
+            font-size: 0.75rem; white-space: nowrap; z-index: 10;
+            transition: opacity 0.2s; pointer-events: none;
+            margin-bottom: 6px; border: 1px solid #555;
+        }
+        .metric-card:hover .metric-tooltip { visibility: visible; opacity: 1; }
         </style>
 
         <script>
@@ -114,6 +141,19 @@ format:
             link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
             document.head.appendChild(link);
         })();
+
+        // Back to top button
+        document.addEventListener('DOMContentLoaded', function() {
+            var btn = document.createElement('button');
+            btn.id = 'back-to-top';
+            btn.title = 'Back to top';
+            btn.innerHTML = '<span class="fa-solid fa-arrow-up"></span>';
+            btn.onclick = function() { window.scrollTo({top: 0, behavior: 'smooth'}); };
+            document.body.appendChild(btn);
+            window.addEventListener('scroll', function() {
+                btn.classList.toggle('visible', window.scrollY > 400);
+            });
+        });
         </script>
         <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
         <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
@@ -257,6 +297,13 @@ ids_to_check = list(set([
     if 'id_eol' in item and not item.get('skip', False)
 ]))
 
+# Reverse mapping: id_eol → user's display name from YAML
+id_to_display_name = {
+    item.get('id_eol'): item.get('name', item.get('id_eol', ''))
+    for item in config_data.get('stack', [])
+    if 'id_eol' in item
+}
+
 product_extended_cache = {}
 for product_id in ids_to_check:
     try:
@@ -365,6 +412,12 @@ upcoming_count = len(upcoming_risks)
 ok_comp = len(df_raw[df_raw['status'] == 'OK']) - upcoming_count
 untracked_comp = len(df_raw[df_raw['status'] == 'UNKNOWN'])
 
+# Build component name lists for metric card tooltips
+all_names = ', '.join(df_raw['software'].tolist()) or 'None'
+ok_names = ', '.join(df_raw[(df_raw['status'] == 'OK') & ~df_raw.index.isin(upcoming_risks.index)]['software'].tolist()) or 'None'
+upcoming_names = ', '.join(upcoming_risks['software'].tolist()) or 'None'
+eol_names = ', '.join(df_raw[df_raw['status'] == 'EOL']['software'].tolist()) or 'None'
+
 # Compute per-component health scores
 def compute_health_score(row):
     if row['status'] == 'UNKNOWN':
@@ -410,7 +463,13 @@ stack_health_score = round(scored_components['health_score'].mean(), 1) if not s
 print(f'<script>document.title = "{app_name} geol EoL stack reporting";</script>')
 display(HTML(f'<div class="report-header"><h1><span class="fa-solid fa-hourglass-half"></span> {app_name} Geol EoL stack reporting</h1></div>'))
 display(HTML(f'<div style="text-align: center; margin: 20px 0;"><a href="https://github.com/opt-nc/geol" target="_blank"><img src="https://github.com/opt-nc/geol/blob/main/assets/logos/dist/logo-with-name-gradient-black.jpeg?raw=true" alt="Geol Logo" style="max-width: 300px; border-radius: 8px;"></a></div>'))
-display(Markdown("## <span class='fa-solid fa-circle-info'></span> Abstract"))
+```
+
+## <span class='fa-solid fa-circle-info'></span> Abstract
+
+```{python}
+#| echo: false
+#| output: asis
 print(f"This report provides an EOL analysis for **{app_name}**. Generated using [geol](https://opt-nc.github.io/geol/).")
 
 display(HTML(f"""
@@ -425,10 +484,10 @@ if additional_context and str(additional_context).strip():
 
 display(HTML(f"""
 <div style="display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
-    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="fa-solid fa-layer-group metric-icon"></span><span class="metric-label">Stack Size</span><span class="metric-value">{total_comp}</span></div>
-    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="fa-solid fa-circle-check metric-icon status-ok"></span><span class="metric-label">Healthy</span><span class="metric-value status-ok">{ok_comp}</span></div>
-    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="fa-solid fa-triangle-exclamation metric-icon status-warning"></span><span class="metric-label">Upcoming Risks</span><span class="metric-value status-warning">{upcoming_count}</span></div>
-    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="fa-solid fa-fire-flame-curved metric-icon status-eol"></span><span class="metric-label">End of Life</span><span class="metric-value status-eol">{eol_comp}</span></div>
+    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="metric-tooltip">{html.escape(all_names)}</span><span class="fa-solid fa-layer-group metric-icon"></span><span class="metric-label">Stack Size</span><span class="metric-value">{total_comp}</span></div>
+    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="metric-tooltip">{html.escape(ok_names)}</span><span class="fa-solid fa-circle-check metric-icon status-ok"></span><span class="metric-label">Healthy</span><span class="metric-value status-ok">{ok_comp}</span></div>
+    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="metric-tooltip">{html.escape(upcoming_names)}</span><span class="fa-solid fa-triangle-exclamation metric-icon status-warning"></span><span class="metric-label">Upcoming Risks</span><span class="metric-value status-warning">{upcoming_count}</span></div>
+    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="metric-tooltip">{html.escape(eol_names)}</span><span class="fa-solid fa-fire-flame-curved metric-icon status-eol"></span><span class="metric-label">End of Life</span><span class="metric-value status-eol">{eol_comp}</span></div>
 </div>
 """))
 
@@ -440,12 +499,12 @@ display(Markdown(f"""
 """))
 ```
 
+## <span class='fa-solid fa-heart-pulse'></span> Stack Health Score
+
 ```{python}
 #| echo: false
 #| output: asis
 # --- Stack Health Score ---
-
-display(Markdown("## <span class='fa-solid fa-heart-pulse'></span> Stack Health Score"))
 
 # Score color
 if stack_health_score >= 80:
@@ -457,6 +516,11 @@ elif stack_health_score >= 50:
 else:
     score_color = COLORS["critical"]
     score_label = "Critical"
+```
+
+```{python}
+#| echo: false
+# --- Stack Health Score (gauge) ---
 
 import plotly.graph_objects as go
 fig_gauge = go.Figure(go.Indicator(
@@ -488,6 +552,12 @@ fig_gauge.update_layout(
     margin=dict(t=30, b=10, l=40, r=40),
 )
 display(fig_gauge)
+```
+
+```{python}
+#| echo: false
+#| output: asis
+# --- Stack Health Score (details) ---
 
 display(Markdown(f"""
 The **Stack Health Score** is the average of individual component scores (0–100).
@@ -504,12 +574,11 @@ display(HTML(f"""
 """))
 
 # Scoring methodology (collapsed by default)
-print(f"""
-<details style="margin: 15px 0;">
-    <summary style="cursor: pointer; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px;">
-        <span class="fa-solid fa-book-open"></span> <strong>Scoring Methodology</strong> — click to expand
-    </summary>
-    <div style="margin-top: 10px;">
+print(f"""<details style="margin: 15px 0;">
+<summary style="cursor: pointer; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px;">
+<span class="fa-solid fa-book-open"></span> <strong>Scoring Methodology</strong> — click to expand
+</summary>
+<div style="margin-top: 10px;">
 <table class="table" style="max-width: 700px;">
 <thead><tr class="thead-dark"><th style="text-align:left;">Status</th><th style="text-align:center;">LTS?</th><th style="text-align:center;">Latest LTS?</th><th style="text-align:right;">Score</th><th style="text-align:left;">Example</th></tr></thead>
 <tbody>
@@ -525,9 +594,8 @@ print(f"""
 <tr><td style="text-align:left;">❓ Untracked</td><td style="text-align:center;">—</td><td style="text-align:center;">—</td><td style="text-align:right;"><em>excluded</em></td><td style="text-align:left;">Not enough data</td></tr>
 </tbody>
 </table>
-    </div>
-</details>
-""")
+</div>
+</details>""")
 
 # Per-component detail table
 display(Markdown("### Score Breakdown"))
@@ -573,6 +641,8 @@ display(HTML(f"""
 </table>
 """))
 ```
+
+## <span class='fa-solid fa-list-check'></span> Recommended Actions
 
 ```{python}
 #| echo: false
@@ -627,8 +697,6 @@ for _, row in df_raw.iterrows():
 actions.sort(key=lambda a: (a[0], a[1]))
 
 if actions:
-    display(Markdown(f"## <span class='fa-solid fa-list-check'></span> Recommended Actions ({len(actions)})"))
-
     # First item gets a stronger visual treatment as the worst offender
     first_item = f'<li style="font-size: 1.1rem; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">{actions[0][2]}</li>'
     rest_items = "".join(f"<li>{a[2]}</li>" for a in actions[1:])
@@ -645,7 +713,6 @@ if actions:
 </div>
 """))
 else:
-    display(Markdown("## <span class='fa-solid fa-list-check'></span> Recommended Actions"))
     display(HTML(f"""
 <div style="margin: 10px 0; padding: 15px 20px; border-left: 4px solid {COLORS['healthy']}; background: rgba(80,250,123,0.07); border-radius: 0 6px 6px 0;">
     <p style="margin: 0;"><span class="fa-solid fa-circle-check" style="color:{COLORS['healthy']};"></span> <strong>No actions needed</strong> — all components are up to date!</p>
@@ -653,13 +720,13 @@ else:
 """))
 ```
 
+## <span class='fa-solid fa-chart-pie'></span> Status Overview
+
 ```{python}
 #| echo: false
 #| message: false
 #| warning: false
 # --- Status Overview (Sunburst Chart) ---
-
-display(Markdown(f"## <span class='fa-solid fa-chart-pie'></span> Status Overview ({total_comp})"))
 
 if not df_raw.empty:
     df_raw['Root'] = app_name
@@ -695,12 +762,12 @@ if not df_raw.empty:
     display(HTML(findings))
 ```
 
+## <span class='fa-solid fa-list-check'></span> Stack Status
+
 ```{python}
 #| echo: false
 #| output: asis
 # --- Stack Status (DataTable) ---
-
-display(Markdown(f"## <span class='fa-solid fa-list-check'></span> Stack Status ({total_comp})"))
 
 try:
     df = df_raw.copy()
@@ -764,16 +831,31 @@ except Exception as e:
     print(f"Error: {e}")
 ```
 
+## <span class='fa-solid fa-calendar-days'></span> Lifecycle Timeline
+
 ```{python}
 #| echo: false
 #| message: false
 #| warning: false
 # --- Lifecycle Timeline (using cached data) ---
 
-display(Markdown("## <span class='fa-solid fa-calendar-days'></span> Lifecycle Timeline"))
+# Build map of deployed version cycles per product for highlighting
+deployed_cycles = {}
+for _, row in df_raw.iterrows():
+    sw_name = str(row['software']).strip().lower()
+    pid = name_to_id.get(sw_name)
+    if pid and pid in product_extended_cache:
+        display_name = id_to_display_name.get(pid, product_extended_cache[pid].get('name', ''))
+        ver = str(row['version']).strip()
+        for rel in product_extended_cache[pid].get('releases', []):
+            cycle = str(rel.get('cycle', '')).strip()
+            if cycle and (ver == cycle or ver.startswith(cycle + '.')):
+                deployed_cycles[f"{display_name}|{cycle}"] = True
+                break
 
 lifecycle_events = []
 for product_id, product_data in product_extended_cache.items():
+    display_name = id_to_display_name.get(product_id, product_data.get('name', product_id))
     try:
         for release in product_data.get('releases', [])[:6]:
             start_date = release.get('releaseDate')
@@ -790,13 +872,15 @@ for product_id, product_data in product_extended_cache.items():
                         status = "Active"
                     else:
                         status = "Upcoming"
+                    is_deployed = f"{display_name}|{cycle}" in deployed_cycles
                     lifecycle_events.append({
-                        "Product": product_data['name'],
+                        "Product": display_name,
                         "Cycle": str(cycle),
                         "Start": start_date,
                         "End": end_date,
                         "Status": status,
-                        "Label": f"{product_data['name']} {cycle}",
+                        "Label": f"{display_name} {cycle}",
+                        "Deployed": is_deployed,
                     })
                 except (ValueError, KeyError) as e:
                     logger.warning("Skipping malformed release for %s cycle %s: %s", product_id, cycle, e)
@@ -805,6 +889,10 @@ for product_id, product_data in product_extended_cache.items():
 
 if lifecycle_events:
     df_lifecycle = pd.DataFrame(lifecycle_events)
+    # Mark deployed cycles in the display text
+    df_lifecycle['DisplayCycle'] = df_lifecycle.apply(
+        lambda r: f"▶ {r['Cycle']}" if r['Deployed'] else r['Cycle'], axis=1
+    )
     fig = px.timeline(
         df_lifecycle,
         x_start="Start",
@@ -812,10 +900,11 @@ if lifecycle_events:
         y="Product",
         color="Status",
         hover_name="Label",
-        text="Cycle",
+        text="DisplayCycle",
         color_discrete_map=TIMELINE_COLOR_MAP,
         category_orders={"Status": ["Active", "Upcoming", "EOL"]},
     )
+    fig.update_traces(textposition="inside")
     fig.update_yaxes(autorange="reversed")
     fig.update_layout(
         template="plotly_dark",
@@ -836,12 +925,11 @@ if lifecycle_events:
     display(fig)
 ```
 
+## <span class='fa-solid fa-database'></span> Report Metadata
+
 ```{python}
 #| echo: false
 #| output: asis
-# --- Configuration Source & Footer ---
-
-display(Markdown("## <span class='fa-solid fa-database'></span> Report Metadata"))
 now_local = datetime.now().astimezone()
 now_utc = datetime.now(dt_timezone.utc)
 
@@ -863,20 +951,28 @@ metadata_items.append(f"<li><span class='fa-solid fa-file-code'></span> <strong>
 metadata_items.append(f"<li><span class='fa-solid fa-link'></span> <strong>Data Source:</strong> <a href='https://endoflife.date/docs/api/v1' target='_blank'>endoflife.date API</a></li>")
 
 display(HTML("<ul>" + "".join(metadata_items) + "</ul>"))
+```
 
-display(Markdown("## <span class='fa-solid fa-code'></span> Configuration Source"))
-print(f"""
-<details>
-    <summary style="cursor: pointer; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; margin-bottom: 10px;">
-        <span class="fa-solid fa-file-invoice"></span> Click to view the <code>geol</code> input configuration
-    </summary>
-    <p style="margin-top: 10px;">Built using <code>geol check</code>. (see <a href="https://opt-nc.github.io/geol/docs/tutorial-basics/check-command" target="_blank">tutorial</a> for more)</p>
+## <span class='fa-solid fa-code'></span> Configuration Source
+
+```{python}
+#| echo: false
+#| output: asis
+print(f"""<details>
+<summary style="cursor: pointer; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; margin-bottom: 10px;">
+<span class="fa-solid fa-file-invoice"></span> Click to view the <code>geol</code> input configuration
+</summary>
+<p style="margin-top: 10px;">Built using <code>geol check</code>. (see <a href="https://opt-nc.github.io/geol/docs/tutorial-basics/check-command" target="_blank">tutorial</a> for more)</p>
 """)
 print(f"```yaml\n{config_raw}\n```")
 print("</details>")
+```
 
-display(Markdown("## <span class='fa-solid fa-handshake-angle'></span> License & Contribution"))
+## <span class='fa-solid fa-handshake-angle'></span> License & Contribution
 
+```{python}
+#| echo: false
+#| output: asis
 generation_duration = round(time.time() - start_time, 2)
 generation_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S %Z')
 
