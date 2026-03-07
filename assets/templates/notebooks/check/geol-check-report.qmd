@@ -28,6 +28,7 @@ format:
         <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
         <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
         <style>
+        html { scroll-behavior: smooth; }
         /* Force Font Awesome Visibility */
         .fa-solid, .fa-brands, .fas, .fa {
             font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
@@ -304,6 +305,13 @@ id_to_display_name = {
     if 'id_eol' in item
 }
 
+# Build always-latest set from YAML config
+always_latest_set = {
+    str(item.get('name')).strip().lower()
+    for item in config_data.get('stack', [])
+    if item.get('always-latest', False)
+}
+
 product_extended_cache = {}
 for product_id in ids_to_check:
     try:
@@ -378,6 +386,9 @@ def enrich_row(row):
     else:
         row['soft_html'] = html.escape(row['software'])
 
+    # Always-latest policy flag
+    row['always_latest'] = software_name in always_latest_set
+
     return row
 
 
@@ -397,6 +408,7 @@ if skipped_products:
         'lag': 'Untracked',
         'is_lts': False,
         'is_latest_lts': False,
+        'always_latest': item.get('always-latest', False),
         'soft_html': html.escape(item.get('name', 'Unknown')),
     } for item in skipped_products]
     df_raw = pd.concat([df_raw, pd.DataFrame(skipped_rows)], ignore_index=True)
@@ -463,6 +475,23 @@ stack_health_score = round(scored_components['health_score'].mean(), 1) if not s
 print(f'<script>document.title = "{app_name} geol EoL stack reporting";</script>')
 display(HTML(f'<div class="report-header"><h1><span class="fa-solid fa-hourglass-half"></span> {app_name} Geol EoL stack reporting</h1></div>'))
 display(HTML(f'<div style="text-align: center; margin: 20px 0;"><a href="https://github.com/opt-nc/geol" target="_blank"><img src="https://github.com/opt-nc/geol/blob/main/assets/logos/dist/logo-with-name-gradient-black.jpeg?raw=true" alt="Geol Logo" style="max-width: 300px; border-radius: 8px;"></a></div>'))
+
+# Executive summary
+action_count = eol_comp + upcoming_count + len([1 for _, r in df_raw.iterrows() if r['lag'] in ('Major Lag', 'Minor Lag') and r['status'] != 'EOL' and r['status'] != 'UNKNOWN'])
+tracked_count = total_comp - untracked_comp
+if action_count == 0:
+    summary_icon = f'<span class="fa-solid fa-circle-check" style="color:{COLORS["healthy"]};"></span>'
+    summary_text = f"All {tracked_count} tracked components are up to date — no action required."
+    summary_border = COLORS['healthy']
+elif eol_comp > 0:
+    summary_icon = f'<span class="fa-solid fa-circle-exclamation" style="color:{COLORS["critical"]};"></span>'
+    summary_text = f"{action_count} of {tracked_count} tracked components require action — {eol_comp} past EOL."
+    summary_border = COLORS['critical']
+else:
+    summary_icon = f'<span class="fa-solid fa-triangle-exclamation" style="color:{COLORS["warning"]};"></span>'
+    summary_text = f"{action_count} of {tracked_count} tracked components require attention."
+    summary_border = COLORS['warning']
+display(HTML(f'<div style="text-align:center; margin: 15px auto; padding: 10px 20px; border: 1px solid {summary_border}; border-radius: 8px; font-size: 1.1rem; max-width: 600px;">{summary_icon} {summary_text}</div>'))
 ```
 
 ## <span class='fa-solid fa-circle-info'></span> Abstract
@@ -693,6 +722,12 @@ for _, row in df_raw.iterrows():
         actions.append((4, score or 0, f'<span class="fa-solid fa-wrench" style="color:{COLORS["healthy"]};"></span> '
             f'<strong>Update {html.escape(sw)}</strong> from <code>{html.escape(ver)}</code>{target} — <em>minor/patch update available</em>'))
 
+    # Always-latest policy: flag components not on latest version
+    if row.get('always_latest') and lag in ('Major Lag', 'Minor Lag') and status != 'EOL':
+        target = f" → {latest}" if latest and latest != '-' else ""
+        actions.append((-1, score or 0, f'<span class="fa-solid fa-bolt" style="color:{COLORS["warning"]};"></span> '
+            f'<strong>Policy: {html.escape(sw)}</strong> must be on latest (<code>{html.escape(ver)}</code>{target}) — <em>always-latest policy requires immediate update</em>'))
+
 # Sort by priority (lower = more urgent), then by score (lower = more urgent)
 actions.sort(key=lambda a: (a[0], a[1]))
 
@@ -822,7 +857,8 @@ try:
             row_bg = f'background-color: rgba(139, 233, 253, 0.05);'
         else:
             row_bg = ''
-        table_html += f'<tr style="{row_bg}"><td>{row["soft_html"]}</td><td>{row["Ver"]}</td><td>{row["Stat"]}</td><td>{row["Lag"]}</td><td>{row["eol_date"]}</td><td>{row["latest_version"]}</td></tr>'
+        always_latest_badge = ' <span class="fa-solid fa-bolt" title="Always-latest policy" style="color:#ffb86c;"></span>' if row.get('always_latest') else ''
+        table_html += f'<tr style="{row_bg}"><td>{row["soft_html"]}{always_latest_badge}</td><td>{row["Ver"]}</td><td>{row["Stat"]}</td><td>{row["Lag"]}</td><td>{row["eol_date"]}</td><td>{row["latest_version"]}</td></tr>'
     table_html += '</tbody></table>'
     table_html += '<script>$(document).ready(function() { if (!$.fn.DataTable.isDataTable("#stack-table")) { $("#stack-table").DataTable({ dom: "Bfrtip", buttons: ["copy", "csv", "excel", "print", "colvis"], pageLength: 15, responsive: true, order: [] }); } });</script>'
     display(HTML(table_html))
