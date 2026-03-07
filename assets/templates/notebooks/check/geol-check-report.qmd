@@ -16,86 +16,57 @@ format:
       default: dark
       toggle: true
     toc: true
+    toc-location: right
+    toc-title: "Navigation"
     code-fold: true
     embed-resources: true
     include-in-header:
       text: |
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
         <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
         <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
         <style>
+        /* Force Font Awesome Visibility */
+        .fa-solid, .fa-brands, .fas, .fa {
+            font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+            font-weight: 900 !important;
+            display: inline-block !important;
+            font-style: normal !important;
+            font-variant: normal !important;
+            text-rendering: auto !important;
+            -webkit-font-smoothing: antialiased !important;
+        }
         body.quarto-dark { background-color: #222 !important; color: #eee !important; }
         .quarto-dark .metric-card { background: #2d2d2d; border: 1px solid #444; }
-        
         .thead-dark th { background-color: #333 !important; }
-        .fa-circle-check { color: #50fa7b !important; }
-        .fa-circle-exclamation { color: #ff5555 !important; }
-        .fa-circle-question { color: #8be9fd !important; }
-        .fa-triangle-exclamation { color: #ffb86c !important; }
-        
-        .metric-card {
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            border: 1px solid #ddd;
-            margin-bottom: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 140px;
-        }
-        .metric-icon {
-            font-size: 1.8rem;
-            margin-bottom: 10px;
-            opacity: 0.8;
-        }
-        .metric-value {
-            font-size: 2.5rem;
-            font-weight: bold;
-            display: block;
-        }
-        .metric-label {
-            font-size: 1rem;
-            color: #aaa;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .status-ok { color: #50fa7b !important; }
-        .status-eol { color: #ff5555 !important; }
-        .status-skip { color: #8be9fd !important; }
-        .status-warning { color: #ffb86c !important; }
-        
-        .finding-box {
-            padding: 15px 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            border-left: 5px solid;
-        }
-        .finding-critical {
-            background-color: rgba(255, 85, 85, 0.1);
-            border-color: #ff5555;
-            color: #ff5555;
-        }
-        .finding-warning {
-            background-color: rgba(255, 184, 108, 0.1);
-            border-color: #ffb86c;
-            color: #ffb86c;
-        }
-        .finding-safe {
-            background-color: rgba(80, 250, 123, 0.1);
-            border-color: #50fa7b;
-            color: #50fa7b;
-        }
+        .fa-circle-check, .status-ok { color: #50fa7b !important; }
+        .fa-circle-exclamation, .status-eol { color: #ff5555 !important; }
+        .fa-circle-question, .status-skip { color: #8be9fd !important; }
+        .fa-triangle-exclamation, .status-warning { color: #ffb86c !important; }
+        .fa-shield-halved { color: #8be9fd !important; margin-left: 8px !important; }
+        .fa-fire-flame-curved { color: #ff5555 !important; }
+        .metric-card { border-radius: 8px; padding: 20px; text-align: center; border: 1px solid #ddd; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 140px; }
+        .metric-icon { font-size: 1.8rem; margin-bottom: 10px; opacity: 0.8; }
+        .metric-value { font-size: 2.5rem; font-weight: bold; display: block; }
+        .metric-label { font-size: 1rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+        .finding-box { padding: 15px 20px; border-radius: 8px; margin: 20px 0; display: flex; align-items: center; gap: 15px; border-left: 5px solid; }
+        .finding-critical { background-color: rgba(255, 85, 85, 0.1); border-color: #ff5555; color: #ff5555; }
+        .finding-warning { background-color: rgba(255, 184, 108, 0.1); border-color: #ffb86c; color: #ffb86c; }
+        .finding-safe { background-color: rgba(80, 250, 123, 0.1); border-color: #50fa7b; color: #50fa7b; }
         .finding-icon { font-size: 1.5rem; }
         .finding-text { font-size: 1.1rem; font-weight: 500; }
-        
         .report-header { text-align: center; margin-bottom: 30px; }
         .report-header h1 { font-size: 2.5rem; font-weight: 700; }
         </style>
+        <script>
+        // Definitive FA Loader
+        (function() {
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
+            document.head.appendChild(link);
+        })();
+        </script>
         <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
         <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
         <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
@@ -115,22 +86,16 @@ additional_context = ""
 ```{python}
 #| echo: false
 #| output: asis
-import subprocess
-import shutil
-import sys
-import yaml
-import json
-import os
-from datetime import datetime
-import hashlib
+import subprocess, shutil, sys, yaml, json, os, hashlib, time
+from datetime import datetime, timezone as dt_timezone
 from IPython.display import display, HTML, Markdown
+from packaging.version import parse as parse_v
 
-# 1. Check if geol is installed
-geol_path = shutil.which("geol")
-if not geol_path:
-    display(HTML("<h2><i class='fa-solid fa-triangle-exclamation'></i> [CRITICAL ERROR] geol is NOT installed</h2>"))
-    print("\nTo use this report, you must install `geol` first.")
-    print("\nVisit [geol documentation](https://opt-nc.github.io/geol/docs/intro) for installation instructions.")
+start_time = time.time()
+
+# 1. Check geol
+if not shutil.which("geol"):
+    display(HTML("<h2><span class='fa-solid fa-triangle-exclamation'></span> [CRITICAL ERROR] geol is NOT installed</h2>"))
     sys.exit(1)
 
 # Get versions
@@ -138,16 +103,27 @@ try:
     geol_version = subprocess.run(['geol', 'version'], capture_output=True, text=True).stdout.strip()
     quarto_version = subprocess.run(['quarto', '--version'], capture_output=True, text=True).stdout.strip()
     uv_version = subprocess.run(['uv', '--version'], capture_output=True, text=True).stdout.strip().replace('uv ', '')
-except:
-    geol_version = quarto_version = uv_version = "Unknown"
+    import packaging
+    packaging_version = packaging.__version__
+except: geol_version = quarto_version = uv_version = packaging_version = "Unknown"
 
-# 2. Load Configuration and Data
-if not os.path.exists(config_file):
-    display(HTML(f"<h2><i class='fa-solid fa-file-circle-xmark'></i> [ERROR] Configuration file `{config_file}` not found.</h2>"))
-    sys.exit(1)
+# Git Detection
+git_commit = None
+config_git_commit = None
+try:
+    if shutil.which("git"):
+        is_git = subprocess.run(['git', 'rev-parse', '--is-inside-work-tree'], capture_output=True, text=True)
+        if is_git.returncode == 0:
+            git_commit = subprocess.run(['git', 'rev-parse', 'HEAD'], capture_output=True, text=True).stdout.strip()
+            config_git_res = subprocess.run(['git', 'log', '-n', '1', '--format=%H', '--', config_file], capture_output=True, text=True)
+            if config_git_res.returncode == 0 and config_git_res.stdout.strip():
+                config_git_commit = config_git_res.stdout.strip()
+except: pass
 
+# 2. Load Config
 with open(config_file, 'rb') as f:
     config_bytes = f.read()
+    config_sha256 = hashlib.sha256(config_bytes).hexdigest()
     config_md5 = hashlib.md5(config_bytes).hexdigest()
     config_raw = config_bytes.decode('utf-8')
     config_data = yaml.safe_load(config_raw)
@@ -156,121 +132,102 @@ app_name = config_data.get('app_name', 'Unnamed Project')
 
 # Run geol check
 result = subprocess.run(['geol', 'check', config_file, '--json'], capture_output=True, text=True)
-check_json = json.loads(result.stdout)
 import pandas as pd
-df_raw = pd.DataFrame(check_json['software_components'])
+df_raw = pd.DataFrame(json.loads(result.stdout)['software_components'])
 
-# Version Lag Analysis logic using packaging for robust comparison
-from packaging.version import Version, parse
+# Collect LTS Data
+lts_map = {} 
+name_to_id = {str(item.get('name')).strip().lower(): item.get('id_eol') for item in config_data.get('stack', [])}
+ids_to_check = list(set([item['id_eol'] for item in config_data.get('stack', []) if 'id_eol' in item and not item.get('skip', False)]))
 
-def calculate_lag(row):
-    cur_str = str(row['version']).strip()
-    lat_str = str(row['latest_version']).strip()
-    
-    if not lat_str or lat_str == '-' or not cur_str or cur_str == lat_str:
-        return 'Current'
-    
+for prod_id in ids_to_check:
     try:
-        cur_v = parse(cur_str)
-        lat_v = parse(lat_str)
-        
-        # Robust comparison using packaging.version
-        if lat_v > cur_v:
-            # Check if major segment differs
-            cur_major = getattr(cur_v, 'major', None)
-            lat_major = getattr(lat_v, 'major', None)
-            
-            # If major exists and differs, it's a Major Lag
-            if cur_major is not None and lat_major is not None and cur_major != lat_major:
-                return 'Major Lag'
-            
-            # Fallback for versions without explicit .major (or if same major)
-            # Check the first numeric part of the release tuple
-            if cur_v.release and lat_v.release and cur_v.release[0] != lat_v.release[0]:
-                return 'Major Lag'
-                
-            return 'Minor Lag'
-        return 'Current'
-    except:
-        # Fallback to basic string split if parsing fails for very custom formats
+        res = subprocess.run(['geol', 'product', 'extended', prod_id, '--json'], capture_output=True, text=True)
+        if res.returncode == 0:
+            p_ext_data = json.loads(res.stdout)
+            if p_ext_data: lts_map[prod_id] = [str(rel.get('cycle')).strip() for rel in p_ext_data[0].get('releases', []) if rel.get('isLts')]
+    except: pass
+
+def enrich_row(row):
+    sn, pid, v_str = str(row['software']).strip().lower(), name_to_id.get(str(row['software']).strip().lower()), str(row['version']).strip()
+    row['is_lts'] = False
+    if pid in lts_map:
+        if v_str in lts_map[pid] or any(v_str.startswith(c + '.') for c in lts_map[pid]): row['is_lts'] = True
+    cur, lat = v_str, str(row['latest_version']).strip()
+    if not lat or lat == '-' or cur == lat: row['lag'] = 'Current'
+    else:
         try:
-            if cur_str.split('.')[0] != lat_str.split('.')[0]:
-                return 'Major Lag'
-            return 'Minor Lag'
-        except:
-            return 'Unknown'
+            cv, lv = parse_v(cur), parse_v(lat)
+            if lv > cv:
+                if (getattr(cv, 'major', None) is not None and getattr(lv, 'major', None) is not None and cv.major != lv.major) or (cv.release and lv.release and cv.release[0] != lv.release[0]): row['lag'] = 'Major Lag'
+                else: row['lag'] = 'Minor Lag'
+            else: row['lag'] = 'Current'
+        except: row['lag'] = 'Major Lag' if cur.split('.')[0] != lat.split('.')[0] else 'Minor Lag'
+    row['soft_html'] = f'<a href="https://endoflife.date/{pid if pid else sn}" target="_blank">{row["software"]}</a>' if row['status'] != 'UNKNOWN' else row['software']
+    return row
 
-df_raw['lag'] = df_raw.apply(calculate_lag, axis=1)
+df_raw = df_raw.apply(enrich_row, axis=1)
 
-# Extract skipped products
+# Add skipped
 skipped_products = [item for item in config_data.get('stack', []) if item.get('skip', False)]
 if skipped_products:
-    skipped_rows = [{'software': i.get('name', 'Unknown'), 'version': i.get('version', ''), 'status': 'UNKNOWN', 'eol_date': '', 'days': '', 'latest_version': '', 'is_latest': False, 'lag': 'Untracked'} for i in skipped_products]
+    skipped_rows = [{'software': i.get('name', 'Unknown'), 'version': i.get('version', ''), 'status': 'UNKNOWN', 'eol_date': '', 'days': '', 'latest_version': '', 'is_latest': False, 'lag': 'Untracked', 'is_lts': False, 'soft_html': i.get('name', 'Unknown')} for i in skipped_products]
     df_raw = pd.concat([df_raw, pd.DataFrame(skipped_rows)], ignore_index=True)
 
 # Metrics
 df_raw['days_num'] = pd.to_numeric(df_raw['days'], errors='coerce').fillna(9999)
-total_comp = len(df_raw)
-eol_comp = len(df_raw[df_raw['status'] == 'EOL'])
-# Upcoming risks: not EOL yet but EOL within 180 days
+total_comp, eol_comp = len(df_raw), len(df_raw[df_raw['status'] == 'EOL'])
 upcoming_risks = df_raw[(df_raw['status'] == 'OK') & (df_raw['days_num'] > 0) & (df_raw['days_num'] < 180)]
 upcoming_count = len(upcoming_risks)
-ok_comp = len(df_raw[df_raw['status'] == 'OK']) - upcoming_count
-untracked_comp = len(df_raw[df_raw['status'] == 'UNKNOWN'])
+ok_comp, untracked_comp = len(df_raw[df_raw['status'] == 'OK']) - upcoming_count, len(df_raw[df_raw['status'] == 'UNKNOWN'])
 
-# Set Titles
+# UI
 print(f'<script>document.title = "{app_name} geol EoL stack reporting";</script>')
-display(HTML(f'<div class="report-header"><h1><i class="fa-solid fa-hourglass-half"></i> {app_name} Geol EoL stack reporting</h1></div>'))
-
-# Logo
-logo_url = "https://raw.githubusercontent.com/opt-nc/geol/main/assets/logos/dist/logo-with-name-gradient-black.jpeg"
-display(HTML(f'<div style="text-align: center; margin: 20px 0;"><a href="https://github.com/opt-nc/geol" target="_blank"><img src="{logo_url}" alt="Geol Logo" style="max-width: 300px; border-radius: 8px;"></a></div>'))
-
-display(HTML("<h2><i class='fa-solid fa-circle-info'></i> Abstract</h2>"))
-print(f"This report provides an EOL (End of Life) analysis for **{app_name}**. Generated using [geol](https://opt-nc.github.io/geol/).")
-
+display(HTML(f'<div class="report-header"><h1><span class="fa-solid fa-hourglass-half"></span> {app_name} Geol EoL stack reporting</h1></div>'))
+display(HTML(f'<div style="text-align: center; margin: 20px 0;"><a href="https://github.com/opt-nc/geol" target="_blank"><img src="https://github.com/opt-nc/geol/blob/main/assets/logos/dist/logo-with-name-gradient-black.jpeg?raw=true" alt="Geol Logo" style="max-width: 300px; border-radius: 8px;"></a></div>'))
+display(Markdown("## <span class='fa-solid fa-circle-info'></span> Abstract"))
+print(f"This report provides an EOL analysis for **{app_name}**. Generated using [geol](https://opt-nc.github.io/geol/).")
 if additional_context and str(additional_context).strip():
-    display(HTML(f"<h2><i class='fa-solid fa-note-sticky'></i> Additional context</h2>"))
+    display(HTML("<h2><span class='fa-solid fa-note-sticky'></span> Additional context</h2>"))
     print(additional_context)
 
-# --- BIG NUMBERS ---
-metrics_html = f"""
+display(HTML(f"""
 <div style="display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
-    <div class="metric-card" style="flex: 1; min-width: 150px;"><i class="fa-solid fa-layer-group metric-icon"></i><span class="metric-label">Total Stack</span><span class="metric-value">{total_comp}</span></div>
-    <div class="metric-card" style="flex: 1; min-width: 150px;"><i class="fa-solid fa-circle-check metric-icon status-ok"></i><span class="metric-label">Healthy</span><span class="metric-value status-ok">{ok_comp}</span></div>
-    <div class="metric-card" style="flex: 1; min-width: 150px;"><i class="fa-solid fa-triangle-exclamation metric-icon status-warning"></i><span class="metric-label">Upcoming Risks</span><span class="metric-value status-warning">{upcoming_count}</span></div>
-    <div class="metric-card" style="flex: 1; min-width: 150px;"><i class="fa-solid fa-fire-flame-curved metric-icon status-eol"></i><span class="metric-label">End of Life</span><span class="metric-value status-eol">{eol_comp}</span></div>
+    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="fa-solid fa-layer-group metric-icon"></span><span class="metric-label">Total Stack</span><span class="metric-value">{total_comp}</span></div>
+    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="fa-solid fa-circle-check metric-icon status-ok"></span><span class="metric-label">Healthy</span><span class="metric-value status-ok">{ok_comp}</span></div>
+    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="fa-solid fa-triangle-exclamation metric-icon status-warning"></span><span class="metric-label">Upcoming Risks</span><span class="metric-value status-warning">{upcoming_count}</span></div>
+    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="fa-solid fa-fire-flame-curved metric-icon status-eol"></span><span class="metric-label">End of Life</span><span class="metric-value status-eol">{eol_comp}</span></div>
 </div>
-"""
-display(HTML(metrics_html))
-
-display(Markdown(f"""
-- <i class='fa-solid fa-layer-group'></i> **Total Stack:** Represents the complete inventory of software components defined in your configuration.
-- <i class='fa-solid fa-circle-check status-ok'></i> **Healthy:** Components that are currently supported and have a comfortable timeframe before EOL.
-- <i class='fa-solid fa-triangle-exclamation status-warning'></i> **Upcoming Risks:** Components reaching EOL within the next 180 days. Plan upgrades soon.
-- <i class='fa-solid fa-fire-flame-curved status-eol'></i> **End of Life:** Critical items no longer receiving official updates. Immediate upgrade required.
-- <i class='fa-solid fa-eye-slash status-skip'></i> **Untracked:** Components marked to be skipped (Total tracked = Total Stack - {untracked_comp}).
 """))
 
-display(HTML("<h2><i class='fa-solid fa-database'></i> Report Metadata</h2>"))
-now_local = datetime.now().astimezone()
-from datetime import timezone as dt_timezone
-now_utc = datetime.now(dt_timezone.utc)
+display(Markdown(f"""
+- <span class='fa-solid fa-layer-group'></span> **Total Stack:** Complete inventory of software components.
+- <span class='fa-solid fa-circle-check status-ok'></span> **Healthy:** Supported components with a safe timeframe.
+- <span class='fa-solid fa-triangle-exclamation status-warning'></span> **Upcoming Risks:** Reaching EOL within 180 days.
+- <span class='fa-solid fa-fire-flame-curved status-eol'></span> **End of Life:** Critical items requiring immediate replacement.
+"""))
 
-metadata_html = f"""
-<ul>
-    <li><i class='fa-solid fa-clock'></i> <strong>Generation Date (Local):</strong> {now_local.strftime('%Y-%m-%d %H:%M:%S %Z (UTC%z)')}</li>
-    <li><i class='fa-solid fa-earth-americas'></i> <strong>Generation Date (UTC):</strong> {now_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}</li>
-    <li><i class='fa-brands fa-python'></i> <strong>Python Version:</strong> <code>{sys.version.split()[0]}</code></li>
-    <li><i class='fa-solid fa-bolt'></i> <strong><a href='https://docs.astral.sh/uv/'>UV</a> Version:</strong> <code>{uv_version}</code></li>
-    <li><i class='fa-solid fa-gears'></i> <strong><a href='https://opt-nc.github.io/geol/'>Geol</a> Version:</strong> <code>{geol_version}</code></li>
-    <li><i class='fa-solid fa-book-open'></i> <strong><a href='https://quarto.org/'>Quarto</a> Version:</strong> <code>{quarto_version}</code></li>
-    <li><i class='fa-solid fa-file-code'></i> <strong>Configuration File:</strong> <code>{config_file}</code></li>
-    <li><i class='fa-solid fa-fingerprint'></i> <strong>Configuration MD5:</strong> <code>{config_md5}</code></li>
-    <li><i class='fa-solid fa-link'></i> <strong>Data Source:</strong> <a href='https://endoflife.date/'>endoflife.date API</a></li>
-</ul>
-"""
-display(HTML(metadata_html))
+display(Markdown("## <span class='fa-solid fa-database'></span> Report Metadata"))
+now_local, now_utc = datetime.now().astimezone(), datetime.now(dt_timezone.utc)
+
+metadata_items = []
+metadata_items.append(f"<li><span class='fa-solid fa-clock'></span> <strong>Local:</strong> {now_local.strftime('%Y-%m-%d %H:%M:%S %Z')}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-earth-americas'></span> <strong>UTC:</strong> {now_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}</li>")
+
+if git_commit:
+    metadata_items.append(f"<li><span class='fa-brands fa-git-alt'></span> <strong>Workspace Git Commit:</strong> <code>{git_commit[:8]}</code></li>")
+if config_git_commit:
+    metadata_items.append(f"<li><span class='fa-solid fa-code-commit'></span> <strong>geol input check file commit:</strong> <code>{config_git_commit[:8]}</code></li>")
+
+metadata_items.append(f"<li><span class='fa-brands fa-python'></span> <strong>Python:</strong> {sys.version.split()[0]}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-bolt'></span> <strong><a href='https://docs.astral.sh/uv/' target='_blank'>UV</a>:</strong> {uv_version}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-gears'></span> <strong><a href='https://github.com/opt-nc/geol' target='_blank'>Geol</a>:</strong> {geol_version}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-box-open'></span> <strong><a href='https://pypi.org/project/packaging/' target='_blank'>Packaging</a>:</strong> {packaging_version} (used for robust SemVer and Calendar version comparison, following the <a href='https://peps.python.org/pep-0440/' target='_blank'>PEP 440</a> initiative)</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-book-open'></span> <strong><a href='https://quarto.org/' target='_blank'>Quarto</a>:</strong> {quarto_version}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-file-code'></span> <strong>geol input check file:</strong> <code>{config_file}</code> (SHA-256: <code>{config_sha256[:12]}...</code> | MD5: <code>{config_md5}</code>)</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-link'></span> <strong>Data Source:</strong> <a href='https://endoflife.date/docs/api/v1' target='_blank'>endoflife.date API</a></li>")
+
+display(HTML("<ul>" + "".join(metadata_items) + "</ul>"))
 ```
 
 ```{python}
@@ -278,110 +235,61 @@ display(HTML(metadata_html))
 #| message: false
 #| warning: false
 from IPython.display import display, HTML
-display(HTML("<h2><i class='fa-solid fa-chart-pie'></i> Status Overview</h2>"))
+display(Markdown("## <span class='fa-solid fa-chart-pie'></span> Status Overview"))
 import plotly.express as px
-import pandas as pd
 
 if not df_raw.empty:
     df_raw['Root'] = app_name
-    # Create a display status for the chart
-    def chart_status(row):
-        if row['status'] == 'EOL': return 'EOL'
-        if row['status'] == 'UNKNOWN': return 'Untracked'
-        if row['days_num'] < 180: return 'Upcoming Risk'
-        return 'Healthy'
-    
-    df_raw['Chart_Status'] = df_raw.apply(chart_status, axis=1)
-    
-    fig_sun = px.sunburst(df_raw, path=['Root', 'Chart_Status', 'software'], color='Chart_Status',
-                          color_discrete_map={"EOL": "#ff5555", "Healthy": "#50fa7b", "Upcoming Risk": "#ffb86c", "Untracked": "#8be9fd"})
+    df_raw['Chart_Status'] = df_raw.apply(lambda r: 'EOL' if r['status'] == 'EOL' else 'Untracked' if r['status'] == 'UNKNOWN' else 'Upcoming Risk' if r['days_num'] < 180 else 'Healthy', axis=1)
+    fig_sun = px.sunburst(df_raw, path=['Root', 'Chart_Status', 'software'], color='Chart_Status', color_discrete_map={"EOL": "#ff5555", "Healthy": "#50fa7b", "Upcoming Risk": "#ffb86c", "Untracked": "#8be9fd"})
     fig_sun.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=0, b=0, l=0, r=0), height=450)
     display(fig_sun)
     
-    # --- KEY FINDINGS ---
-    findings_html = ""
-    
-    if eol_comp > 0:
-        findings_html += f"""
-        <div class="finding-box finding-critical">
-            <div class="finding-icon"><i class="fa-solid fa-fire-flame-curved"></i></div>
-            <div class="finding-text"><strong>Critical Risk:</strong> {eol_comp} component{'s are' if eol_comp > 1 else ' is'} past the End-of-Life date. Immediate replacement is required.</div>
-        </div>
-        """
-    
-    if upcoming_count > 0:
-        findings_html += f"""
-        <div class="finding-box finding-warning">
-            <div class="finding-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-            <div class="finding-text"><strong>Upcoming Risk:</strong> {upcoming_count} component{'s' if upcoming_count > 1 else ''} will reach End-of-Life within 180 days.</div>
-        </div>
-        """
-    
-    if eol_comp == 0 and upcoming_count == 0:
-        findings_html += """
-        <div class="finding-box finding-safe">
-            <div class="finding-icon"><i class="fa-solid fa-circle-check"></i></div>
-            <div class="finding-text"><strong>All Clear:</strong> All tracked components are currently within their supported lifecycle.</div>
-        </div>
-        """
-
-    display(HTML(findings_html))
+    findings = ""
+    if eol_comp > 0: findings += f'<div class="finding-box finding-critical"><div class="finding-icon"><span class="fa-solid fa-fire-flame-curved"></span></div><div class="finding-text"><strong>Critical Risk:</strong> {eol_comp} past EOL.</div></div>'
+    if upcoming_count > 0: findings += f'<div class="finding-box finding-warning"><div class="finding-icon"><span class="fa-solid fa-triangle-exclamation"></span></div><div class="finding-text"><strong>Upcoming:</strong> {upcoming_count} reach EOL soon.</div></div>'
+    if not findings: findings = '<div class="finding-box finding-safe"><div class="finding-icon"><span class="fa-solid fa-circle-check"></span></div><div class="finding-text"><strong>Healthy:</strong> All components are supported.</div></div>'
+    display(HTML(findings))
 ```
 
 ```{python}
 #| echo: false
 #| output: asis
 from IPython.display import display, HTML
-display(HTML("<h2><i class='fa-solid fa-list-check'></i> Stack Status</h2>"))
+display(Markdown("## <span class='fa-solid fa-list-check'></span> Stack Status"))
 
 try:
-    name_to_id = {item.get('name'): item.get('id_eol') for item in config_data.get('stack', [])}
     df = df_raw.copy()
-    
-    # Custom Sorting: EOL first, then Upcoming, then OK, then Unknown
-    def sort_rank(row):
-        if row['status'] == 'EOL': return 0
-        if row['status'] == 'OK' and row['days_num'] < 180: return 1
-        if row['status'] == 'OK': return 2
-        return 3
-    
-    df['sort_rank'] = df.apply(sort_rank, axis=1)
+    df['sort_rank'] = df.apply(lambda r: 0 if r['status'] == 'EOL' else 1 if (r['status'] == 'OK' and r['days_num'] < 180) else 2 if r['status'] == 'OK' else 3, axis=1)
     df = df.sort_values(by=['sort_rank', 'days_num'], ascending=[True, True])
 
-    def color_status(row):
-        val = row['status']
-        days = row['days_num']
-        if val == 'EOL':
-            return f'<i class="fa-solid fa-circle-exclamation"></i> <span style="color:#ff5555; font-weight:bold;">{val}</span>'
-        if val == 'UNKNOWN':
-            return f'<i class="fa-solid fa-circle-question"></i> <span style="color:#8be9fd;">{val}</span>'
-        if days < 180:
-            return f'<i class="fa-solid fa-triangle-exclamation"></i> <span style="color:#ffb86c; font-weight:bold;">WARNING</span>'
-        return f'<i class="fa-solid fa-circle-check"></i> <span style="color:#50fa7b;">{val}</span>'
+    def style_status(row):
+        v, d = row['status'], row['days_num']
+        if v == 'EOL': return f'<span class="fa-solid fa-circle-exclamation"></span> <span style="color:#ff5555; font-weight:bold;">{v}</span>'
+        if v == 'UNKNOWN': return f'<span class="fa-solid fa-circle-question"></span> <span style="color:#8be9fd;">{v}</span>'
+        if d < 180: return f'<span class="fa-solid fa-triangle-exclamation"></span> <span style="color:#ffb86c; font-weight:bold;">WARNING</span>'
+        return f'<span class="fa-solid fa-circle-check"></span> <span style="color:#50fa7b;">{v}</span>'
+
+    def style_version(row):
+        v = str(row['version'])
+        if row.get('is_lts') == True:
+            return f'{v} <span class="fa-solid fa-shield-halved" title="Long Term Support (LTS)"></span>'
+        return v
 
     def style_lag(val):
-        color = "#50fa7b" if val == 'Current' else "#ffb86c" if val == 'Minor Lag' else "#ff5555" if val == 'Major Lag' else "#8be9fd"
-        icon = "fa-circle-check" if val == 'Current' else "fa-circle-chevron-up"
-        return f'<span style="color:{color};"><i class="fa-solid {icon}"></i> {val}</span>'
+        c = "#50fa7b" if val == 'Current' else "#ffb86c" if val == 'Minor Lag' else "#ff5555" if val == 'Major Lag' else "#8be9fd"
+        ic = "fa-circle-check" if val == "Current" else "fa-circle-chevron-up"
+        return f'<span style="color:{c};"><span class="fa-solid {ic}"></span> {val}</span>'
 
-    df['software_linked'] = df.apply(lambda x: f'<a href="https://endoflife.date/{name_to_id.get(x["software"], x["software"])}" target="_blank">{x["software"]}</a>' if x['status'] != 'UNKNOWN' else x['software'], axis=1)
-    df['status_styled'] = df.apply(color_status, axis=1)
-    df['lag_styled'] = df['lag'].apply(style_lag)
+    df['Stat'] = df.apply(style_status, axis=1)
+    df['Ver'] = df.apply(style_version, axis=1)
+    df['Lag'] = df['lag'].apply(style_lag)
     
-    headers = ['software_linked', 'version', 'status_styled', 'lag_styled', 'eol_date', 'latest_version']
-    display_headers = ['Software', 'Version', 'Status', 'Version Lag', 'EOL Date', 'Latest']
-    
-    html_table = '<table id="stack-table" class="display table nowrap" style="width:100%"><thead><tr class="thead-dark">'
-    for h in display_headers: html_table += f'<th>{h}</th>'
-    html_table += '</tr></thead><tbody>'
-    for _, row in df[headers].iterrows():
-        html_table += '<tr>'
-        for val in row: html_table += f'<td>{val}</td>'
-        html_table += '</tr>'
-    html_table += '</tbody></table>'
-    
-    dt_js = "<script>$(document).ready(function() { if ( ! $.fn.DataTable.isDataTable( '#stack-table' ) ) { $('#stack-table').DataTable({ dom: 'Bfrtip', buttons: ['copy', 'csv', 'excel', 'print', 'colvis'], pageLength: 15, responsive: true, order: [] }); } });</script>"
-    display(HTML(html_table + dt_js))
+    html = '<table id="stack-table" class="display table nowrap" style="width:100%"><thead><tr class="thead-dark"><th>Software</th><th>Version</th><th>Status</th><th>Lag</th><th>EOL Date</th><th>Latest</th></tr></thead><tbody>'
+    for _, r in df.iterrows():
+        html += f'<tr><td>{r["soft_html"]}</td><td>{r["Ver"]}</td><td>{r["Stat"]}</td><td>{r["Lag"]}</td><td>{r["eol_date"]}</td><td>{r["latest_version"]}</td></tr>'
+    html += '</tbody></table><script>$(document).ready(function() { if (!$.fn.DataTable.isDataTable("#stack-table")) { $("#stack-table").DataTable({ dom: "Bfrtip", buttons: ["copy", "csv", "excel", "print", "colvis"], pageLength: 15, responsive: true, order: [] }); } });</script>'
+    display(HTML(html))
 except Exception as e: print(f"Error: {e}")
 ```
 
@@ -390,54 +298,63 @@ except Exception as e: print(f"Error: {e}")
 #| message: false
 #| warning: false
 from IPython.display import display, HTML
-display(HTML("<h2><i class='fa-solid fa-calendar-days'></i> Lifecycle Timeline</h2>"))
+display(Markdown("## <span class='fa-solid fa-calendar-days'></span> Lifecycle Timeline"))
 import plotly.express as px
-from datetime import datetime
-
 lifecycle_events = []
-today = datetime.now()
-ids_to_check = list(set([item['id_eol'] for item in config_data.get('stack', []) if 'id_eol' in item and not item.get('skip', False)]))
-
 for prod_id in ids_to_check:
     try:
         res = subprocess.run(['geol', 'product', 'extended', prod_id, '--json'], capture_output=True, text=True)
         if res.returncode == 0:
-            data = json.loads(res.stdout)
-            if data and len(data) > 0:
-                product_info = data[0]
-                for rel in product_info.get('releases', [])[:6]:
-                    start, end, cycle = rel.get('releaseDate'), rel.get('eolFrom'), rel.get('cycle', 'unknown')
-                    if start and end and end != "false":
+            p_ext_data = json.loads(res.stdout)
+            if p_ext_data:
+                for rel in p_ext_data[0].get('releases', [])[:6]:
+                    s, e, c = rel.get('releaseDate'), rel.get('eolFrom'), rel.get('cycle', 'unknown')
+                    if s and e and e != "false":
                         try:
-                            start_dt, end_dt = datetime.strptime(start, '%Y-%m-%d'), datetime.strptime(end, '%Y-%m-%d')
-                            status = "EOL" if end_dt < today else "Active" if start_dt <= today <= end_dt else "Upcoming"
-                            lifecycle_events.append({"Product": product_info['name'], "Cycle": str(cycle), "Start": start, "End": end, "Status": status, "Label": f"{product_info['name']} {cycle}"})
+                            s_dt, e_dt, today = datetime.strptime(s, '%Y-%m-%d'), datetime.strptime(e, '%Y-%m-%d'), datetime.now()
+                            st = "EOL" if e_dt < today else "Active" if s_dt <= today <= e_dt else "Upcoming"
+                            lifecycle_events.append({"Product": p_ext_data[0]['name'], "Cycle": str(c), "Start": s, "End": e, "Status": st, "Label": f"{p_ext_data[0]['name']} {c}"})
                         except: continue
     except: pass
-
 if lifecycle_events:
     df_lc = pd.DataFrame(lifecycle_events)
-    fig = px.timeline(df_lc, x_start="Start", x_end="End", y="Product", color="Status", hover_name="Label", text="Cycle",
-                      color_discrete_map={"EOL": "#ff5555", "Active": "#50fa7b", "Upcoming": "#8be9fd"}, category_orders={"Status": ["Active", "Upcoming", "EOL"]})
+    fig = px.timeline(df_lc, x_start="Start", x_end="End", y="Product", color="Status", hover_name="Label", text="Cycle", color_discrete_map={"EOL": "#ff5555", "Active": "#50fa7b", "Upcoming": "#8be9fd"}, category_orders={"Status": ["Active", "Upcoming", "EOL"]})
     fig.update_yaxes(autorange="reversed")
     fig.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=400 + (len(df_lc['Product'].unique()) * 30), xaxis_title="")
-    fig.add_vline(x=today.timestamp() * 1000, line_dash="dash", line_color="white")
+    fig.add_vline(x=datetime.now().timestamp() * 1000, line_dash="dash", line_color="white")
     display(fig)
-else: print("*No data available.*")
 ```
 
 ```{python}
 #| echo: false
 #| output: asis
 from IPython.display import display, HTML
-display(HTML("<h2><i class='fa-solid fa-code'></i> Configuration Source</h2>"))
-print(f"Built using `geol check` (see [tutorial](https://opt-nc.github.io/geol/docs/tutorial-basics/check-command) for more)\n```yaml\n{config_raw}\n```")
-```
+display(Markdown("## <span class='fa-solid fa-code'></span> Configuration Source"))
+print(f"""
+<details>
+    <summary style="cursor: pointer; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; margin-bottom: 10px;">
+        <span class="fa-solid fa-file-invoice"></span> Click to view the <code>geol</code> input configuration
+    </summary>
+    <p style="margin-top: 10px;">Built using <code>geol check</code>. (see <a href="https://opt-nc.github.io/geol/docs/tutorial-basics/check-command" target="_blank">tutorial</a> for more)</p>
+""")
+print(f"```yaml\n{config_raw}\n```")
+print("</details>")
 
-***
+display(Markdown("## <span class='fa-solid fa-handshake-angle'></span> License & Contribution"))
 
-<div style="text-align: center; font-size: 0.9rem; margin-top: 50px; opacity: 0.7;">
-    <p><i class="fa-solid fa-code-fork"></i> <strong>Open Source & Customizable</strong></p>
-    <p>This reporting notebook is open-source and part of the <a href="https://github.com/opt-nc/geol" target="_blank">geol project</a> ecosystem. You are encouraged to fork this repository and customize the analytics, visualizations, or styling to meet your organization's specific auditing and compliance needs.</p>
-    <p><em>End-of-Life data is provided by the endoflife.date community API.</em></p>
+# Duration calculation
+generation_duration = round(time.time() - start_time, 2)
+generation_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S %Z')
+
+display(HTML(f"""
+<div style="font-size: 1rem; margin-bottom: 30px;">
+    <p><span class="fa-solid fa-code-fork"></span> <strong>Open Source & Customizable</strong></p>
+    <p>This reporting notebook is open-source and part of the <a href="https://github.com/opt-nc/geol" target="_blank">geol project</a> ecosystem. You are encouraged to fork this repository and customize it to meet your specific auditing needs, and share your contributions back with the community.</p>
+    <p><span class="fa-solid fa-scale-balanced"></span> <strong>Disclaimer & License</strong></p>
+    <p>This tool is provided "as is", without warranty of any kind, under the <a href="https://github.com/opt-nc/geol/blob/main/LICENSE" target="_blank">geol license</a>. It is designed to assist decision-making through KPIs, but the authors are not accountable for governance choices or technical implementations made based on this report.</p>
+    <p><span class="fa-solid fa-gears"></span> <strong>Build Information</strong></p>
+    <p>Generated with <a href="https://github.com/opt-nc/geol" target="_blank">geol</a> and <a href="https://quarto.org/" target="_blank">Quarto</a> on <strong>{generation_date}</strong> in <strong>{generation_duration} seconds</strong>.</p>
+    <p><em>End-of-Life data provided by the <a href="https://endoflife.date/" target="_blank">endoflife.date</a> API.</em></p>
 </div>
+"""))
+```
