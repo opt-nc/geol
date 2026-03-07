@@ -476,7 +476,7 @@ print(f'<script>document.title = "{app_name} geol EoL stack reporting";</script>
 display(HTML(f'<div class="report-header"><h1><span class="fa-solid fa-hourglass-half"></span> {app_name} Geol EoL stack reporting</h1></div>'))
 display(HTML(f'<div style="text-align: center; margin: 20px 0;"><a href="https://github.com/opt-nc/geol" target="_blank"><img src="https://github.com/opt-nc/geol/blob/main/assets/logos/dist/logo-with-name-gradient-black.jpeg?raw=true" alt="Geol Logo" style="max-width: 300px; border-radius: 8px;"></a></div>'))
 
-# Executive summary
+# Executive summary with risk sparkline
 action_count = eol_comp + upcoming_count + len([1 for _, r in df_raw.iterrows() if r['lag'] in ('Major Lag', 'Minor Lag') and r['status'] != 'EOL' and r['status'] != 'UNKNOWN'])
 tracked_count = total_comp - untracked_comp
 if action_count == 0:
@@ -491,7 +491,23 @@ else:
     summary_icon = f'<span class="fa-solid fa-triangle-exclamation" style="color:{COLORS["warning"]};"></span>'
     summary_text = f"{action_count} of {tracked_count} tracked components require attention."
     summary_border = COLORS['warning']
-display(HTML(f'<div style="text-align:center; margin: 15px auto; padding: 10px 20px; border: 1px solid {summary_border}; border-radius: 8px; font-size: 1.1rem; max-width: 600px;">{summary_icon} {summary_text}</div>'))
+
+# Build sparkline bar segments (proportional to component counts)
+ok_pct = round(ok_comp / tracked_count * 100) if tracked_count else 0
+upcoming_pct = round(upcoming_count / tracked_count * 100) if tracked_count else 0
+eol_pct = round(eol_comp / tracked_count * 100) if tracked_count else 0
+# Ensure total doesn't exceed 100 due to rounding
+remainder = 100 - ok_pct - upcoming_pct - eol_pct
+ok_pct += remainder
+sparkline = (
+    f'<div style="display:flex; height:8px; border-radius:4px; overflow:hidden; margin-top:8px; background:rgba(255,255,255,0.1);">'
+    f'<div style="width:{ok_pct}%; background:{COLORS["healthy"]};" title="Healthy: {ok_comp}"></div>'
+    f'<div style="width:{upcoming_pct}%; background:{COLORS["warning"]};" title="Upcoming: {upcoming_count}"></div>'
+    f'<div style="width:{eol_pct}%; background:{COLORS["critical"]};" title="EOL: {eol_comp}"></div>'
+    f'</div>'
+)
+
+display(HTML(f'<div style="text-align:center; margin: 15px auto; padding: 10px 20px; border: 1px solid {summary_border}; border-radius: 8px; font-size: 1.1rem; max-width: 600px;">{summary_icon} {summary_text}{sparkline}</div>'))
 ```
 
 ## <span class='fa-solid fa-circle-info'></span> Abstract
@@ -513,10 +529,10 @@ if additional_context and str(additional_context).strip():
 
 display(HTML(f"""
 <div style="display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
-    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="metric-tooltip">{html.escape(all_names)}</span><span class="fa-solid fa-layer-group metric-icon"></span><span class="metric-label">Stack Size</span><span class="metric-value">{total_comp}</span></div>
-    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="metric-tooltip">{html.escape(ok_names)}</span><span class="fa-solid fa-circle-check metric-icon status-ok"></span><span class="metric-label">Healthy</span><span class="metric-value status-ok">{ok_comp}</span></div>
-    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="metric-tooltip">{html.escape(upcoming_names)}</span><span class="fa-solid fa-triangle-exclamation metric-icon status-warning"></span><span class="metric-label">Upcoming Risks</span><span class="metric-value status-warning">{upcoming_count}</span></div>
-    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="metric-tooltip">{html.escape(eol_names)}</span><span class="fa-solid fa-fire-flame-curved metric-icon status-eol"></span><span class="metric-label">End of Life</span><span class="metric-value status-eol">{eol_comp}</span></div>
+    <div class="metric-card" style="flex: 1; min-width: 150px; cursor: pointer;" onclick="document.getElementById('stack-status').scrollIntoView()"><span class="metric-tooltip">{html.escape(all_names)}</span><span class="fa-solid fa-layer-group metric-icon"></span><span class="metric-label">Stack Size</span><span class="metric-value">{total_comp}</span></div>
+    <div class="metric-card" style="flex: 1; min-width: 150px; cursor: pointer;" onclick="document.getElementById('stack-status').scrollIntoView()"><span class="metric-tooltip">{html.escape(ok_names)}</span><span class="fa-solid fa-circle-check metric-icon status-ok"></span><span class="metric-label">Healthy</span><span class="metric-value status-ok">{ok_comp}</span></div>
+    <div class="metric-card" style="flex: 1; min-width: 150px; cursor: pointer;" onclick="document.getElementById('recommended-actions').scrollIntoView()"><span class="metric-tooltip">{html.escape(upcoming_names)}</span><span class="fa-solid fa-triangle-exclamation metric-icon status-warning"></span><span class="metric-label">Upcoming Risks</span><span class="metric-value status-warning">{upcoming_count}</span></div>
+    <div class="metric-card" style="flex: 1; min-width: 150px; cursor: pointer;" onclick="document.getElementById('recommended-actions').scrollIntoView()"><span class="metric-tooltip">{html.escape(eol_names)}</span><span class="fa-solid fa-fire-flame-curved metric-icon status-eol"></span><span class="metric-label">End of Life</span><span class="metric-value status-eol">{eol_comp}</span></div>
 </div>
 """))
 
@@ -683,6 +699,7 @@ actions = []
 
 for _, row in df_raw.iterrows():
     sw = row['software']
+    sw_slug = sw.lower().replace(' ', '-').replace('_', '-')
     ver = str(row['version']).strip()
     latest = str(row.get('latest_version', '')).strip()
     status = row['status']
@@ -698,34 +715,34 @@ for _, row in df_raw.iterrows():
     if status == 'EOL':
         since = f" (EOL since {eol_date})" if eol_date and eol_date != '-' else ""
         target = f" → {latest}" if latest and latest != '-' else ""
-        actions.append((0, score or 0, f'<span class="fa-solid fa-circle-exclamation" style="color:{COLORS["critical"]};"></span> '
+        actions.append((0, score or 0, sw_slug, f'<span class="fa-solid fa-circle-exclamation" style="color:{COLORS["critical"]};"></span> '
             f'<strong>Upgrade {html.escape(sw)}</strong> from <code>{html.escape(ver)}</code>{target}{since} — <em>unsupported, critical risk</em>'))
 
     elif row['days_num'] > 0 and row['days_num'] < RISK_THRESHOLD_DAYS:
         days_left = int(row['days_num'])
         target = f" → {latest}" if latest and latest != '-' and latest != ver else ""
-        actions.append((1, score or 0, f'<span class="fa-solid fa-triangle-exclamation" style="color:{COLORS["warning"]};"></span> '
+        actions.append((1, score or 0, sw_slug, f'<span class="fa-solid fa-triangle-exclamation" style="color:{COLORS["warning"]};"></span> '
             f'<strong>Plan migration for {html.escape(sw)}</strong> <code>{html.escape(ver)}</code>{target} — <em>EOL in {days_left} days</em>'))
 
     elif lag == 'Major Lag' and not is_lts:
         target = f" → {latest}" if latest and latest != '-' else ""
-        actions.append((2, score or 0, f'<span class="fa-solid fa-arrow-up" style="color:{COLORS["warning"]};"></span> '
+        actions.append((2, score or 0, sw_slug, f'<span class="fa-solid fa-arrow-up" style="color:{COLORS["warning"]};"></span> '
             f'<strong>Upgrade {html.escape(sw)}</strong> from <code>{html.escape(ver)}</code>{target} — <em>major version behind, no LTS</em>'))
 
     elif lag == 'Major Lag' and is_lts and not is_latest_lts:
         target = f" → {latest}" if latest and latest != '-' else ""
-        actions.append((3, score or 0, f'<span class="fa-solid fa-shield-halved" style="color:{COLORS["info"]};"></span> '
+        actions.append((3, score or 0, sw_slug, f'<span class="fa-solid fa-shield-halved" style="color:{COLORS["info"]};"></span> '
             f'<strong>Consider upgrading {html.escape(sw)}</strong> from <code>{html.escape(ver)}</code>{target} — <em>older LTS, newer LTS available</em>'))
 
     elif lag == 'Minor Lag':
         target = f" → {latest}" if latest and latest != '-' else ""
-        actions.append((4, score or 0, f'<span class="fa-solid fa-wrench" style="color:{COLORS["healthy"]};"></span> '
+        actions.append((4, score or 0, sw_slug, f'<span class="fa-solid fa-wrench" style="color:{COLORS["healthy"]};"></span> '
             f'<strong>Update {html.escape(sw)}</strong> from <code>{html.escape(ver)}</code>{target} — <em>minor/patch update available</em>'))
 
     # Always-latest policy: flag components not on latest version
     if row.get('always_latest') and lag in ('Major Lag', 'Minor Lag') and status != 'EOL':
         target = f" → {latest}" if latest and latest != '-' else ""
-        actions.append((-1, score or 0, f'<span class="fa-solid fa-bolt" style="color:{COLORS["warning"]};"></span> '
+        actions.append((-1, score or 0, f"policy-{sw_slug}", f'<span class="fa-solid fa-bolt" style="color:{COLORS["warning"]};"></span> '
             f'<strong>Policy: {html.escape(sw)}</strong> must be on latest (<code>{html.escape(ver)}</code>{target}) — <em>always-latest policy requires immediate update</em>'))
 
 # Sort by priority (lower = more urgent), then by score (lower = more urgent)
@@ -733,8 +750,8 @@ actions.sort(key=lambda a: (a[0], a[1]))
 
 if actions:
     # First item gets a stronger visual treatment as the worst offender
-    first_item = f'<li style="font-size: 1.1rem; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">{actions[0][2]}</li>'
-    rest_items = "".join(f"<li>{a[2]}</li>" for a in actions[1:])
+    first_item = f'<li id="action-{actions[0][2]}" style="font-size: 1.1rem; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">{actions[0][3]}</li>'
+    rest_items = "".join(f'<li id="action-{a[2]}">{a[3]}</li>' for a in actions[1:])
 
     display(HTML(f"""
 <div style="margin: 10px 0; padding: 15px 20px; border-left: 4px solid {COLORS['warning']}; background: rgba(255,184,108,0.07); border-radius: 0 6px 6px 0;">
@@ -909,6 +926,7 @@ for product_id, product_data in product_extended_cache.items():
                     else:
                         status = "Upcoming"
                     is_deployed = f"{display_name}|{cycle}" in deployed_cycles
+                    is_lts_cycle = release.get('isLts', False)
                     lifecycle_events.append({
                         "Product": display_name,
                         "Cycle": str(cycle),
@@ -917,6 +935,8 @@ for product_id, product_data in product_extended_cache.items():
                         "Status": status,
                         "Label": f"{display_name} {cycle}",
                         "Deployed": is_deployed,
+                        "LTS": "Yes" if is_lts_cycle else "No",
+                        "DeployedLabel": "✅ Deployed" if is_deployed else "",
                     })
                 except (ValueError, KeyError) as e:
                     logger.warning("Skipping malformed release for %s cycle %s: %s", product_id, cycle, e)
@@ -937,10 +957,14 @@ if lifecycle_events:
         color="Status",
         hover_name="Label",
         text="DisplayCycle",
+        custom_data=["Cycle", "Start", "End", "LTS", "DeployedLabel"],
         color_discrete_map=TIMELINE_COLOR_MAP,
         category_orders={"Status": ["Active", "Upcoming", "EOL"]},
     )
-    fig.update_traces(textposition="inside")
+    fig.update_traces(
+        textposition="inside",
+        hovertemplate="<b>%{customdata[0]}</b><br>Release: %{customdata[1]}<br>EOL: %{customdata[2]}<br>LTS: %{customdata[3]}<br>%{customdata[4]}<extra>%{y}</extra>",
+    )
     fig.update_yaxes(autorange="reversed")
     fig.update_layout(
         template="plotly_dark",
