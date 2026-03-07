@@ -1,85 +1,49 @@
-# DuckDB Export Discover Notebook
+# Geol Quarto Stack Dashboard
 
-This Quarto notebook connects to a DuckDB database, discovers the schema, and generates a visual representation of the tables and their relationships. It also provides an interactive table view of the data.
+An automated, professional End-of-Life (EoL) reporting dashboard for your technology stack. This project integrates [geol](https://opt-nc.github.io/geol/) with [Quarto](https://quarto.org/) to produce an interactive, dark-themed HTML analysis based on the [endoflife.date](https://endoflife.date/) API.
 
-## Requirements
+## 🚀 Features
 
-*   [Quarto CLI](https://quarto.org/docs/get-started/)
-*   [Python 3.10+](https://www.python.org/downloads/)
-*   [uv](https://docs.astral.sh/uv/)
-*   [go-task](https://taskfile.dev/installation/)
-*   [Graphviz](https://graphviz.org/download/)
-*   A DuckDB database file (e.g., `geol.duckdb`)
+- **Dynamic Reporting:** Automatically reads your `.geol.yaml` configuration.
+- **Interactive Visualizations:**
+  - **Sunburst Drill-down:** Click to explore status by component.
+  - **Lifecycle Timeline:** Interactive Plotly timeline of product releases and EOL dates.
+  - **Searchable Table:** DataTables-powered list with Export buttons (CSV, Excel, Copy).
+- **Professional KPI Dashboard:** At-a-glance health metrics (Total, Healthy, EoL, Untracked).
+- **Enterprise Ready:** Full metadata tracking (MD5 hashes, tool versions, dual timestamps).
+- **Responsive Design:** Dark mode by default with Font Awesome icons.
 
-## Quick Start
+## 🛠 Prerequisites
 
-The easiest way to set up the environment and render the notebook is to use [task](https://taskfile.dev/):
+Ensure you have the following tools installed:
 
+- **uv**: `brew install uv`
+- **Quarto**: `brew install --cask quarto`
+- **geol**: `brew install curl && brew install --cask opt-nc/homebrew-tap/geol`
+- **Taskfile**: `brew install go-task` (optional, for automation)
+
+## 📖 Usage
+
+### Quick Start
+To build the report using the default `.geol.yaml`:
 ```bash
-task
+task build
 ```
 
-This command will automatically create the virtual environment, install dependencies, generate the database (if `geol` is installed), and render the notebook.
+### Advanced Usage
+Run the report for a custom configuration or add extra context:
+```bash
+task build GEOL_CONFIG="my-app.yaml" ADDITIONAL_CONTEXT="Internal audit for Q1 2026."
+```
 
-## Installation
+### Cleanup
+Remove all generated artifacts:
+```bash
+task clean
+```
 
-1.  **Install Quarto, Python, uv, and Graphviz:**
+## 📄 Output
+The resulting dashboard is generated as a self-contained HTML file: **`geol-check-report.html`**.
 
-    Follow the instructions on the respective websites to install Quarto, Python, and uv for your operating system.
-
-    To install Graphviz on macOS or Linux using Homebrew, run:
-    ```bash
-    brew install graphviz
-    ```
-    On other systems, please refer to the [Graphviz download page](https://graphviz.org/download/).
-
-2.  **Create a virtual environment:**
-
-    It is recommended to use a virtual environment to manage the Python dependencies for this project.
-    ```bash
-    uv venv
-    ```
-
-3.  **Activate the virtual environment:**
-
-    On macOS and Linux:
-    ```bash
-    source .venv/bin/activate
-    ```
-    On Windows:
-    ```bash
-    .venv\Scripts\activate
-    ```
-
-4.  **Install the required Python packages:**
-
-    With the virtual environment activated, install the necessary packages using uv:
-    ```bash
-    uv pip install jupyter duckdb plotly pandas itables graphviz networkx pyyaml
-    ```
-
-## Usage
-
-1.  **Activate the virtual environment** (if not already activated):
-    ```bash
-    source .venv/bin/activate
-    ```
-
-2.  **Render the Quarto notebook:**
-    ```bash
-    quarto render duckdb-export-discover.qmd
-    ```
-    This will execute the notebook and create an HTML file with the output.
-
-    By default, the notebook will look for a database file named `geol.duckdb` in the same directory. You can specify a different database file by setting the `QUARTO_PARAM_DATABASE` environment variable:
-    ```bash
-    QUARTO_PARAM_DATABASE=path/to/your/database.duckdb quarto render duckdb-export-discover.qmd
-    ```
-
-## Output
-
-The output of the notebook is an HTML file named `duckdb-export-discover.html`. This file contains:
-
-*   An interactive table of all tables in the database.
-*   A schema diagram showing the tables and their inferred relationships.
-*   Interactive tables for each table in the database.
+---
+*Built with ❤️ by [geol](https://github.com/opt-nc/geol)*

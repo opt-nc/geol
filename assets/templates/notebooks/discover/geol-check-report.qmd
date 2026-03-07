@@ -1,0 +1,413 @@
+---
+author: "geol"
+subtitle: "Automated Technology Lifecycle Audit"
+date: last-modified
+description: "End-of-Life analysis for software components based on endoflife.date API."
+keywords: [EOL, Security, Compliance, DevOps]
+params:
+  config_file: ".geol.yaml"
+  additional_context: ""
+format: 
+  html:
+    theme:
+      dark: darkly
+      light: flatly
+    quarto-color-scheme:
+      default: dark
+      toggle: true
+    toc: true
+    toc-location: right
+    toc-title: "Navigation"
+    code-fold: true
+    embed-resources: true
+    include-in-header:
+      text: |
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+        <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+        <style>
+        /* Force Font Awesome Visibility */
+        .fa-solid, .fa-brands, .fas, .fa {
+            font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+            font-weight: 900 !important;
+            display: inline-block !important;
+            font-style: normal !important;
+            font-variant: normal !important;
+            text-rendering: auto !important;
+            -webkit-font-smoothing: antialiased !important;
+        }
+        body.quarto-dark { background-color: #222 !important; color: #eee !important; }
+        .quarto-dark .metric-card { background: #2d2d2d; border: 1px solid #444; }
+        .thead-dark th { background-color: #333 !important; }
+        .fa-circle-check, .status-ok { color: #50fa7b !important; }
+        .fa-circle-exclamation, .status-eol { color: #ff5555 !important; }
+        .fa-circle-question, .status-skip { color: #8be9fd !important; }
+        .fa-triangle-exclamation, .status-warning { color: #ffb86c !important; }
+        .fa-shield-halved { color: #8be9fd !important; margin-left: 8px !important; }
+        .fa-fire-flame-curved { color: #ff5555 !important; }
+        .metric-card { border-radius: 8px; padding: 20px; text-align: center; border: 1px solid #ddd; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 140px; }
+        .metric-icon { font-size: 1.8rem; margin-bottom: 10px; opacity: 0.8; }
+        .metric-value { font-size: 2.5rem; font-weight: bold; display: block; }
+        .metric-label { font-size: 1rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+        .finding-box { padding: 15px 20px; border-radius: 8px; margin: 20px 0; display: flex; align-items: center; gap: 15px; border-left: 5px solid; }
+        .finding-critical { background-color: rgba(255, 85, 85, 0.1); border-color: #ff5555; color: #ff5555; }
+        .finding-warning { background-color: rgba(255, 184, 108, 0.1); border-color: #ffb86c; color: #ffb86c; }
+        .finding-safe { background-color: rgba(80, 250, 123, 0.1); border-color: #50fa7b; color: #50fa7b; }
+        .finding-icon { font-size: 1.5rem; }
+        .finding-text { font-size: 1.1rem; font-weight: 500; }
+
+        /* Pro Tip Visibility */
+        .protip-box code {
+            background-color: #444 !important;
+            color: #fff !important;
+            padding: 2px 5px !important;
+            border-radius: 3px !important;
+        }
+
+        .report-header { text-align: center; margin-bottom: 30px; }
+        .report-header h1 { font-size: 2.5rem; font-weight: 700; }
+        
+        /* Executive One-Pager Print Mode */
+        @media print {
+            body, .quarto-container, #quarto-content {
+                background-color: white !important;
+                color: black !important;
+            }
+            .report-header h1 { color: black !important; margin-top: 0; }
+            .metric-card {
+                background: white !important;
+                border: 2px solid #333 !important;
+                color: black !important;
+                break-inside: avoid;
+            }
+            .metric-label { color: #444 !important; }
+            .status-ok, .status-eol, .status-warning, .status-skip { color: black !important; font-weight: bold !important; }
+            
+            /* Hide interactive/digital-only elements */
+            .dt-buttons, .dataTables_filter, .dataTables_length, .dataTables_paginate, .dataTables_info,
+            #quarto-sidebar, .toc-actions, #TOC, .navbar, .quarto-color-scheme-toggle {
+                display: none !important;
+            }
+            
+            /* Expand tables to full length */
+            table { width: 100% !important; border-collapse: collapse !important; }
+            table.dataTable tbody tr { background-color: white !important; color: black !important; }
+            .thead-dark th { background-color: #eee !important; color: black !important; border: 1px solid #333 !important; }
+            td { border: 1px solid #ddd !important; }
+            
+            /* Ensure charts are visible (or consider hiding sunburst if too complex for print) */
+            .js-plotly-plot { margin-bottom: 20px; }
+            
+            /* Add page break control */
+            h2 { page-break-before: always; margin-top: 30px !important; }
+            h2:first-of-type { page-break-before: avoid; }
+            .finding-box { border: 2px solid black !important; background: transparent !important; color: black !important; }
+        }
+        </style>
+        <script>
+        // Definitive FA Loader
+        (function() {
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
+            document.head.appendChild(link);
+        })();
+        </script>
+        <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+        <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+        <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+        <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+        <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
+---
+
+```{python}
+#| tags: [parameters]
+#| echo: false
+config_file = ".geol.yaml"
+additional_context = ""
+```
+
+```{python}
+#| echo: false
+#| output: asis
+import subprocess, shutil, sys, yaml, json, os, hashlib, time
+from datetime import datetime, timezone as dt_timezone
+from IPython.display import display, HTML, Markdown
+from packaging.version import parse as parse_v
+
+start_time = time.time()
+
+# 1. Check geol
+if not shutil.which("geol"):
+    display(HTML("<h2><span class='fa-solid fa-triangle-exclamation'></span> [CRITICAL ERROR] geol is NOT installed</h2>"))
+    sys.exit(1)
+
+# Get versions
+try:
+    geol_version = subprocess.run(['geol', 'version'], capture_output=True, text=True).stdout.strip()
+    quarto_version = subprocess.run(['quarto', '--version'], capture_output=True, text=True).stdout.strip()
+    uv_version = subprocess.run(['uv', '--version'], capture_output=True, text=True).stdout.strip().replace('uv ', '')
+    import packaging
+    packaging_version = packaging.__version__
+except: geol_version = quarto_version = uv_version = packaging_version = "Unknown"
+
+# Git Detection
+git_commit = None
+config_git_commit = None
+try:
+    if shutil.which("git"):
+        is_git = subprocess.run(['git', 'rev-parse', '--is-inside-work-tree'], capture_output=True, text=True)
+        if is_git.returncode == 0:
+            git_commit = subprocess.run(['git', 'rev-parse', 'HEAD'], capture_output=True, text=True).stdout.strip()
+            config_git_res = subprocess.run(['git', 'log', '-n', '1', '--format=%H', '--', config_file], capture_output=True, text=True)
+            if config_git_res.returncode == 0 and config_git_res.stdout.strip():
+                config_git_commit = config_git_res.stdout.strip()
+except: pass
+
+# 2. Load Config
+with open(config_file, 'rb') as f:
+    config_bytes = f.read()
+    config_sha256 = hashlib.sha256(config_bytes).hexdigest()
+    config_md5 = hashlib.md5(config_bytes).hexdigest()
+    config_raw = config_bytes.decode('utf-8')
+    config_data = yaml.safe_load(config_raw)
+
+app_name = config_data.get('app_name', 'Unnamed Project')
+
+# Run geol check
+result = subprocess.run(['geol', 'check', config_file, '--json'], capture_output=True, text=True)
+import pandas as pd
+df_raw = pd.DataFrame(json.loads(result.stdout)['software_components'])
+
+# Collect LTS Data
+lts_map = {} 
+name_to_id = {str(item.get('name')).strip().lower(): item.get('id_eol') for item in config_data.get('stack', [])}
+ids_to_check = list(set([item['id_eol'] for item in config_data.get('stack', []) if 'id_eol' in item and not item.get('skip', False)]))
+
+for prod_id in ids_to_check:
+    try:
+        res = subprocess.run(['geol', 'product', 'extended', prod_id, '--json'], capture_output=True, text=True)
+        if res.returncode == 0:
+            p_ext_data = json.loads(res.stdout)
+            if p_ext_data: lts_map[prod_id] = [str(rel.get('cycle')).strip() for rel in p_ext_data[0].get('releases', []) if rel.get('isLts')]
+    except: pass
+
+def enrich_row(row):
+    sn, pid, v_str = str(row['software']).strip().lower(), name_to_id.get(str(row['software']).strip().lower()), str(row['version']).strip()
+    row['is_lts'] = False
+    if pid in lts_map:
+        if v_str in lts_map[pid] or any(v_str.startswith(c + '.') for c in lts_map[pid]): row['is_lts'] = True
+    cur, lat = v_str, str(row['latest_version']).strip()
+    if not lat or lat == '-' or cur == lat: row['lag'] = 'Current'
+    else:
+        try:
+            cv, lv = parse_v(cur), parse_v(lat)
+            if lv > cv:
+                if (getattr(cv, 'major', None) is not None and getattr(lv, 'major', None) is not None and cv.major != lv.major) or (cv.release and lv.release and cv.release[0] != lv.release[0]): row['lag'] = 'Major Lag'
+                else: row['lag'] = 'Minor Lag'
+            else: row['lag'] = 'Current'
+        except: row['lag'] = 'Major Lag' if cur.split('.')[0] != lat.split('.')[0] else 'Minor Lag'
+    row['soft_html'] = f'<a href="https://endoflife.date/{pid if pid else sn}" target="_blank">{row["software"]}</a>' if row['status'] != 'UNKNOWN' else row['software']
+    return row
+
+df_raw = df_raw.apply(enrich_row, axis=1)
+
+# Add skipped
+skipped_products = [item for item in config_data.get('stack', []) if item.get('skip', False)]
+if skipped_products:
+    skipped_rows = [{'software': i.get('name', 'Unknown'), 'version': i.get('version', ''), 'status': 'UNKNOWN', 'eol_date': '', 'days': '', 'latest_version': '', 'is_latest': False, 'lag': 'Untracked', 'is_lts': False, 'soft_html': i.get('name', 'Unknown')} for i in skipped_products]
+    df_raw = pd.concat([df_raw, pd.DataFrame(skipped_rows)], ignore_index=True)
+
+# Metrics
+df_raw['days_num'] = pd.to_numeric(df_raw['days'], errors='coerce').fillna(9999)
+total_comp, eol_comp = len(df_raw), len(df_raw[df_raw['status'] == 'EOL'])
+upcoming_risks = df_raw[(df_raw['status'] == 'OK') & (df_raw['days_num'] > 0) & (df_raw['days_num'] < 180)]
+upcoming_count = len(upcoming_risks)
+ok_comp, untracked_comp = len(df_raw[df_raw['status'] == 'OK']) - upcoming_count, len(df_raw[df_raw['status'] == 'UNKNOWN'])
+
+# UI
+print(f'<script>document.title = "{app_name} geol EoL stack reporting";</script>')
+display(HTML(f'<div class="report-header"><h1><span class="fa-solid fa-hourglass-half"></span> {app_name} Geol EoL stack reporting</h1></div>'))
+display(HTML(f'<div style="text-align: center; margin: 20px 0;"><a href="https://github.com/opt-nc/geol" target="_blank"><img src="https://github.com/opt-nc/geol/blob/main/assets/logos/dist/logo-with-name-gradient-black.jpeg?raw=true" alt="Geol Logo" style="max-width: 300px; border-radius: 8px;"></a></div>'))
+display(Markdown("## <span class='fa-solid fa-circle-info'></span> Abstract"))
+print(f"This report provides an EOL analysis for **{app_name}**. Generated using [geol](https://opt-nc.github.io/geol/).")
+
+display(HTML(f"""
+<div class="protip-box" style="font-size: 0.85rem; background: rgba(80, 250, 123, 0.05); border: 1px solid #50fa7b; padding: 10px; border-radius: 5px; margin: 15px 0;">
+    <span class="fa-solid fa-file-pdf"></span> <strong>Pro Tip:</strong> Want a PDF? Simply press <code>Ctrl+P</code> (or <code>Cmd+P</code>) in your browser. The report will automatically switch to a clean, white "Executive Print Mode" optimized for paper and PDF sharing.
+</div>
+"""))
+
+if additional_context and str(additional_context).strip():
+    display(HTML("<h2><span class='fa-solid fa-note-sticky'></span> Additional context</h2>"))
+    print(additional_context)
+
+display(HTML(f"""
+<div style="display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
+    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="fa-solid fa-layer-group metric-icon"></span><span class="metric-label">Total Stack</span><span class="metric-value">{total_comp}</span></div>
+    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="fa-solid fa-circle-check metric-icon status-ok"></span><span class="metric-label">Healthy</span><span class="metric-value status-ok">{ok_comp}</span></div>
+    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="fa-solid fa-triangle-exclamation metric-icon status-warning"></span><span class="metric-label">Upcoming Risks</span><span class="metric-value status-warning">{upcoming_count}</span></div>
+    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="fa-solid fa-fire-flame-curved metric-icon status-eol"></span><span class="metric-label">End of Life</span><span class="metric-value status-eol">{eol_comp}</span></div>
+</div>
+"""))
+
+display(Markdown(f"""
+- <span class='fa-solid fa-layer-group'></span> **Total Stack:** Complete inventory of software components.
+- <span class='fa-solid fa-circle-check status-ok'></span> **Healthy:** Supported components with a safe timeframe.
+- <span class='fa-solid fa-triangle-exclamation status-warning'></span> **Upcoming Risks:** Reaching EOL within 180 days.
+- <span class='fa-solid fa-fire-flame-curved status-eol'></span> **End of Life:** Critical items requiring immediate replacement.
+"""))
+
+display(Markdown("## <span class='fa-solid fa-database'></span> Report Metadata"))
+now_local, now_utc = datetime.now().astimezone(), datetime.now(dt_timezone.utc)
+
+metadata_items = []
+metadata_items.append(f"<li><span class='fa-solid fa-clock'></span> <strong>Local:</strong> {now_local.strftime('%Y-%m-%d %H:%M:%S %Z')}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-earth-americas'></span> <strong>UTC:</strong> {now_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}</li>")
+
+if git_commit:
+    metadata_items.append(f"<li><span class='fa-brands fa-git-alt'></span> <strong>Workspace Git Commit:</strong> <code>{git_commit[:8]}</code></li>")
+if config_git_commit:
+    metadata_items.append(f"<li><span class='fa-solid fa-code-commit'></span> <strong>geol input check file commit:</strong> <code>{config_git_commit[:8]}</code></li>")
+
+metadata_items.append(f"<li><span class='fa-brands fa-python'></span> <strong>Python:</strong> {sys.version.split()[0]}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-bolt'></span> <strong><a href='https://docs.astral.sh/uv/' target='_blank'>UV</a>:</strong> {uv_version}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-gears'></span> <strong><a href='https://github.com/opt-nc/geol' target='_blank'>Geol</a>:</strong> {geol_version}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-box-open'></span> <strong><a href='https://pypi.org/project/packaging/' target='_blank'>Packaging</a>:</strong> {packaging_version} (used for robust SemVer and Calendar version comparison, following the <a href='https://peps.python.org/pep-0440/' target='_blank'>PEP 440</a> initiative)</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-book-open'></span> <strong><a href='https://quarto.org/' target='_blank'>Quarto</a>:</strong> {quarto_version}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-file-code'></span> <strong>geol input check file:</strong> <code>{config_file}</code> (SHA-256: <code>{config_sha256[:12]}...</code> | MD5: <code>{config_md5}</code>)</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-link'></span> <strong>Data Source:</strong> <a href='https://endoflife.date/docs/api/v1' target='_blank'>endoflife.date API</a></li>")
+
+display(HTML("<ul>" + "".join(metadata_items) + "</ul>"))
+```
+
+```{python}
+#| echo: false
+#| message: false
+#| warning: false
+from IPython.display import display, HTML
+display(Markdown("## <span class='fa-solid fa-chart-pie'></span> Status Overview"))
+import plotly.express as px
+
+if not df_raw.empty:
+    df_raw['Root'] = app_name
+    df_raw['Chart_Status'] = df_raw.apply(lambda r: 'EOL' if r['status'] == 'EOL' else 'Untracked' if r['status'] == 'UNKNOWN' else 'Upcoming Risk' if r['days_num'] < 180 else 'Healthy', axis=1)
+    fig_sun = px.sunburst(df_raw, path=['Root', 'Chart_Status', 'software'], color='Chart_Status', color_discrete_map={"EOL": "#ff5555", "Healthy": "#50fa7b", "Upcoming Risk": "#ffb86c", "Untracked": "#8be9fd"})
+    fig_sun.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', margin=dict(t=0, b=0, l=0, r=0), height=450)
+    display(fig_sun)
+    
+    findings = ""
+    if eol_comp > 0: findings += f'<div class="finding-box finding-critical"><div class="finding-icon"><span class="fa-solid fa-fire-flame-curved"></span></div><div class="finding-text"><strong>Critical Risk:</strong> {eol_comp} past EOL.</div></div>'
+    if upcoming_count > 0: findings += f'<div class="finding-box finding-warning"><div class="finding-icon"><span class="fa-solid fa-triangle-exclamation"></span></div><div class="finding-text"><strong>Upcoming:</strong> {upcoming_count} reach EOL soon.</div></div>'
+    if not findings: findings = '<div class="finding-box finding-safe"><div class="finding-icon"><span class="fa-solid fa-circle-check"></span></div><div class="finding-text"><strong>Healthy:</strong> All components are supported.</div></div>'
+    display(HTML(findings))
+```
+
+```{python}
+#| echo: false
+#| output: asis
+from IPython.display import display, HTML
+display(Markdown("## <span class='fa-solid fa-list-check'></span> Stack Status"))
+
+try:
+    df = df_raw.copy()
+    df['sort_rank'] = df.apply(lambda r: 0 if r['status'] == 'EOL' else 1 if (r['status'] == 'OK' and r['days_num'] < 180) else 2 if r['status'] == 'OK' else 3, axis=1)
+    df = df.sort_values(by=['sort_rank', 'days_num'], ascending=[True, True])
+
+    def style_status(row):
+        v, d = row['status'], row['days_num']
+        if v == 'EOL': return f'<span class="fa-solid fa-circle-exclamation"></span> <span style="color:#ff5555; font-weight:bold;">{v}</span>'
+        if v == 'UNKNOWN': return f'<span class="fa-solid fa-circle-question"></span> <span style="color:#8be9fd;">{v}</span>'
+        if d < 180: return f'<span class="fa-solid fa-triangle-exclamation"></span> <span style="color:#ffb86c; font-weight:bold;">WARNING</span>'
+        return f'<span class="fa-solid fa-circle-check"></span> <span style="color:#50fa7b;">{v}</span>'
+
+    def style_version(row):
+        v = str(row['version'])
+        if row.get('is_lts') == True:
+            return f'{v} <span class="fa-solid fa-shield-halved" title="Long Term Support (LTS)"></span>'
+        return v
+
+    def style_lag(val):
+        c = "#50fa7b" if val == 'Current' else "#ffb86c" if val == 'Minor Lag' else "#ff5555" if val == 'Major Lag' else "#8be9fd"
+        ic = "fa-circle-check" if val == "Current" else "fa-circle-chevron-up"
+        return f'<span style="color:{c};"><span class="fa-solid {ic}"></span> {val}</span>'
+
+    df['Stat'] = df.apply(style_status, axis=1)
+    df['Ver'] = df.apply(style_version, axis=1)
+    df['Lag'] = df['lag'].apply(style_lag)
+    
+    html = '<table id="stack-table" class="display table nowrap" style="width:100%"><thead><tr class="thead-dark"><th>Software</th><th>Version</th><th>Status</th><th>Lag</th><th>EOL Date</th><th>Latest</th></tr></thead><tbody>'
+    for _, r in df.iterrows():
+        html += f'<tr><td>{r["soft_html"]}</td><td>{r["Ver"]}</td><td>{r["Stat"]}</td><td>{r["Lag"]}</td><td>{r["eol_date"]}</td><td>{r["latest_version"]}</td></tr>'
+    html += '</tbody></table><script>$(document).ready(function() { if (!$.fn.DataTable.isDataTable("#stack-table")) { $("#stack-table").DataTable({ dom: "Bfrtip", buttons: ["copy", "csv", "excel", "print", "colvis"], pageLength: 15, responsive: true, order: [] }); } });</script>'
+    display(HTML(html))
+except Exception as e: print(f"Error: {e}")
+```
+
+```{python}
+#| echo: false
+#| message: false
+#| warning: false
+from IPython.display import display, HTML
+display(Markdown("## <span class='fa-solid fa-calendar-days'></span> Lifecycle Timeline"))
+import plotly.express as px
+lifecycle_events = []
+for prod_id in ids_to_check:
+    try:
+        res = subprocess.run(['geol', 'product', 'extended', prod_id, '--json'], capture_output=True, text=True)
+        if res.returncode == 0:
+            p_ext_data = json.loads(res.stdout)
+            if p_ext_data:
+                for rel in p_ext_data[0].get('releases', [])[:6]:
+                    s, e, c = rel.get('releaseDate'), rel.get('eolFrom'), rel.get('cycle', 'unknown')
+                    if s and e and e != "false":
+                        try:
+                            s_dt, e_dt, today = datetime.strptime(s, '%Y-%m-%d'), datetime.strptime(e, '%Y-%m-%d'), datetime.now()
+                            st = "EOL" if e_dt < today else "Active" if s_dt <= today <= e_dt else "Upcoming"
+                            lifecycle_events.append({"Product": p_ext_data[0]['name'], "Cycle": str(c), "Start": s, "End": e, "Status": st, "Label": f"{p_ext_data[0]['name']} {c}"})
+                        except: continue
+    except: pass
+if lifecycle_events:
+    df_lc = pd.DataFrame(lifecycle_events)
+    fig = px.timeline(df_lc, x_start="Start", x_end="End", y="Product", color="Status", hover_name="Label", text="Cycle", color_discrete_map={"EOL": "#ff5555", "Active": "#50fa7b", "Upcoming": "#8be9fd"}, category_orders={"Status": ["Active", "Upcoming", "EOL"]})
+    fig.update_yaxes(autorange="reversed")
+    fig.update_layout(template="plotly_dark", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', height=400 + (len(df_lc['Product'].unique()) * 30), xaxis_title="")
+    fig.add_vline(x=datetime.now().timestamp() * 1000, line_dash="dash", line_color="white")
+    display(fig)
+```
+
+```{python}
+#| echo: false
+#| output: asis
+from IPython.display import display, HTML
+display(Markdown("## <span class='fa-solid fa-code'></span> Configuration Source"))
+print(f"""
+<details>
+    <summary style="cursor: pointer; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; margin-bottom: 10px;">
+        <span class="fa-solid fa-file-invoice"></span> Click to view the <code>geol</code> input configuration
+    </summary>
+    <p style="margin-top: 10px;">Built using <code>geol check</code>. (see <a href="https://opt-nc.github.io/geol/docs/tutorial-basics/check-command" target="_blank">tutorial</a> for more)</p>
+""")
+print(f"```yaml\n{config_raw}\n```")
+print("</details>")
+
+display(Markdown("## <span class='fa-solid fa-handshake-angle'></span> License & Contribution"))
+
+# Duration calculation
+generation_duration = round(time.time() - start_time, 2)
+generation_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S %Z')
+
+display(HTML(f"""
+<div style="font-size: 1rem; margin-bottom: 30px;">
+    <p><span class="fa-solid fa-code-fork"></span> <strong>Open Source & Customizable</strong></p>
+    <p>This reporting notebook is open-source and part of the <a href="https://github.com/opt-nc/geol" target="_blank">geol project</a> ecosystem. You are encouraged to fork this repository and customize it to meet your specific auditing needs, and share your contributions back with the community.</p>
+    <p><span class="fa-solid fa-scale-balanced"></span> <strong>Disclaimer & License</strong></p>
+    <p>This tool is provided "as is", without warranty of any kind, under the <a href="https://github.com/opt-nc/geol/blob/main/LICENSE" target="_blank">geol license</a>. It is designed to assist decision-making through KPIs, but the authors are not accountable for governance choices or technical implementations made based on this report.</p>
+    <p><span class="fa-solid fa-gears"></span> <strong>Build Information</strong></p>
+    <p>Generated with <a href="https://github.com/opt-nc/geol" target="_blank">geol</a> and <a href="https://quarto.org/" target="_blank">Quarto</a> on <strong>{generation_date}</strong> in <strong>{generation_duration} seconds</strong>.</p>
+    <p><em>End-of-Life data provided by the <a href="https://endoflife.date/" target="_blank">endoflife.date</a> API.</em></p>
+</div>
+"""))
+```
