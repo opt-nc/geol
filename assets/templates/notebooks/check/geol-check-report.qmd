@@ -7,7 +7,7 @@ keywords: [EOL, Security, Compliance, DevOps]
 params:
   config_file: ".geol.yaml"
   additional_context: ""
-format: 
+format:
   html:
     theme:
       dark: darkly
@@ -22,6 +22,7 @@ format:
     embed-resources: true
     include-in-header:
       text: |
+        <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48dGV4dCB5PSIuOWVtIiBmb250LXNpemU9IjkwIj7ij7M8L3RleHQ+PC9zdmc+">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
         <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
         <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
@@ -281,6 +282,14 @@ for product_id, product_data in product_extended_cache.items():
     if lts_cycles:
         lts_map[product_id] = lts_cycles
 
+# Determine latest LTS cycle per product
+latest_lts_map = {}
+for product_id, cycles in lts_map.items():
+    try:
+        latest_lts_map[product_id] = max(cycles, key=lambda c: parse_v(c))
+    except Exception:
+        latest_lts_map[product_id] = cycles[0] if cycles else None
+
 
 def enrich_row(row):
     software_name = str(row['software']).strip().lower()
@@ -289,10 +298,14 @@ def enrich_row(row):
 
     # LTS detection
     row['is_lts'] = False
+    row['is_latest_lts'] = False
     if product_id in lts_map:
         cycles = lts_map[product_id]
         if version_str in cycles or any(version_str.startswith(c + '.') for c in cycles):
             row['is_lts'] = True
+            latest_cycle = latest_lts_map.get(product_id)
+            if latest_cycle and (version_str == latest_cycle or version_str.startswith(latest_cycle + '.')):
+                row['is_latest_lts'] = True
 
     # Version lag analysis
     latest_str = str(row['latest_version']).strip()
@@ -336,6 +349,7 @@ if skipped_products:
         'is_latest': False,
         'lag': 'Untracked',
         'is_lts': False,
+        'is_latest_lts': False,
         'soft_html': html.escape(item.get('name', 'Unknown')),
     } for item in skipped_products]
     df_raw = pd.concat([df_raw, pd.DataFrame(skipped_rows)], ignore_index=True)
@@ -350,6 +364,42 @@ upcoming_risks = df_raw[
 upcoming_count = len(upcoming_risks)
 ok_comp = len(df_raw[df_raw['status'] == 'OK']) - upcoming_count
 untracked_comp = len(df_raw[df_raw['status'] == 'UNKNOWN'])
+
+# Compute per-component health scores
+def compute_health_score(row):
+    if row['status'] == 'UNKNOWN':
+        return None
+    if row['status'] == 'EOL':
+        return 0
+
+    is_lts = row.get('is_lts', False)
+    is_latest_lts = row.get('is_latest_lts', False)
+    is_upcoming = row['days_num'] > 0 and row['days_num'] < RISK_THRESHOLD_DAYS
+    lag = row['lag']
+
+    if is_upcoming:
+        if is_lts and is_latest_lts:
+            return 45
+        elif is_lts:
+            return 35
+        return 30
+
+    if lag == 'Current':
+        return 100
+    elif lag == 'Minor Lag':
+        return 80
+    elif lag == 'Major Lag':
+        if is_lts and is_latest_lts:
+            return 95
+        elif is_lts:
+            return 75
+        return 60
+
+    return 80
+
+df_raw['health_score'] = df_raw.apply(compute_health_score, axis=1)
+scored_components = df_raw[df_raw['health_score'].notna()]
+stack_health_score = round(scored_components['health_score'].mean(), 1) if not scored_components.empty else 0
 ```
 
 ```{python}
@@ -375,7 +425,7 @@ if additional_context and str(additional_context).strip():
 
 display(HTML(f"""
 <div style="display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
-    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="fa-solid fa-layer-group metric-icon"></span><span class="metric-label">Total Stack</span><span class="metric-value">{total_comp}</span></div>
+    <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="fa-solid fa-layer-group metric-icon"></span><span class="metric-label">Stack Size</span><span class="metric-value">{total_comp}</span></div>
     <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="fa-solid fa-circle-check metric-icon status-ok"></span><span class="metric-label">Healthy</span><span class="metric-value status-ok">{ok_comp}</span></div>
     <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="fa-solid fa-triangle-exclamation metric-icon status-warning"></span><span class="metric-label">Upcoming Risks</span><span class="metric-value status-warning">{upcoming_count}</span></div>
     <div class="metric-card" style="flex: 1; min-width: 150px;"><span class="fa-solid fa-fire-flame-curved metric-icon status-eol"></span><span class="metric-label">End of Life</span><span class="metric-value status-eol">{eol_comp}</span></div>
@@ -383,34 +433,224 @@ display(HTML(f"""
 """))
 
 display(Markdown(f"""
-- <span class='fa-solid fa-layer-group'></span> **Total Stack:** Complete inventory of software components.
+- <span class='fa-solid fa-layer-group'></span> **Stack Size:** Complete inventory of software components.
 - <span class='fa-solid fa-circle-check status-ok'></span> **Healthy:** Supported components with a safe timeframe.
 - <span class='fa-solid fa-triangle-exclamation status-warning'></span> **Upcoming Risks:** Reaching EOL within {RISK_THRESHOLD_DAYS} days.
 - <span class='fa-solid fa-fire-flame-curved status-eol'></span> **End of Life:** Critical items requiring immediate replacement.
 """))
+```
 
-display(Markdown("## <span class='fa-solid fa-database'></span> Report Metadata"))
-now_local = datetime.now().astimezone()
-now_utc = datetime.now(dt_timezone.utc)
+```{python}
+#| echo: false
+#| output: asis
+# --- Stack Health Score ---
 
-metadata_items = []
-metadata_items.append(f"<li><span class='fa-solid fa-clock'></span> <strong>Local:</strong> {now_local.strftime('%Y-%m-%d %H:%M:%S %Z')}</li>")
-metadata_items.append(f"<li><span class='fa-solid fa-earth-americas'></span> <strong>UTC:</strong> {now_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}</li>")
+display(Markdown("## <span class='fa-solid fa-heart-pulse'></span> Stack Health Score"))
 
-if git_commit:
-    metadata_items.append(f"<li><span class='fa-brands fa-git-alt'></span> <strong>Workspace Git Commit:</strong> <code>{git_commit[:8]}</code></li>")
-if config_git_commit:
-    metadata_items.append(f"<li><span class='fa-solid fa-code-commit'></span> <strong>geol input check file commit:</strong> <code>{config_git_commit[:8]}</code></li>")
+# Score color
+if stack_health_score >= 80:
+    score_color = COLORS["healthy"]
+    score_label = "Healthy"
+elif stack_health_score >= 50:
+    score_color = COLORS["warning"]
+    score_label = "Needs Attention"
+else:
+    score_color = COLORS["critical"]
+    score_label = "Critical"
 
-metadata_items.append(f"<li><span class='fa-brands fa-python'></span> <strong>Python:</strong> {sys.version.split()[0]}</li>")
-metadata_items.append(f"<li><span class='fa-solid fa-bolt'></span> <strong><a href='https://docs.astral.sh/uv/' target='_blank'>UV</a>:</strong> {uv_version}</li>")
-metadata_items.append(f"<li><span class='fa-solid fa-gears'></span> <strong><a href='https://github.com/opt-nc/geol' target='_blank'>Geol</a>:</strong> {geol_version}</li>")
-metadata_items.append(f"<li><span class='fa-solid fa-box-open'></span> <strong><a href='https://pypi.org/project/packaging/' target='_blank'>Packaging</a>:</strong> {packaging_version} (used for robust SemVer and Calendar version comparison, following the <a href='https://peps.python.org/pep-0440/' target='_blank'>PEP 440</a> initiative)</li>")
-metadata_items.append(f"<li><span class='fa-solid fa-book-open'></span> <strong><a href='https://quarto.org/' target='_blank'>Quarto</a>:</strong> {quarto_version}</li>")
-metadata_items.append(f"<li><span class='fa-solid fa-file-code'></span> <strong>geol input check file:</strong> <code>{config_file}</code> (SHA-256: <code>{config_sha256[:12]}...</code>)</li>")
-metadata_items.append(f"<li><span class='fa-solid fa-link'></span> <strong>Data Source:</strong> <a href='https://endoflife.date/docs/api/v1' target='_blank'>endoflife.date API</a></li>")
+import plotly.graph_objects as go
+fig_gauge = go.Figure(go.Indicator(
+    mode="gauge+number",
+    value=stack_health_score,
+    number={"suffix": " / 100", "font": {"size": 40, "color": score_color}},
+    gauge={
+        "axis": {"range": [0, 100], "tickwidth": 2, "tickcolor": "#666"},
+        "bar": {"color": score_color, "thickness": 0.3},
+        "bgcolor": "rgba(0,0,0,0)",
+        "borderwidth": 0,
+        "steps": [
+            {"range": [0, 50], "color": "rgba(255, 85, 85, 0.15)"},
+            {"range": [50, 80], "color": "rgba(255, 184, 108, 0.15)"},
+            {"range": [80, 100], "color": "rgba(80, 250, 123, 0.15)"},
+        ],
+        "threshold": {
+            "line": {"color": "white", "width": 3},
+            "thickness": 0.8,
+            "value": stack_health_score,
+        },
+    },
+))
+fig_gauge.update_layout(
+    template="plotly_dark",
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+    height=280,
+    margin=dict(t=30, b=10, l=40, r=40),
+)
+display(fig_gauge)
 
-display(HTML("<ul>" + "".join(metadata_items) + "</ul>"))
+display(Markdown(f"""
+The **Stack Health Score** is the average of individual component scores (0–100).
+It allows comparing stacks against each other on the same scale: **the higher the better**.
+"""))
+
+display(HTML(f"""
+<ul style="list-style: none; padding-left: 0; margin: 10px 0;">
+    <li>🟢 <strong>80–100</strong> — Stack is in great shape</li>
+    <li>🟠 <strong>50–79</strong> — Some components need attention</li>
+    <li>🔴 <strong>0–49</strong> — Significant risk exposure</li>
+</ul>
+<p>Untracked/skipped components are excluded from the calculation ({untracked_comp} excluded here).</p>
+"""))
+
+# Scoring methodology (collapsed by default)
+print(f"""
+<details style="margin: 15px 0;">
+    <summary style="cursor: pointer; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px;">
+        <span class="fa-solid fa-book-open"></span> <strong>Scoring Methodology</strong> — click to expand
+    </summary>
+    <div style="margin-top: 10px;">
+<table class="table" style="max-width: 700px;">
+<thead><tr class="thead-dark"><th style="text-align:left;">Status</th><th style="text-align:center;">LTS?</th><th style="text-align:center;">Latest LTS?</th><th style="text-align:right;">Score</th><th style="text-align:left;">Example</th></tr></thead>
+<tbody>
+<tr><td style="text-align:left;">✅ Healthy + Current</td><td style="text-align:center;">—</td><td style="text-align:center;">—</td><td style="text-align:right;"><strong>100</strong></td><td style="text-align:left;">On the latest release</td></tr>
+<tr><td style="text-align:left;">✅ Healthy + Major Lag</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅ Latest</td><td style="text-align:right;"><strong>95</strong></td><td style="text-align:left;">Java 21 LTS when 24 exists</td></tr>
+<tr><td style="text-align:left;">✅ Healthy + Minor Lag</td><td style="text-align:center;">—</td><td style="text-align:center;">—</td><td style="text-align:right;"><strong>80</strong></td><td style="text-align:left;">Patch/minor update available</td></tr>
+<tr><td style="text-align:left;">✅ Healthy + Major Lag</td><td style="text-align:center;">✅</td><td style="text-align:center;">❌ Older</td><td style="text-align:right;"><strong>75</strong></td><td style="text-align:left;">Java 17 LTS when 21 LTS exists</td></tr>
+<tr><td style="text-align:left;">✅ Healthy + Major Lag</td><td style="text-align:center;">❌</td><td style="text-align:center;">—</td><td style="text-align:right;"><strong>60</strong></td><td style="text-align:left;">Behind with no LTS safety net</td></tr>
+<tr><td style="text-align:left;">⚠️ Upcoming Risk</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅ Latest</td><td style="text-align:right;"><strong>45</strong></td><td style="text-align:left;">Latest LTS nearing EOL</td></tr>
+<tr><td style="text-align:left;">⚠️ Upcoming Risk</td><td style="text-align:center;">✅</td><td style="text-align:center;">❌ Older</td><td style="text-align:right;"><strong>35</strong></td><td style="text-align:left;">Old LTS expiring</td></tr>
+<tr><td style="text-align:left;">⚠️ Upcoming Risk</td><td style="text-align:center;">❌</td><td style="text-align:center;">—</td><td style="text-align:right;"><strong>30</strong></td><td style="text-align:left;">Non-LTS expiring soon</td></tr>
+<tr><td style="text-align:left;">🔴 End of Life</td><td style="text-align:center;">—</td><td style="text-align:center;">—</td><td style="text-align:right;"><strong>0</strong></td><td style="text-align:left;">Unsupported</td></tr>
+<tr><td style="text-align:left;">❓ Untracked</td><td style="text-align:center;">—</td><td style="text-align:center;">—</td><td style="text-align:right;"><em>excluded</em></td><td style="text-align:left;">Not enough data</td></tr>
+</tbody>
+</table>
+    </div>
+</details>
+""")
+
+# Per-component detail table
+display(Markdown("### Score Breakdown"))
+
+score_rows = ""
+for _, row in df_raw.iterrows():
+    score_val = row['health_score']
+    if score_val is None or pd.isna(score_val):
+        score_display = f'<span style="color:{COLORS["info"]};">excluded</span>'
+    elif score_val >= 80:
+        score_display = f'<span style="color:{COLORS["healthy"]}; font-weight:bold;">{int(score_val)}</span>'
+    elif score_val >= 50:
+        score_display = f'<span style="color:{COLORS["warning"]}; font-weight:bold;">{int(score_val)}</span>'
+    else:
+        score_display = f'<span style="color:{COLORS["critical"]}; font-weight:bold;">{int(score_val)}</span>'
+
+    lts_badge = ""
+    if row.get('is_latest_lts'):
+        lts_badge = '<span class="fa-solid fa-shield-halved" title="Latest LTS" style="color:#50fa7b;"></span> Latest'
+    elif row.get('is_lts'):
+        lts_badge = '<span class="fa-solid fa-shield-halved" title="Older LTS" style="color:#8be9fd;"></span> Older'
+    else:
+        lts_badge = "—"
+
+    # Mini-bar for visual scanning
+    if score_val is None or pd.isna(score_val):
+        bar_html = ''
+    else:
+        sv = int(score_val)
+        bar_color = COLORS["healthy"] if sv >= 80 else COLORS["warning"] if sv >= 50 else COLORS["critical"]
+        bar_html = (f'<div style="display:inline-block; width:60px; height:8px; background:rgba(255,255,255,0.1); '
+                    f'border-radius:4px; vertical-align:middle; margin-left:6px;">'
+                    f'<div style="width:{sv}%; height:100%; background:{bar_color}; border-radius:4px;"></div></div>')
+
+    score_rows += f'<tr><td>{html.escape(row["software"])}</td><td>{html.escape(str(row["version"]))}</td><td>{row["status"]}</td><td>{row["lag"]}</td><td>{lts_badge}</td><td>{score_display} {bar_html}</td></tr>'
+
+scored_count = len(scored_components)
+display(HTML(f"""
+<table class="table display nowrap" style="width:100%">
+<thead><tr class="thead-dark"><th>Software</th><th>Version</th><th>Status</th><th>Lag</th><th>LTS</th><th>Score</th></tr></thead>
+<tbody>{score_rows}</tbody>
+<tfoot><tr style="font-weight:bold; border-top: 2px solid {score_color};"><td colspan="5" style="text-align:right;">Average ({scored_count} components)</td><td style="color:{score_color}; font-size:1.2rem;">{stack_health_score}</td></tr></tfoot>
+</table>
+"""))
+```
+
+```{python}
+#| echo: false
+#| output: asis
+# --- Recommended Actions ---
+
+# Build prioritized action list from enriched data
+actions = []
+
+for _, row in df_raw.iterrows():
+    sw = row['software']
+    ver = str(row['version']).strip()
+    latest = str(row.get('latest_version', '')).strip()
+    status = row['status']
+    lag = row.get('lag', '')
+    score = row.get('health_score')
+    eol_date = str(row.get('eol_date', '')).strip()
+    is_lts = row.get('is_lts', False)
+    is_latest_lts = row.get('is_latest_lts', False)
+
+    if status == 'UNKNOWN':
+        continue
+
+    if status == 'EOL':
+        since = f" (EOL since {eol_date})" if eol_date and eol_date != '-' else ""
+        target = f" → {latest}" if latest and latest != '-' else ""
+        actions.append((0, score or 0, f'<span class="fa-solid fa-circle-exclamation" style="color:{COLORS["critical"]};"></span> '
+            f'<strong>Upgrade {html.escape(sw)}</strong> from <code>{html.escape(ver)}</code>{target}{since} — <em>unsupported, critical risk</em>'))
+
+    elif row['days_num'] > 0 and row['days_num'] < RISK_THRESHOLD_DAYS:
+        days_left = int(row['days_num'])
+        target = f" → {latest}" if latest and latest != '-' and latest != ver else ""
+        actions.append((1, score or 0, f'<span class="fa-solid fa-triangle-exclamation" style="color:{COLORS["warning"]};"></span> '
+            f'<strong>Plan migration for {html.escape(sw)}</strong> <code>{html.escape(ver)}</code>{target} — <em>EOL in {days_left} days</em>'))
+
+    elif lag == 'Major Lag' and not is_lts:
+        target = f" → {latest}" if latest and latest != '-' else ""
+        actions.append((2, score or 0, f'<span class="fa-solid fa-arrow-up" style="color:{COLORS["warning"]};"></span> '
+            f'<strong>Upgrade {html.escape(sw)}</strong> from <code>{html.escape(ver)}</code>{target} — <em>major version behind, no LTS</em>'))
+
+    elif lag == 'Major Lag' and is_lts and not is_latest_lts:
+        target = f" → {latest}" if latest and latest != '-' else ""
+        actions.append((3, score or 0, f'<span class="fa-solid fa-shield-halved" style="color:{COLORS["info"]};"></span> '
+            f'<strong>Consider upgrading {html.escape(sw)}</strong> from <code>{html.escape(ver)}</code>{target} — <em>older LTS, newer LTS available</em>'))
+
+    elif lag == 'Minor Lag':
+        target = f" → {latest}" if latest and latest != '-' else ""
+        actions.append((4, score or 0, f'<span class="fa-solid fa-wrench" style="color:{COLORS["healthy"]};"></span> '
+            f'<strong>Update {html.escape(sw)}</strong> from <code>{html.escape(ver)}</code>{target} — <em>minor/patch update available</em>'))
+
+# Sort by priority (lower = more urgent), then by score (lower = more urgent)
+actions.sort(key=lambda a: (a[0], a[1]))
+
+if actions:
+    display(Markdown(f"## <span class='fa-solid fa-list-check'></span> Recommended Actions ({len(actions)})"))
+
+    # First item gets a stronger visual treatment as the worst offender
+    first_item = f'<li style="font-size: 1.1rem; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">{actions[0][2]}</li>'
+    rest_items = "".join(f"<li>{a[2]}</li>" for a in actions[1:])
+
+    display(HTML(f"""
+<div style="margin: 10px 0; padding: 15px 20px; border-left: 4px solid {COLORS['warning']}; background: rgba(255,184,108,0.07); border-radius: 0 6px 6px 0;">
+    <p style="margin: 0 0 10px 0; font-weight: bold;">
+        <span class="fa-solid fa-bolt" style="color:{COLORS['warning']};"></span>
+        {len(actions)} action{"s" if len(actions) != 1 else ""} identified — sorted by priority
+    </p>
+    <ol style="margin: 0; padding-left: 20px; line-height: 2;">
+        {first_item}{rest_items}
+    </ol>
+</div>
+"""))
+else:
+    display(Markdown("## <span class='fa-solid fa-list-check'></span> Recommended Actions"))
+    display(HTML(f"""
+<div style="margin: 10px 0; padding: 15px 20px; border-left: 4px solid {COLORS['healthy']}; background: rgba(80,250,123,0.07); border-radius: 0 6px 6px 0;">
+    <p style="margin: 0;"><span class="fa-solid fa-circle-check" style="color:{COLORS['healthy']};"></span> <strong>No actions needed</strong> — all components are up to date!</p>
+</div>
+"""))
 ```
 
 ```{python}
@@ -419,7 +659,7 @@ display(HTML("<ul>" + "".join(metadata_items) + "</ul>"))
 #| warning: false
 # --- Status Overview (Sunburst Chart) ---
 
-display(Markdown("## <span class='fa-solid fa-chart-pie'></span> Status Overview"))
+display(Markdown(f"## <span class='fa-solid fa-chart-pie'></span> Status Overview ({total_comp})"))
 
 if not df_raw.empty:
     df_raw['Root'] = app_name
@@ -460,7 +700,7 @@ if not df_raw.empty:
 #| output: asis
 # --- Stack Status (DataTable) ---
 
-display(Markdown("## <span class='fa-solid fa-list-check'></span> Stack Status"))
+display(Markdown(f"## <span class='fa-solid fa-list-check'></span> Stack Status ({total_comp})"))
 
 try:
     df = df_raw.copy()
@@ -507,7 +747,15 @@ try:
 
     table_html = '<table id="stack-table" class="display table nowrap" style="width:100%"><thead><tr class="thead-dark"><th>Software</th><th>Version</th><th>Status</th><th>Lag</th><th>EOL Date</th><th>Latest</th></tr></thead><tbody>'
     for _, row in df.iterrows():
-        table_html += f'<tr><td>{row["soft_html"]}</td><td>{row["Ver"]}</td><td>{row["Stat"]}</td><td>{row["Lag"]}</td><td>{row["eol_date"]}</td><td>{row["latest_version"]}</td></tr>'
+        if row['status'] == 'EOL':
+            row_bg = f'background-color: rgba(255, 85, 85, 0.1);'
+        elif row['status'] == 'OK' and row['days_num'] < RISK_THRESHOLD_DAYS:
+            row_bg = f'background-color: rgba(255, 184, 108, 0.1);'
+        elif row['status'] == 'UNKNOWN':
+            row_bg = f'background-color: rgba(139, 233, 253, 0.05);'
+        else:
+            row_bg = ''
+        table_html += f'<tr style="{row_bg}"><td>{row["soft_html"]}</td><td>{row["Ver"]}</td><td>{row["Stat"]}</td><td>{row["Lag"]}</td><td>{row["eol_date"]}</td><td>{row["latest_version"]}</td></tr>'
     table_html += '</tbody></table>'
     table_html += '<script>$(document).ready(function() { if (!$.fn.DataTable.isDataTable("#stack-table")) { $("#stack-table").DataTable({ dom: "Bfrtip", buttons: ["copy", "csv", "excel", "print", "colvis"], pageLength: 15, responsive: true, order: [] }); } });</script>'
     display(HTML(table_html))
@@ -577,6 +825,14 @@ if lifecycle_events:
         xaxis_title="",
     )
     fig.add_vline(x=datetime.now().timestamp() * 1000, line_dash="dash", line_color="white")
+    fig.add_annotation(
+        x=datetime.now().timestamp() * 1000,
+        y=1.06, yref="paper",
+        text="Today", showarrow=False,
+        font=dict(color="white", size=11, family="Arial"),
+        bgcolor="rgba(255,255,255,0.15)",
+        borderpad=3, bordercolor="rgba(255,255,255,0.3)", borderwidth=1,
+    )
     display(fig)
 ```
 
@@ -584,6 +840,29 @@ if lifecycle_events:
 #| echo: false
 #| output: asis
 # --- Configuration Source & Footer ---
+
+display(Markdown("## <span class='fa-solid fa-database'></span> Report Metadata"))
+now_local = datetime.now().astimezone()
+now_utc = datetime.now(dt_timezone.utc)
+
+metadata_items = []
+metadata_items.append(f"<li><span class='fa-solid fa-clock'></span> <strong>Local:</strong> {now_local.strftime('%Y-%m-%d %H:%M:%S %Z')}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-earth-americas'></span> <strong>UTC:</strong> {now_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}</li>")
+
+if git_commit:
+    metadata_items.append(f"<li><span class='fa-brands fa-git-alt'></span> <strong>Workspace Git Commit:</strong> <code>{git_commit[:8]}</code></li>")
+if config_git_commit:
+    metadata_items.append(f"<li><span class='fa-solid fa-code-commit'></span> <strong>geol input check file commit:</strong> <code>{config_git_commit[:8]}</code></li>")
+
+metadata_items.append(f"<li><span class='fa-brands fa-python'></span> <strong>Python:</strong> {sys.version.split()[0]}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-bolt'></span> <strong><a href='https://docs.astral.sh/uv/' target='_blank'>UV</a>:</strong> {uv_version}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-gears'></span> <strong><a href='https://github.com/opt-nc/geol' target='_blank'>Geol</a>:</strong> {geol_version}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-box-open'></span> <strong><a href='https://pypi.org/project/packaging/' target='_blank'>Packaging</a>:</strong> {packaging_version} (used for robust SemVer and Calendar version comparison, following the <a href='https://peps.python.org/pep-0440/' target='_blank'>PEP 440</a> initiative)</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-book-open'></span> <strong><a href='https://quarto.org/' target='_blank'>Quarto</a>:</strong> {quarto_version}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-file-code'></span> <strong>geol input check file:</strong> <code>{config_file}</code> (SHA-256: <code>{config_sha256[:12]}...</code>)</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-link'></span> <strong>Data Source:</strong> <a href='https://endoflife.date/docs/api/v1' target='_blank'>endoflife.date API</a></li>")
+
+display(HTML("<ul>" + "".join(metadata_items) + "</ul>"))
 
 display(Markdown("## <span class='fa-solid fa-code'></span> Configuration Source"))
 print(f"""
