@@ -50,3 +50,5 @@ manpages/
 *.duckdb
 *.sqlite
 geol-build/
+
+.task/

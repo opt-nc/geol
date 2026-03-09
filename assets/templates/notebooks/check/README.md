@@ -18,9 +18,11 @@ An automated, professional End-of-Life (EoL) reporting dashboard for your techno
 Ensure you have the following tools installed:
 
 - **uv**: `brew install uv`
-- **Quarto**: `brew install --cask quarto`
+- **Quarto**: `brew install --cask quarto` (MacOs only, see [Quarto installation](https://quarto.org/docs/get-started/) for other platforms)
 - **geol**: `brew install curl && brew install --cask opt-nc/homebrew-tap/geol`
 - **Taskfile**: `brew install go-task` (optional, for automation)
+
+Python dependencies are managed via `requirements.txt` and will be installed in a virtual environment automatically when building.
 
 ## 📖 Usage
 
@@ -30,6 +32,18 @@ To build the report using the default `.geol.yaml`:
 task build
 ```
 
+This command will:
+1. Verify that all required tools are installed
+2. Create a virtual environment (`.venv`) if it doesn't exist
+3. Install Python dependencies from `requirements.txt`
+4. Render the Quarto report to HTML
+
+### Manual Dependency Installation
+If you prefer to install Python dependencies separately:
+```bash
+task install-deps
+```
+
 ### Advanced Usage
 Run the report for a custom configuration or add extra context:
 ```bash
@@ -37,9 +51,14 @@ task build GEOL_CONFIG="my-app.yaml" ADDITIONAL_CONTEXT="Internal audit for Q1 2
 ```
 
 ### Cleanup
-Remove all generated artifacts:
+Remove generated artifacts:
 ```bash
 task clean
+```
+
+Remove everything including the virtual environment:
+```bash
+task clean-all
 ```
 
 ## 📄 Output
