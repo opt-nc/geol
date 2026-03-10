@@ -486,10 +486,10 @@ func createDetailsTable(db *sql.DB) error {
 func createProductsTable(db *sql.DB, allData *productDataMap) error {
 	// Create 'products' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS products (
-			id TEXT PRIMARY KEY,
-			label TEXT,
-			category_id TEXT,
-			uri TEXT,
+			id TEXT PRIMARY KEY NOT NULL,
+			label TEXT NOT NULL,
+			category_id TEXT NOT NULL,
+			uri TEXT NOT NULL,
 			FOREIGN KEY (category_id) REFERENCES categories(id)
 		)`)
 	if err != nil {

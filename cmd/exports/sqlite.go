@@ -135,10 +135,10 @@ func exportDuckDBToSQLite(db *sql.DB, sqlitePath string) error {
 			generated_at_tz TEXT NOT NULL
 		)`,
 		`CREATE TABLE sqlite_db.products(
-			id TEXT PRIMARY KEY,
-			label TEXT,
-			category_id TEXT,
-			uri TEXT
+			id TEXT PRIMARY KEY NOT NULL,
+			label TEXT NOT NULL,
+			category_id TEXT NOT NULL,
+			uri TEXT NOT NULL
 		)`,
 		`CREATE TABLE sqlite_db.aliases(
 			id TEXT,
@@ -253,10 +253,10 @@ func addSQLiteForeignKeys(sqlitePath string) error {
 			statements: []string{
 				"ALTER TABLE products RENAME TO products_old",
 				`CREATE TABLE products(
-					id TEXT PRIMARY KEY,
-					label TEXT,
-					category_id TEXT,
-					uri TEXT,
+					id TEXT PRIMARY KEY NOT NULL,
+					label TEXT NOT NULL,
+					category_id TEXT NOT NULL,
+					uri TEXT NOT NULL,
 					FOREIGN KEY (category_id) REFERENCES categories(id)
 				)`,
 				"INSERT INTO products SELECT * FROM products_old",
