@@ -118,7 +118,7 @@ func exportDuckDBToSQLite(db *sql.DB, sqlitePath string) error {
 	tableCreations := []string{
 		`CREATE TABLE sqlite_db.categories(
 			id TEXT PRIMARY KEY,
-			uri TEXT
+			uri TEXT NOT NULL
 		)`,
 		`CREATE TABLE sqlite_db.tags(
 			id TEXT PRIMARY KEY,

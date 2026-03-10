@@ -887,7 +887,7 @@ func createCategoriesTable(db *sql.DB, allCategories map[string]utilities.Catego
 	// Create 'categories' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS categories (
 			id TEXT PRIMARY KEY,
-			uri TEXT
+			uri TEXT NOT NULL
 		)`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'categories' table")
