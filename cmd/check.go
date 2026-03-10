@@ -377,7 +377,7 @@ var checkCmd = &cobra.Command{
 	Aliases: []string{"chk"},
 	Short:   "Analyzes a stack from a YAML file, checks each component’s EOL status.",
 	Long: `The 'check' command analyzes each software component listed in your stack YAML file (default: .geol.yaml), retrieves End-of-Life (EOL) information, and displays the EOL status report. Great to identify outdated software in a given stack.
-Try using 'geol check init' to generate a sample stack YAML file.`,
+Try using 'geol check init' to generate a sample stack YAML file. See https://opt-nc.github.io/geol/docs/tutorial-basics/check-command for more`,
 	Example: `geol check
 geol check --file stack.yaml
 geol check --json`,
