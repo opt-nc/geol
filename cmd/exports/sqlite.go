@@ -122,8 +122,8 @@ func exportDuckDBToSQLite(db *sql.DB, sqlitePath string) error {
 		)`,
 		`CREATE TABLE sqlite_db.tags(
 			id TEXT PRIMARY KEY,
-			uri TEXT UNIQUE,
-			www TEXT
+			uri TEXT UNIQUE NOT NULL,
+			www TEXT NOT NULL
 		)`,
 		`CREATE TABLE sqlite_db.about(
 			git_version TEXT NOT NULL,
