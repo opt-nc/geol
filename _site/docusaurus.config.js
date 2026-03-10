@@ -65,11 +65,12 @@ const config = {
         {name: 'og:site_name', content: 'geol'},
         {name: 'og:type', content: 'website'},
         {name: 'twitter:card', content: 'summary_large_image'},
+        {name: 'og:description', content: 'geol — manage software end-of-life and track supported versions.'},
       ],
       image: 'img/geol.png',
       colorMode: { respectPrefersColorScheme: true },
       navbar: {
-        title: 'geol',
+        title: 'geol - Efficiently show and monitor end-of-life dates for a number of products in your terminal and CI using endoflife.date API ',
         logo: { alt: 'geol Logo', src: 'img/logo-no-name-gradient.png' },
         items: [
           { to: '/search', label: 'Search', position: 'right' },
