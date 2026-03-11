@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	charm.land/bubbles/v2 v2.0.0
 	charm.land/bubbletea/v2 v2.0.2
-	charm.land/lipgloss/v2 v2.0.1
+	charm.land/lipgloss/v2 v2.0.2
 	cuelang.org/go v0.16.0
 	github.com/charmbracelet/fang v1.0.0
 	github.com/charmbracelet/glamour/v2 v2.0.0-20251106195642-800eb8175930
