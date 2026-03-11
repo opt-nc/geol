@@ -131,17 +131,17 @@ jobs:
         run: mkdir -p ./geol-build/linux ./geol-build/darwin ./geol-build/windows
 
       - name: Download Linux artifacts
-        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: geol-linux-artifacts
           path: ./geol-build/linux
       - name: Download macOS artifacts
-        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: geol-darwin-artifacts
           path: ./geol-build/darwin
       - name: Download Windows artifacts
-        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: geol-windows-artifacts
           path: ./geol-build/windows
