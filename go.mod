@@ -15,7 +15,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.34
 	github.com/phuslu/log v1.0.122
 	github.com/spf13/cobra v1.10.2
-	golang.org/x/term v0.40.0
+	golang.org/x/term v0.41.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
