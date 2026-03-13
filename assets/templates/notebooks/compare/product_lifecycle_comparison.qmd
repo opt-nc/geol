@@ -1,0 +1,465 @@
+---
+title: "Advanced Product Lifecycle Comparison"
+subtitle: "Comparing {{< meta params.product1 >}} vs {{< meta params.product2 >}}"
+date: today
+date-format: "MMMM D, YYYY"
+format:
+  html:
+    theme: darkly
+    toc: true
+    code-fold: true
+    code-summary: "Show the code"
+    self-contained: true
+execute:
+  echo: false
+  warning: false
+  freeze: auto
+params:
+  product1: "postgresql"
+  product2: "mariadb"
+  db_path: "geol.duckdb"
+---
+
+## Introduction
+
+This notebook provides an advanced comparison of the lifecycles of two products documented on the [endoflife.date](https://endoflife.date) site. The data used for this analysis is stored in a DuckDB database generated using the [geol](https://github.com/opt-nc/geol) tool. Beyond simple timelines, we analyze support trends, release cadences, and version overlaps to provide deeper insights into product stability and maintenance patterns.
+
+```{python}
+#| tags: [parameters]
+# These are the default values for the parameters.
+# Quarto will override these if -P is used in the CLI.
+product1 = "postgresql"
+product2 = "mariadb"
+db_path = "geol.duckdb"
+```
+
+```{python}
+import duckdb
+import pandas as pd
+import altair as alt
+import numpy as np
+from datetime import datetime
+from IPython.display import display, HTML
+
+# Enable dark theme for Altair
+alt.themes.enable('dark')
+
+# --- Input Parameters from Quarto ---
+product1_id = product1
+product2_id = product2
+
+# Connect to the DuckDB database
+con = duckdb.connect(database=db_path, read_only=True)
+
+def get_enhanced_details(product_id):
+    query = f"""
+    SELECT
+        p.id AS product_id,
+        p.label AS product_label,
+        p.uri AS product_uri,
+        d.cycle,
+        d.release_date,
+        d.eol_date
+    FROM
+        products p
+    JOIN
+        details d ON p.id = d.product_id
+    WHERE
+        p.id = '{product_id}'
+    ORDER BY
+        d.release_date ASC;
+    """
+    df = con.execute(query).fetchdf()
+    if df.empty:
+        return pd.DataFrame()
+
+    df['release_date'] = pd.to_datetime(df['release_date'])
+    df['eol_date'] = pd.to_datetime(df['eol_date'])
+    df['support_duration_days'] = (df['eol_date'] - df['release_date']).dt.days
+    df['cycle_numeric'] = pd.to_numeric(df['cycle'], errors='coerce').fillna(0)
+
+    # Calculate Time Between Releases (Frequency)
+    df['prev_release_date'] = df['release_date'].shift(1)
+    df['days_since_prev_release'] = (df['release_date'] - df['prev_release_date']).dt.days
+
+    # Calculate Version Overlap (How long was this version supported AFTER the next one came out?)
+    df['next_release_date'] = df['release_date'].shift(-1)
+    df['overlap_days'] = (df['eol_date'] - df['next_release_date']).dt.days
+    
+    # Identify if currently active
+    now = pd.Timestamp.now()
+    df['is_active'] = (df['release_date'] <= now) & (df['eol_date'] >= now)
+
+    return df
+
+p1_df = get_enhanced_details(product1_id)
+p2_df = get_enhanced_details(product2_id)
+# Combined DataFrame for multi-product charts
+combined_df = pd.concat([p1_df, p2_df])
+
+# Filter for Modern Era (last 10 years) for trend analysis
+modern_era_start = pd.Timestamp.now() - pd.Timedelta(days=365*10)
+modern_df = combined_df[combined_df['release_date'] >= modern_era_start]
+
+# Fetch geol metadata
+about_df = con.execute("SELECT git_version, git_commit, go_version, platform, github_url, generated_at FROM about").fetchdf()
+```
+
+## Data Source
+
+```{python}
+#| output: asis
+row = about_df.iloc[0]
+print(f"- **Database generated at:** {row['generated_at']}")
+print(f"- **geol version:** [{row['git_version']}](https://github.com/opt-nc/geol/releases/tag/v{row['git_version']}) (commit `{row['git_commit'][:8]}`)")
+print(f"- **Platform:** {row['platform']} — Go {row['go_version']}")
+```
+
+## Products Under Comparison
+
+```{python}
+#| output: asis
+# Print product names for the "Products Under Comparison" section
+print(f"- [{p1_df['product_label'].iloc[0]}]({p1_df['product_uri'].iloc[0]})")
+print(f"- [{p2_df['product_label'].iloc[0]}]({p2_df['product_uri'].iloc[0]})")
+```
+
+## Product Metadata
+
+```{python}
+query_meta = f"""
+SELECT 
+    p.label AS Product,
+    c.id AS Category,
+    GROUP_CONCAT(t.id, ', ') AS Tags
+FROM products p
+LEFT JOIN categories c ON p.category_id = c.id
+LEFT JOIN product_tags pt ON p.id = pt.product_id
+LEFT JOIN tags t ON pt.tag_id = t.id
+WHERE p.id IN ('{product1_id}', '{product2_id}')
+GROUP BY p.label, c.id
+"""
+
+metadata_df = con.execute(query_meta).fetchdf()
+
+display(HTML(metadata_df.to_html(index=False)))
+```
+
+## Current Status Dashboard
+
+```{python}
+def get_kpis(df):
+    now = pd.Timestamp.now()
+    active = df[df['is_active']]
+    if active.empty:
+        return "N/A", "N/A", "N/A", "#fff", "N/A"
+    
+    active_count = len(active)
+    closest_eol = active.sort_values('eol_date').iloc[0]
+    days_to_eol = (closest_eol['eol_date'] - now).days
+    avg_age = (now - active['release_date']).dt.days.mean()
+    
+    # Predictability Score (based on release interval consistency)
+    release_intervals = df['days_since_prev_release'].dropna()
+    if not release_intervals.empty:
+        cv = release_intervals.std() / release_intervals.mean()
+        # Scale 0-100 where 0 is perfect consistency
+        predictability = max(0, 100 * (1 - cv))
+        pred_text = f"{predictability:.0f}/100"
+    else:
+        pred_text = "N/A"
+
+    # Determine color based on urgency
+    if days_to_eol < 180:
+        color = "#ff4b4b" # Red
+    elif days_to_eol < 365:
+        color = "#ffa500" # Orange
+    else:
+        color = "#00cc96" # Green
+    
+    return active_count, f"{closest_eol['cycle']} ({days_to_eol} days left)", f"{avg_age:.0f} days", color, pred_text
+
+p1_count, p1_eol, p1_age, p1_color, p1_pred = get_kpis(p1_df)
+p2_count, p2_eol, p2_age, p2_color, p2_pred = get_kpis(p2_df)
+
+html_dashboard = f"""
+<div style="display: flex; justify-content: space-around; text-align: center; padding: 20px; background-color: #222; border-radius: 10px;">
+    <div style="flex: 1;">
+        <h4>{p1_df['product_label'].iloc[0]}</h4>
+        <p style="font-size: 2.5em; margin: 0; font-weight: bold;">{p1_count}</p>
+        <p style="color: #888; text-transform: uppercase; font-size: 0.8em;">Active Versions</p>
+        <hr style="border-color: #444;">
+        <p><b>Next EOL:</b> <span style="color: {p1_color};">{p1_eol}</span></p>
+        <p><b>Avg Active Age:</b> {p1_age}</p>
+        <p><b>Predictability:</b> {p1_pred}</p>
+    </div>
+    <div style="border-left: 1px solid #444; margin: 0 20px;"></div>
+    <div style="flex: 1;">
+        <h4>{p2_df['product_label'].iloc[0]}</h4>
+        <p style="font-size: 2.5em; margin: 0; font-weight: bold;">{p2_count}</p>
+        <p style="color: #888; text-transform: uppercase; font-size: 0.8em;">Active Versions</p>
+        <hr style="border-color: #444;">
+        <p><b>Next EOL:</b> <span style="color: {p2_color};">{p2_eol}</span></p>
+        <p><b>Avg Active Age:</b> {p2_age}</p>
+        <p><b>Predictability:</b> {p2_pred}</p>
+    </div>
+</div>
+"""
+display(HTML(html_dashboard))
+```
+
+## Comparative Analytics
+
+::: {.panel-tabset}
+
+### Support Lifespan
+```{python}
+# Grouped Bar Chart for Mean/Median Support
+stats = combined_df.groupby('product_label')['support_duration_days'].agg(['mean', 'median']).reset_index()
+stats_melted = stats.melt(id_vars='product_label', var_name='Metric', value_name='Days')
+
+alt.Chart(stats_melted).mark_bar().encode(
+    x=alt.X('Metric:N', title=None),
+    y=alt.Y('Days:Q', title='Duration (Days)'),
+    color=alt.Color('product_label:N', title='Product'),
+    column=alt.Column('product_label:N', title=None, header=alt.Header(labelOrient='bottom'))
+).properties(width=200, title="Mean vs Median Support Duration").display()
+```
+
+### Maintenance Heatmap
+```{python}
+# Maintenance Intensity Heatmap
+min_year = combined_df['release_date'].min().year
+max_year = combined_df['eol_date'].max().year
+years = pd.date_range(start=f"{min_year}-01-01", end=f"{max_year}-12-31", freq='YE')
+
+heatmap_data = []
+for y in years:
+    for p_id, p_df in [(product1_id, p1_df), (product2_id, p2_df)]:
+        active_count = p_df[(p_df['release_date'] <= y) & (p_df['eol_date'] >= y)].shape[0]
+        heatmap_data.append({'year': y.year, 'Product': p_df['product_label'].iloc[0], 'Concurrency': active_count})
+
+heatmap_df = pd.DataFrame(heatmap_data)
+
+alt.Chart(heatmap_df).mark_rect().encode(
+    x=alt.X('year:O', title='Year'),
+    y=alt.Y('Product:N', title=None),
+    color=alt.Color('Concurrency:Q', scale=alt.Scale(scheme='viridis'), title='Active Streams'),
+    tooltip=['year', 'Product', 'Concurrency']
+).properties(width='container', height=200, title="Historical Maintenance Intensity Heatmap").display()
+```
+
+### Version Concurrency
+```{python}
+# Active Versions Over Time
+min_date = combined_df['release_date'].min()
+max_date = combined_df['eol_date'].max()
+dates = pd.date_range(start=min_date, end=max_date, freq='ME')
+
+active_data = []
+for d in dates:
+    for p_id, p_df in [(product1_id, p1_df), (product2_id, p2_df)]:
+        active_count = p_df[(p_df['release_date'] <= d) & (p_df['eol_date'] >= d)].shape[0]
+        active_data.append({'date': d, 'Product': p_df['product_label'].iloc[0], 'count': active_count})
+
+active_df = pd.DataFrame(active_data)
+
+alt.Chart(active_df).mark_line(interpolate='step-after').encode(
+    x=alt.X('date:T', title='Time'),
+    y=alt.Y('count:Q', title='Number of Active Versions'),
+    color='Product:N',
+    tooltip=['date', 'Product', 'count']
+).properties(width='container', height=300, title="Maintenance Concurrency Over Time").interactive().display()
+```
+
+### Support Trend (Modern)
+```{python}
+# Focused on last 10 years
+alt.Chart(modern_df).mark_circle(size=80).encode(
+    x=alt.X('release_date:T', title='Release Date'),
+    y=alt.Y('support_duration_days:Q', title='Support Length (Days)'),
+    color='product_label:N',
+    size=alt.Size('overlap_days:Q', title='Overlap with Successor'),
+    tooltip=['product_label', 'cycle', 'support_duration_days', 'overlap_days']
+).properties(width='container', height=400, title="Modern Era Support Longevity Trend (Last 10 Years)").display()
+```
+
+### Migration Window
+```{python}
+# Overlap Analysis (Grace Period)
+alt.Chart(modern_df).mark_bar().encode(
+    x=alt.X('cycle:N', sort=alt.EncodingSortField(field="release_date", order='ascending'), title='Version'),
+    y=alt.Y('overlap_days:Q', title='Migration Window (Days)'),
+    color='product_label:N',
+    facet=alt.Facet('product_label:N', columns=1, title=None)
+).properties(width='container', height=150, title="Migration Grace Period per Version (Modern Era)").display()
+```
+
+:::
+
+## Combined Lifecycle Comparison (Gantt)
+
+This chart provides a direct side-by-side visual comparison of all version lifecycles for both products.
+
+```{python}
+# Dual Y-axis Gantt chart
+p1_chart = alt.Chart(p1_df).mark_rule(size=10).encode(
+    y=alt.Y('cycle:N', sort=alt.EncodingSortField(field="release_date", order='descending'), title=f"{p1_df['product_label'].iloc[0]} Version"),
+    x=alt.X('release_date:T', title='Timeline'),
+    x2='eol_date:T',
+    color=alt.value('#4c78a8'),
+    tooltip=['product_label', 'cycle', 'release_date', 'eol_date']
+)
+
+p2_chart = alt.Chart(p2_df).mark_rule(size=10).encode(
+    y=alt.Y('cycle:N', sort=alt.EncodingSortField(field="release_date", order='descending'), title=f"{p2_df['product_label'].iloc[0]} Version", axis=alt.Axis(orient='right')),
+    x=alt.X('release_date:T', title='Timeline'),
+    x2='eol_date:T',
+    color=alt.value('#e15759'),
+    tooltip=['product_label', 'cycle', 'release_date', 'eol_date']
+)
+
+alt.layer(p1_chart, p2_chart).resolve_scale(
+    y='independent'
+).properties(
+    width='container', 
+    height=1000, 
+    title="Dual-Axis Comparative Lifecycle Gantt"
+).display()
+```
+
+## EOL Calendar
+
+This timeline shows upcoming end-of-life dates for all currently active versions, helping plan migrations ahead of time.
+
+```{python}
+now = pd.Timestamp.now()
+
+def eol_urgency(days):
+    if days < 180:
+        return 'Critical (<6 months)'
+    elif days < 365:
+        return 'Warning (<1 year)'
+    else:
+        return 'OK (>1 year)'
+
+urgency_colors = alt.Scale(
+    domain=['Critical (<6 months)', 'Warning (<1 year)', 'OK (>1 year)'],
+    range=['#ff4b4b', '#ffa500', '#00cc96']
+)
+
+def eol_chart(df):
+    cal = df[df['is_active']].copy()
+    if cal.empty:
+        return None
+    cal['days_to_eol'] = (cal['eol_date'] - now).dt.days
+    cal = cal.sort_values('eol_date')
+    cal['urgency'] = cal['days_to_eol'].apply(eol_urgency)
+    label = cal['product_label'].iloc[0]
+    return alt.Chart(cal).mark_bar(size=14).encode(
+        y=alt.Y('cycle:N', sort=alt.EncodingSortField(field='eol_date', order='ascending'), title='Version'),
+        x=alt.X('eol_date:T', title='End of Life Date'),
+        color=alt.Color('urgency:N', scale=urgency_colors, title='Urgency'),
+        tooltip=['product_label', 'cycle', 'eol_date', 'days_to_eol', 'urgency']
+    ).properties(width='container', height=alt.Step(20), title=f'{label} — Upcoming EOL Calendar')
+
+eol_chart(p1_df).display()
+```
+
+```{python}
+eol_chart(p2_df).display()
+```
+
+```{python}
+#| output: asis
+# Generate callout warnings for versions approaching EOL
+now_callout = pd.Timestamp.now()
+for label, df in [(p1_df['product_label'].iloc[0], p1_df), (p2_df['product_label'].iloc[0], p2_df)]:
+    active = df[df['is_active']].copy()
+    if active.empty:
+        continue
+    critical = active[(active['eol_date'] - now_callout).dt.days < 180]
+    warning = active[((active['eol_date'] - now_callout).dt.days >= 180) & ((active['eol_date'] - now_callout).dt.days < 365)]
+    for _, row in critical.iterrows():
+        days_left = (row['eol_date'] - now_callout).days
+        print(f"\n:::: {{.callout-important}}")
+        print(f"**{label} {row['cycle']}** reaches end of life in **{days_left} days** ({row['eol_date'].strftime('%Y-%m-%d')}). Plan your migration now!")
+        print(f"::::\n")
+    for _, row in warning.iterrows():
+        days_left = (row['eol_date'] - now_callout).days
+        print(f"\n:::: {{.callout-warning}}")
+        print(f"**{label} {row['cycle']}** reaches end of life in **{days_left} days** ({row['eol_date'].strftime('%Y-%m-%d')}). Start planning your migration.")
+        print(f"::::\n")
+```
+
+## Strategic Insights
+
+```{python}
+def get_strategic_summary(df):
+    recent = df.tail(5)
+    avg_overlap = recent['overlap_days'].mean()
+    min_overlap = recent['overlap_days'].min()
+    avg_cadence = recent['days_since_prev_release'].mean()
+    
+    return {
+        'avg_overlap': avg_overlap,
+        'min_overlap': min_overlap,
+        'avg_cadence': avg_cadence
+    }
+
+s1 = get_strategic_summary(p1_df)
+s2 = get_strategic_summary(p2_df)
+
+insight_html = f"""
+<div style="display: grid; grid-template-columns: 1fr 1fr; grid-gap: 20px;">
+    <div style="background-color: #333; padding: 15px; border-radius: 5px;">
+        <h5>{p1_df['product_label'].iloc[0]} Strategy</h5>
+        <ul>
+            <li><b>Avg Migration Window:</b> {s1['avg_overlap']:.0f} days</li>
+            <li><b>Risk:</b> Minimal overlap was {s1['min_overlap']:.0f} days.</li>
+            <li><b>Cadence:</b> New major release every {s1['avg_cadence']/30.44:.1f} months.</li>
+        </ul>
+    </div>
+    <div style="background-color: #333; padding: 15px; border-radius: 5px;">
+        <h5>{p2_df['product_label'].iloc[0]} Strategy</h5>
+        <ul>
+            <li><b>Avg Migration Window:</b> {s2['avg_overlap']:.0f} days</li>
+            <li><b>Risk:</b> Minimal overlap was {s2['min_overlap']:.0f} days.</li>
+            <li><b>Cadence:</b> New major release every {s2['avg_cadence']/30.44:.1f} months.</li>
+        </ul>
+    </div>
+</div>
+"""
+display(HTML(insight_html))
+```
+
+## Detailed Product Data
+
+::: {.panel-tabset}
+
+```{python}
+#| output: asis
+print(f"### Detailed {p1_df['product_label'].iloc[0]}")
+```
+
+```{python}
+cols = ['cycle', 'release_date', 'eol_date', 'support_duration_days', 'is_active']
+table_style = '<div style="max-height: 400px; overflow-y: auto; border: 1px solid #444; border-radius: 5px;">'
+
+display(HTML(table_style + p1_df[cols].sort_values('release_date', ascending=False).to_html(index=False) + '</div>'))
+```
+
+```{python}
+#| output: asis
+print(f"### Detailed {p2_df['product_label'].iloc[0]}")
+```
+
+```{python}
+display(HTML(table_style + p2_df[cols].sort_values('release_date', ascending=False).to_html(index=False) + '</div>'))
+```
+
+:::
+
+```{python}
+con.close()
+```
