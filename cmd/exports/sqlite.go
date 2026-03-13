@@ -118,52 +118,52 @@ func exportDuckDBToSQLite(db *sql.DB, sqlitePath string) error {
 	tableCreations := []string{
 		`CREATE TABLE sqlite_db.categories(
 			id TEXT PRIMARY KEY,
-			uri TEXT
+			uri TEXT NOT NULL
 		)`,
 		`CREATE TABLE sqlite_db.tags(
 			id TEXT PRIMARY KEY,
-			uri TEXT UNIQUE,
-			www TEXT
+			uri TEXT UNIQUE NOT NULL,
+			www TEXT NOT NULL
 		)`,
 		`CREATE TABLE sqlite_db.about(
-			git_version TEXT,
-			git_commit TEXT,
-			go_version TEXT,
-			platform TEXT,
-			github_url TEXT,
-			generated_at TEXT,
-			generated_at_tz TEXT
+			git_version TEXT NOT NULL,
+			git_commit TEXT NOT NULL,
+			go_version TEXT NOT NULL,
+			platform TEXT NOT NULL,
+			github_url TEXT NOT NULL,
+			generated_at TEXT NOT NULL,
+			generated_at_tz TEXT NOT NULL
 		)`,
 		`CREATE TABLE sqlite_db.products(
-			id TEXT PRIMARY KEY,
-			label TEXT,
-			category_id TEXT,
-			uri TEXT
+			id TEXT PRIMARY KEY NOT NULL,
+			label TEXT NOT NULL,
+			category_id TEXT NOT NULL,
+			uri TEXT NOT NULL
 		)`,
 		`CREATE TABLE sqlite_db.aliases(
-			id TEXT,
-			product_id TEXT,
+			id TEXT NOT NULL,
+			product_id TEXT NOT NULL,
 			PRIMARY KEY(id, product_id)
 		)`,
 		`CREATE TABLE sqlite_db.details(
-			product_id TEXT,
-			cycle TEXT,
-			is_lts INTEGER,
-			release_date TEXT,
-			latest TEXT,
+			product_id TEXT NOT NULL,
+			release_cycle TEXT NOT NULL,
+			is_lts INTEGER NOT NULL,
+			release_date TEXT NOT NULL,
+			latest TEXT NOT NULL,
 			latest_release_date TEXT,
 			eol_date TEXT,
-			PRIMARY KEY(product_id, cycle)
+			PRIMARY KEY(product_id, release_cycle)
 		)`,
 		`CREATE TABLE sqlite_db.product_identifiers(
-			product_id TEXT,
-			identifier_type TEXT,
-			identifier_value TEXT,
+			product_id TEXT NOT NULL,
+			identifier_type TEXT NOT NULL,
+			identifier_value TEXT NOT NULL,
 			PRIMARY KEY(product_id, identifier_type, identifier_value)
 		)`,
 		`CREATE TABLE sqlite_db.product_tags(
-			product_id TEXT,
-			tag_id TEXT,
+			product_id TEXT NOT NULL,
+			tag_id TEXT NOT NULL,
 			PRIMARY KEY(product_id, tag_id)
 		)`,
 	}
@@ -197,7 +197,7 @@ func exportDuckDBToSQLite(db *sql.DB, sqlitePath string) error {
 
 		`INSERT INTO sqlite_db.details
 		SELECT
-			product_id, cycle,
+			product_id, release_cycle,
 			CAST(is_lts AS INTEGER),
 			CAST(release_date AS VARCHAR),
 			latest,
@@ -253,10 +253,10 @@ func addSQLiteForeignKeys(sqlitePath string) error {
 			statements: []string{
 				"ALTER TABLE products RENAME TO products_old",
 				`CREATE TABLE products(
-					id TEXT PRIMARY KEY,
-					label TEXT,
-					category_id TEXT,
-					uri TEXT,
+					id TEXT PRIMARY KEY NOT NULL,
+					label TEXT NOT NULL,
+					category_id TEXT NOT NULL,
+					uri TEXT NOT NULL,
 					FOREIGN KEY (category_id) REFERENCES categories(id)
 				)`,
 				"INSERT INTO products SELECT * FROM products_old",
@@ -268,8 +268,8 @@ func addSQLiteForeignKeys(sqlitePath string) error {
 			statements: []string{
 				"ALTER TABLE aliases RENAME TO aliases_old",
 				`CREATE TABLE aliases(
-					id TEXT,
-					product_id TEXT,
+					id TEXT NOT NULL,
+					product_id TEXT NOT NULL,
 					PRIMARY KEY(id, product_id),
 					FOREIGN KEY (product_id) REFERENCES products(id)
 				)`,
@@ -282,14 +282,14 @@ func addSQLiteForeignKeys(sqlitePath string) error {
 			statements: []string{
 				"ALTER TABLE details RENAME TO details_old",
 				`CREATE TABLE details(
-					product_id TEXT,
-					cycle TEXT,
-					is_lts INTEGER,
-					release_date TEXT,
-					latest TEXT,
+					product_id TEXT NOT NULL,
+					release_cycle TEXT NOT NULL,
+					is_lts INTEGER NOT NULL,
+					release_date TEXT NOT NULL,
+					latest TEXT NOT NULL,
 					latest_release_date TEXT,
 					eol_date TEXT,
-					PRIMARY KEY(product_id, cycle),
+					PRIMARY KEY(product_id, release_cycle),
 					FOREIGN KEY (product_id) REFERENCES products(id)
 				)`,
 				"INSERT INTO details SELECT * FROM details_old",
@@ -301,9 +301,9 @@ func addSQLiteForeignKeys(sqlitePath string) error {
 			statements: []string{
 				"ALTER TABLE product_identifiers RENAME TO product_identifiers_old",
 				`CREATE TABLE product_identifiers(
-					product_id TEXT,
-					identifier_type TEXT,
-					identifier_value TEXT,
+					product_id TEXT NOT NULL,
+					identifier_type TEXT NOT NULL,
+					identifier_value TEXT NOT NULL,
 					PRIMARY KEY(product_id, identifier_type, identifier_value),
 					FOREIGN KEY (product_id) REFERENCES products(id)
 				)`,
@@ -316,8 +316,8 @@ func addSQLiteForeignKeys(sqlitePath string) error {
 			statements: []string{
 				"ALTER TABLE product_tags RENAME TO product_tags_old",
 				`CREATE TABLE product_tags(
-					product_id TEXT,
-					tag_id TEXT,
+					product_id TEXT NOT NULL,
+					tag_id TEXT NOT NULL,
 					PRIMARY KEY(product_id, tag_id),
 					FOREIGN KEY (product_id) REFERENCES products(id),
 					FOREIGN KEY (tag_id) REFERENCES tags(id)
