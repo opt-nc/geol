@@ -296,13 +296,13 @@ func createAboutTable(db *sql.DB) error {
 
 	// Create 'about' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS about (
-			git_version TEXT,
-			git_commit TEXT,
-			go_version TEXT,
-			platform TEXT,
-			github_url TEXT,
-			generated_at TIMESTAMP DEFAULT date_trunc('second', CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
-			generated_at_tz TIMESTAMPTZ DEFAULT date_trunc('second', CURRENT_TIMESTAMP)
+			git_version TEXT NOT NULL,
+			git_commit TEXT NOT NULL,
+			go_version TEXT NOT NULL,
+			platform TEXT NOT NULL,
+			github_url TEXT NOT NULL,
+			generated_at TIMESTAMP DEFAULT date_trunc('second', CURRENT_TIMESTAMP AT TIME ZONE 'UTC') NOT NULL,
+			generated_at_tz TIMESTAMPTZ DEFAULT date_trunc('second', CURRENT_TIMESTAMP) NOT NULL
 		)`)
 	if err != nil {
 		return fmt.Errorf("error creating 'about' table: %w", err)
@@ -347,7 +347,7 @@ func createTempDetailsTable(db *sql.DB, allData *productDataMap) error {
 	// Create 'details_temp' table if not exists
 	_, err := db.Exec(`CREATE TEMP TABLE IF NOT EXISTS details_temp (
 			product_id TEXT,
-			cycle TEXT,
+			release_cycle TEXT,
 			is_lts BOOLEAN,
 			release TEXT,
 			latest TEXT,
@@ -398,7 +398,7 @@ func createTempDetailsTable(db *sql.DB, allData *productDataMap) error {
 		if prodData, exists := allData.Products[productID]; exists {
 			// Insert each release into the details_temp table
 			for _, release := range prodData.Releases {
-				_, err = db.Exec(`INSERT INTO details_temp (product_id, cycle, is_lts, release, latest, latest_release, eol) 
+				_, err = db.Exec(`INSERT INTO details_temp (product_id, release_cycle, is_lts, release, latest, latest_release, eol) 
 						VALUES (?, ?, ?, ?, ?, ?, ?)`,
 					productID,
 					release.Name,
@@ -423,14 +423,14 @@ func createTempDetailsTable(db *sql.DB, allData *productDataMap) error {
 func createDetailsTable(db *sql.DB) error {
 	// Create 'details' table with DATE columns for release_date, latest_release_date, and eol
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS details (
-			product_id TEXT,
-			cycle TEXT,
-			is_lts BOOLEAN,
-			release_date DATE,
-			latest TEXT,
+			product_id TEXT NOT NULL,
+			release_cycle TEXT NOT NULL,
+			is_lts BOOLEAN NOT NULL,
+			release_date DATE NOT NULL,
+			latest TEXT NOT NULL,
 			latest_release_date DATE,
 			eol_date DATE,
-			PRIMARY KEY (product_id, cycle),
+			PRIMARY KEY (product_id, release_cycle),
 			FOREIGN KEY (product_id) REFERENCES products(id)
 		)`)
 	if err != nil {
@@ -439,10 +439,10 @@ func createDetailsTable(db *sql.DB) error {
 	}
 
 	// Insert data from details_temp, converting empty strings to NULL and casting to DATE
-	_, err = db.Exec(`INSERT INTO details (product_id, cycle, is_lts, release_date, latest, latest_release_date, eol_date)
+	_, err = db.Exec(`INSERT INTO details (product_id, release_cycle, is_lts, release_date, latest, latest_release_date, eol_date)
 		SELECT 
 			product_id,
-			cycle,
+			release_cycle,
 			is_lts,
 			CASE WHEN release = '' THEN NULL ELSE TRY_CAST(release AS DATE) END,
 			latest,
@@ -465,7 +465,7 @@ func createDetailsTable(db *sql.DB) error {
 	// Add comments to 'details' table columns
 	_, err = db.Exec(`
 		COMMENT ON COLUMN details.product_id IS '` + CommentColDetailsProductID + `';
-		COMMENT ON COLUMN details.cycle IS '` + CommentColDetailsCycle + `';
+		COMMENT ON COLUMN details.release_cycle IS '` + CommentColDetailsCycle + `';
 		COMMENT ON COLUMN details.is_lts IS '` + CommentColDetailsIsLTS + `';
 		COMMENT ON COLUMN details.release_date IS '` + CommentColDetailsReleaseDate + `';
 		COMMENT ON COLUMN details.latest IS '` + CommentColDetailsLatest + `';
@@ -486,10 +486,10 @@ func createDetailsTable(db *sql.DB) error {
 func createProductsTable(db *sql.DB, allData *productDataMap) error {
 	// Create 'products' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS products (
-			id TEXT PRIMARY KEY,
-			label TEXT,
-			category_id TEXT,
-			uri TEXT,
+			id TEXT PRIMARY KEY NOT NULL,
+			label TEXT NOT NULL,
+			category_id TEXT NOT NULL,
+			uri TEXT NOT NULL,
 			FOREIGN KEY (category_id) REFERENCES categories(id)
 		)`)
 	if err != nil {
@@ -575,8 +575,8 @@ func createProductsTable(db *sql.DB, allData *productDataMap) error {
 func createAliasesTable(db *sql.DB, allData *productDataMap) error {
 	// Create 'aliases' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS aliases (
-			id TEXT,
-			product_id TEXT,
+			id TEXT NOT NULL,
+			product_id TEXT NOT NULL,
 			PRIMARY KEY (id, product_id),
 			FOREIGN KEY (product_id) REFERENCES products(id)
 		)`)
@@ -683,9 +683,9 @@ func createAliasesTable(db *sql.DB, allData *productDataMap) error {
 func createProductIdentifiersTable(db *sql.DB, allData *productDataMap) error {
 	// Create 'product_identifiers' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS product_identifiers (
-			product_id TEXT,
-			identifier_type TEXT,
-			identifier_value TEXT,
+			product_id TEXT NOT NULL,
+			identifier_type TEXT NOT NULL,
+			identifier_value TEXT NOT NULL,
 			PRIMARY KEY (product_id, identifier_type, identifier_value),
 			FOREIGN KEY (product_id) REFERENCES products(id)
 		)`)
@@ -805,8 +805,8 @@ func createTagsTable(db *sql.DB, allTags map[string]utilities.Tag) error {
 	// Create 'tags' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS tags (
 			id TEXT PRIMARY KEY,
-			uri TEXT UNIQUE,
-			www TEXT
+			uri TEXT UNIQUE NOT NULL,
+			www TEXT NOT NULL
 		)`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'tags' table")
@@ -887,7 +887,7 @@ func createCategoriesTable(db *sql.DB, allCategories map[string]utilities.Catego
 	// Create 'categories' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS categories (
 			id TEXT PRIMARY KEY,
-			uri TEXT
+			uri TEXT NOT NULL
 		)`)
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'categories' table")
@@ -962,8 +962,8 @@ func createCategoriesTable(db *sql.DB, allCategories map[string]utilities.Catego
 func createProductTagsTable(db *sql.DB, allData *productDataMap) error {
 	// Create 'product_tags' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS product_tags (
-			product_id TEXT,
-			tag_id TEXT,
+			product_id TEXT NOT NULL,
+			tag_id TEXT NOT NULL,
 			PRIMARY KEY (product_id, tag_id),
 			FOREIGN KEY (product_id) REFERENCES products(id),
 			FOREIGN KEY (tag_id) REFERENCES tags(id)
