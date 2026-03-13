@@ -683,9 +683,9 @@ func createAliasesTable(db *sql.DB, allData *productDataMap) error {
 func createProductIdentifiersTable(db *sql.DB, allData *productDataMap) error {
 	// Create 'product_identifiers' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS product_identifiers (
-			product_id TEXT,
-			identifier_type TEXT,
-			identifier_value TEXT,
+			product_id TEXT NOT NULL,
+			identifier_type TEXT NOT NULL,
+			identifier_value TEXT NOT NULL,
 			PRIMARY KEY (product_id, identifier_type, identifier_value),
 			FOREIGN KEY (product_id) REFERENCES products(id)
 		)`)

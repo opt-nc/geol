@@ -156,9 +156,9 @@ func exportDuckDBToSQLite(db *sql.DB, sqlitePath string) error {
 			PRIMARY KEY(product_id, cycle)
 		)`,
 		`CREATE TABLE sqlite_db.product_identifiers(
-			product_id TEXT,
-			identifier_type TEXT,
-			identifier_value TEXT,
+			product_id TEXT NOT NULL,
+			identifier_type TEXT NOT NULL,
+			identifier_value TEXT NOT NULL,
 			PRIMARY KEY(product_id, identifier_type, identifier_value)
 		)`,
 		`CREATE TABLE sqlite_db.product_tags(
@@ -301,9 +301,9 @@ func addSQLiteForeignKeys(sqlitePath string) error {
 			statements: []string{
 				"ALTER TABLE product_identifiers RENAME TO product_identifiers_old",
 				`CREATE TABLE product_identifiers(
-					product_id TEXT,
-					identifier_type TEXT,
-					identifier_value TEXT,
+					product_id TEXT NOT NULL,
+					identifier_type TEXT NOT NULL,
+					identifier_value TEXT NOT NULL,
 					PRIMARY KEY(product_id, identifier_type, identifier_value),
 					FOREIGN KEY (product_id) REFERENCES products(id)
 				)`,
