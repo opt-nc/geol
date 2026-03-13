@@ -347,7 +347,7 @@ func createTempDetailsTable(db *sql.DB, allData *productDataMap) error {
 	// Create 'details_temp' table if not exists
 	_, err := db.Exec(`CREATE TEMP TABLE IF NOT EXISTS details_temp (
 			product_id TEXT,
-			cycle TEXT,
+			release_cycle TEXT,
 			is_lts BOOLEAN,
 			release TEXT,
 			latest TEXT,
@@ -398,7 +398,7 @@ func createTempDetailsTable(db *sql.DB, allData *productDataMap) error {
 		if prodData, exists := allData.Products[productID]; exists {
 			// Insert each release into the details_temp table
 			for _, release := range prodData.Releases {
-				_, err = db.Exec(`INSERT INTO details_temp (product_id, cycle, is_lts, release, latest, latest_release, eol) 
+				_, err = db.Exec(`INSERT INTO details_temp (product_id, release_cycle, is_lts, release, latest, latest_release, eol) 
 						VALUES (?, ?, ?, ?, ?, ?, ?)`,
 					productID,
 					release.Name,
@@ -424,13 +424,13 @@ func createDetailsTable(db *sql.DB) error {
 	// Create 'details' table with DATE columns for release_date, latest_release_date, and eol
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS details (
 			product_id TEXT NOT NULL,
-			cycle TEXT NOT NULL,
+			release_cycle TEXT NOT NULL,
 			is_lts BOOLEAN NOT NULL,
 			release_date DATE NOT NULL,
 			latest TEXT NOT NULL,
 			latest_release_date DATE,
 			eol_date DATE,
-			PRIMARY KEY (product_id, cycle),
+			PRIMARY KEY (product_id, release_cycle),
 			FOREIGN KEY (product_id) REFERENCES products(id)
 		)`)
 	if err != nil {
@@ -439,10 +439,10 @@ func createDetailsTable(db *sql.DB) error {
 	}
 
 	// Insert data from details_temp, converting empty strings to NULL and casting to DATE
-	_, err = db.Exec(`INSERT INTO details (product_id, cycle, is_lts, release_date, latest, latest_release_date, eol_date)
+	_, err = db.Exec(`INSERT INTO details (product_id, release_cycle, is_lts, release_date, latest, latest_release_date, eol_date)
 		SELECT 
 			product_id,
-			cycle,
+			release_cycle,
 			is_lts,
 			CASE WHEN release = '' THEN NULL ELSE TRY_CAST(release AS DATE) END,
 			latest,
@@ -465,7 +465,7 @@ func createDetailsTable(db *sql.DB) error {
 	// Add comments to 'details' table columns
 	_, err = db.Exec(`
 		COMMENT ON COLUMN details.product_id IS '` + CommentColDetailsProductID + `';
-		COMMENT ON COLUMN details.cycle IS '` + CommentColDetailsCycle + `';
+		COMMENT ON COLUMN details.release_cycle IS '` + CommentColDetailsCycle + `';
 		COMMENT ON COLUMN details.is_lts IS '` + CommentColDetailsIsLTS + `';
 		COMMENT ON COLUMN details.release_date IS '` + CommentColDetailsReleaseDate + `';
 		COMMENT ON COLUMN details.latest IS '` + CommentColDetailsLatest + `';

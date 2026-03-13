@@ -147,13 +147,13 @@ func exportDuckDBToSQLite(db *sql.DB, sqlitePath string) error {
 		)`,
 		`CREATE TABLE sqlite_db.details(
 			product_id TEXT NOT NULL,
-			cycle TEXT NOT NULL,
+			release_cycle TEXT NOT NULL,
 			is_lts INTEGER NOT NULL,
 			release_date TEXT NOT NULL,
 			latest TEXT NOT NULL,
 			latest_release_date TEXT,
 			eol_date TEXT,
-			PRIMARY KEY(product_id, cycle)
+			PRIMARY KEY(product_id, release_cycle)
 		)`,
 		`CREATE TABLE sqlite_db.product_identifiers(
 			product_id TEXT NOT NULL,
@@ -197,7 +197,7 @@ func exportDuckDBToSQLite(db *sql.DB, sqlitePath string) error {
 
 		`INSERT INTO sqlite_db.details
 		SELECT
-			product_id, cycle,
+			product_id, release_cycle,
 			CAST(is_lts AS INTEGER),
 			CAST(release_date AS VARCHAR),
 			latest,
@@ -283,13 +283,13 @@ func addSQLiteForeignKeys(sqlitePath string) error {
 				"ALTER TABLE details RENAME TO details_old",
 				`CREATE TABLE details(
 					product_id TEXT NOT NULL,
-					cycle TEXT NOT NULL,
+					release_cycle TEXT NOT NULL,
 					is_lts INTEGER NOT NULL,
 					release_date TEXT NOT NULL,
 					latest TEXT NOT NULL,
 					latest_release_date TEXT,
 					eol_date TEXT,
-					PRIMARY KEY(product_id, cycle),
+					PRIMARY KEY(product_id, release_cycle),
 					FOREIGN KEY (product_id) REFERENCES products(id)
 				)`,
 				"INSERT INTO details SELECT * FROM details_old",
