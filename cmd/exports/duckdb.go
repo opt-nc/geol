@@ -962,8 +962,8 @@ func createCategoriesTable(db *sql.DB, allCategories map[string]utilities.Catego
 func createProductTagsTable(db *sql.DB, allData *productDataMap) error {
 	// Create 'product_tags' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS product_tags (
-			product_id TEXT,
-			tag_id TEXT,
+			product_id TEXT NOT NULL,
+			tag_id TEXT NOT NULL,
 			PRIMARY KEY (product_id, tag_id),
 			FOREIGN KEY (product_id) REFERENCES products(id),
 			FOREIGN KEY (tag_id) REFERENCES tags(id)

@@ -162,8 +162,8 @@ func exportDuckDBToSQLite(db *sql.DB, sqlitePath string) error {
 			PRIMARY KEY(product_id, identifier_type, identifier_value)
 		)`,
 		`CREATE TABLE sqlite_db.product_tags(
-			product_id TEXT,
-			tag_id TEXT,
+			product_id TEXT NOT NULL,
+			tag_id TEXT NOT NULL,
 			PRIMARY KEY(product_id, tag_id)
 		)`,
 	}
@@ -316,8 +316,8 @@ func addSQLiteForeignKeys(sqlitePath string) error {
 			statements: []string{
 				"ALTER TABLE product_tags RENAME TO product_tags_old",
 				`CREATE TABLE product_tags(
-					product_id TEXT,
-					tag_id TEXT,
+					product_id TEXT NOT NULL,
+					tag_id TEXT NOT NULL,
 					PRIMARY KEY(product_id, tag_id),
 					FOREIGN KEY (product_id) REFERENCES products(id),
 					FOREIGN KEY (tag_id) REFERENCES tags(id)
