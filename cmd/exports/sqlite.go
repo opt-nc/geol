@@ -141,8 +141,8 @@ func exportDuckDBToSQLite(db *sql.DB, sqlitePath string) error {
 			uri TEXT NOT NULL
 		)`,
 		`CREATE TABLE sqlite_db.aliases(
-			id TEXT,
-			product_id TEXT,
+			id TEXT NOT NULL,
+			product_id TEXT NOT NULL,
 			PRIMARY KEY(id, product_id)
 		)`,
 		`CREATE TABLE sqlite_db.details(
@@ -268,8 +268,8 @@ func addSQLiteForeignKeys(sqlitePath string) error {
 			statements: []string{
 				"ALTER TABLE aliases RENAME TO aliases_old",
 				`CREATE TABLE aliases(
-					id TEXT,
-					product_id TEXT,
+					id TEXT NOT NULL,
+					product_id TEXT NOT NULL,
 					PRIMARY KEY(id, product_id),
 					FOREIGN KEY (product_id) REFERENCES products(id)
 				)`,

@@ -575,8 +575,8 @@ func createProductsTable(db *sql.DB, allData *productDataMap) error {
 func createAliasesTable(db *sql.DB, allData *productDataMap) error {
 	// Create 'aliases' table if not exists
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS aliases (
-			id TEXT,
-			product_id TEXT,
+			id TEXT NOT NULL,
+			product_id TEXT NOT NULL,
 			PRIMARY KEY (id, product_id),
 			FOREIGN KEY (product_id) REFERENCES products(id)
 		)`)
