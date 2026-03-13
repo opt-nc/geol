@@ -423,11 +423,11 @@ func createTempDetailsTable(db *sql.DB, allData *productDataMap) error {
 func createDetailsTable(db *sql.DB) error {
 	// Create 'details' table with DATE columns for release_date, latest_release_date, and eol
 	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS details (
-			product_id TEXT,
-			cycle TEXT,
-			is_lts BOOLEAN,
-			release_date DATE,
-			latest TEXT,
+			product_id TEXT NOT NULL,
+			cycle TEXT NOT NULL,
+			is_lts BOOLEAN NOT NULL,
+			release_date DATE NOT NULL,
+			latest TEXT NOT NULL,
 			latest_release_date DATE,
 			eol_date DATE,
 			PRIMARY KEY (product_id, cycle),

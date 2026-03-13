@@ -146,11 +146,11 @@ func exportDuckDBToSQLite(db *sql.DB, sqlitePath string) error {
 			PRIMARY KEY(id, product_id)
 		)`,
 		`CREATE TABLE sqlite_db.details(
-			product_id TEXT,
-			cycle TEXT,
-			is_lts INTEGER,
-			release_date TEXT,
-			latest TEXT,
+			product_id TEXT NOT NULL,
+			cycle TEXT NOT NULL,
+			is_lts INTEGER NOT NULL,
+			release_date TEXT NOT NULL,
+			latest TEXT NOT NULL,
 			latest_release_date TEXT,
 			eol_date TEXT,
 			PRIMARY KEY(product_id, cycle)
@@ -282,11 +282,11 @@ func addSQLiteForeignKeys(sqlitePath string) error {
 			statements: []string{
 				"ALTER TABLE details RENAME TO details_old",
 				`CREATE TABLE details(
-					product_id TEXT,
-					cycle TEXT,
-					is_lts INTEGER,
-					release_date TEXT,
-					latest TEXT,
+					product_id TEXT NOT NULL,
+					cycle TEXT NOT NULL,
+					is_lts INTEGER NOT NULL,
+					release_date TEXT NOT NULL,
+					latest TEXT NOT NULL,
 					latest_release_date TEXT,
 					eol_date TEXT,
 					PRIMARY KEY(product_id, cycle),
