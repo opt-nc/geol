@@ -1,0 +1,76 @@
+version: '3'
+
+vars:
+  GEOL_CONFIG: .geol.yaml
+  QMD_FILE: geol-check-report.qmd
+  OUTPUT_FILE: geol-check-report.html
+  ADDITIONAL_CONTEXT: ""
+
+tasks:
+  default:
+    cmds:
+      - task: build
+
+  check-tools:
+    desc: Check if all required tools are installed
+    cmds:
+      - |
+        FAILED=0
+        for tool in uv quarto geol; do
+          if ! command -v $tool > /dev/null 2>&1; then
+            echo "Error: '$tool' is not installed."
+            if [ "$tool" = "geol" ]; then echo "To install: brew install curl && brew install --cask opt-nc/homebrew-tap/geol"; fi
+            if [ "$tool" = "quarto" ]; then echo "To install: brew install --cask quarto"; fi
+            if [ "$tool" = "uv" ]; then echo "To install: brew install uv"; fi
+            FAILED=1
+          else
+            echo "✓ $tool is installed ($($tool --version 2>/dev/null || $tool version 2>/dev/null | head -n 1))"
+          fi
+        done
+        if [ $FAILED -eq 1 ]; then exit 1; fi
+    silent: true
+
+  install-deps:
+    desc: Install Python dependencies
+    cmds:
+      - |
+        if [ ! -d ".venv" ]; then
+          echo "Creating virtual environment..."
+          uv venv
+        fi
+        echo "Installing dependencies from requirements.txt..."
+        uv pip install -r requirements.txt
+    sources:
+      - requirements.txt
+    generates:
+      - .venv/pyvenv.cfg
+
+  build:
+    desc: Build the Quarto report
+    deps: [check-tools, install-deps]
+    cmds:
+      - |
+        export PATH="{{.TASKFILE_DIR}}/.venv/bin:$PATH"
+        quarto render {{.QMD_FILE}} \
+          -P config_file={{.GEOL_CONFIG}} \
+          -P additional_context="{{.ADDITIONAL_CONTEXT}}" \
+          --to html --output {{.OUTPUT_FILE}}
+    sources:
+      - "{{.QMD_FILE}}"
+      - "{{.GEOL_CONFIG}}"
+    generates:
+      - "{{.OUTPUT_FILE}}"
+
+  clean:
+    desc: Clean generated files
+    cmds:
+      - rm -f {{.OUTPUT_FILE}}
+      - rm -f check_error.log check_output.json
+      - rm -rf {{.QMD_FILE|replace ".qmd" "_files"}}
+      - rm -rf .quarto
+
+  clean-all:
+    desc: Clean generated files and virtual environment
+    cmds:
+      - task: clean
+      - rm -rf .venv
