@@ -1,7 +1,7 @@
 # `geol`
 
+![GitHub Downloads](https://img.shields.io/github/downloads/opt-nc/geol/total?logo=github)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/opt-nc/geol)
-![GitHub Workflow Status](https://github.com/opt-nc/geol/actions/workflows/test-release.yml/badge.svg)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/opt-nc/geol)
 ![GitHub License](https://img.shields.io/github/license/opt-nc/geol)
 ![GitHub Repo stars](https://img.shields.io/github/stars/opt-nc/geol)
