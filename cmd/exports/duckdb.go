@@ -753,7 +753,7 @@ func createProductIdentifiersTable(db *sql.DB, allData *productDataMap) error {
 				// Special handling for repology identifiers - store full URL
 				identifierValue := identifier.ID
 				if identifier.Type == "repology" {
-					identifierValue = "https://repology.org/project/" + identifier.ID
+					identifierValue = "repology:" + identifier.ID
 				}
 
 				allIdentifiers = append(allIdentifiers, identifierEntry{
@@ -1082,7 +1082,7 @@ If the file already exists, use the --force flag to overwrite it.`,
 
 		duration := time.Since(startTime)
 		log.Info().Msgf("DuckDB database created successfully at %s (took %v)", dbPath, duration.Round(time.Millisecond))
-		
+
 		log.Info().Msg("You can query the database using the DuckDB CLI or any compatible client.")
 		log.Info().Msg("For the best experience, install DuckDB via Homebrew: brew install duckdb")
 		log.Info().Msgf("Example CLI command: duckdb %s", dbPath)
