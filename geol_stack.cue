@@ -42,5 +42,5 @@ stack: [...{
     // Set to true to mark products that your organization requires to be on the latest version.
     // This allows you to get alerts when not using the most recent release
     // and helps enforce up-to-date policies for critical components.
-    always-latest?: bool | *false
+    "always-latest"?: bool | *false
 }]
