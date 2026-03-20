@@ -26,7 +26,25 @@ const (
 	maxWidth = 60
 )
 
-var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
+var (
+	helpStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
+	currentDBPath string
+)
+
+// cleanupDuckDBFiles removes the DuckDB database and WAL files
+func cleanupDuckDBFiles() {
+	if currentDBPath != "" {
+		// Remove WAL file
+		walPath := currentDBPath + ".wal"
+		if err := os.Remove(walPath); err == nil {
+			log.Info().Msgf("Removed WAL file: %s", walPath)
+		}
+		// Remove main database file
+		if err := os.Remove(currentDBPath); err == nil {
+			log.Info().Msgf("Removed database file: %s", currentDBPath)
+		}
+	}
+}
 
 type productProcessedMsg string
 
@@ -167,9 +185,9 @@ func fetchAllProductData(cmd *cobra.Command) (*productDataMap, error) {
 			}
 
 			if resp.StatusCode != 200 {
+				cleanupDuckDBFiles()
 				log.Fatal().Msgf("Client error for product %s: API returned status %d", productName, resp.StatusCode)
 			}
-
 			// Parse JSON response
 			var apiResp struct {
 				Result struct {
@@ -240,6 +258,7 @@ func fetchAllCategories() (map[string]utilities.Category, error) {
 	}()
 
 	if resp.StatusCode != 200 {
+		cleanupDuckDBFiles()
 		log.Fatal().Msgf("Client error fetching categories: API returned status %d", resp.StatusCode)
 	}
 
@@ -276,6 +295,7 @@ func fetchAllTags() (map[string]utilities.Tag, error) {
 	}()
 
 	if resp.StatusCode != 200 {
+		cleanupDuckDBFiles()
 		log.Fatal().Msgf("Client error fetching tags: API returned status %d", resp.StatusCode)
 	}
 
@@ -1061,6 +1081,7 @@ If the file already exists, use the --force flag to overwrite it.`,
 
 		utilities.AnalyzeCacheProductsValidity(cmd)
 		dbPath, _ := cmd.Flags().GetString("output")
+		currentDBPath = dbPath
 		forceDuckDB, _ := cmd.Flags().GetBool("force")
 		if _, err := os.Stat(dbPath); err == nil {
 			if !forceDuckDB {
@@ -1083,6 +1104,7 @@ If the file already exists, use the --force flag to overwrite it.`,
 		}()
 
 		if err := populateDuckDB(cmd, db); err != nil {
+			cleanupDuckDBFiles()
 			log.Fatal().Err(err).Msg("Error populating DuckDB database")
 		}
 
