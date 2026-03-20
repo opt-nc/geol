@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -26,7 +27,25 @@ const (
 	maxWidth = 60
 )
 
-var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
+var (
+	helpStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#626262")).Render
+	currentDBPath string
+)
+
+// cleanupDuckDBFiles removes the DuckDB database and WAL files
+func cleanupDuckDBFiles() {
+	if currentDBPath != "" {
+		// Remove WAL file
+		walPath := currentDBPath + ".wal"
+		if err := os.Remove(walPath); err == nil {
+			log.Info().Msgf("Removed WAL file: %s", walPath)
+		}
+		// Remove main database file
+		if err := os.Remove(currentDBPath); err == nil {
+			log.Info().Msgf("Removed database file: %s", currentDBPath)
+		}
+	}
+}
 
 type productProcessedMsg string
 
@@ -131,6 +150,15 @@ func fetchAllProductData(cmd *cobra.Command) (*productDataMap, error) {
 		Products: make(map[string]*productData),
 	}
 
+	// Read API delay from environment variable
+	var apiDelay time.Duration
+	if delayStr := os.Getenv("GEOL_API_DELAY_MS"); delayStr != "" {
+		if delayMs, err := strconv.Atoi(delayStr); err == nil && delayMs > 0 {
+			apiDelay = time.Duration(delayMs) * time.Millisecond
+			log.Debug().Msgf("API delay set to %v between requests", apiDelay)
+		}
+	}
+
 	// Initialize the bubbletea model with progress bar
 	m := model{
 		progress:          progress.New(progress.WithWidth(maxWidth)),
@@ -167,11 +195,10 @@ func fetchAllProductData(cmd *cobra.Command) (*productDataMap, error) {
 			}
 
 			if resp.StatusCode != 200 {
-				log.Warn().Msgf("Product %s not found on the API (status %d), skipping", productName, resp.StatusCode)
-				p.Send(productProcessedMsg(productName))
-				continue
+				log.Error().Msgf("Client error for product %s: API returned status %d", productName, resp.StatusCode)
+				cleanupDuckDBFiles()
+				log.Fatal().Msg("Try to export GEOL_API_DELAY_MS=200 to add a delay between API requests and avoid overloading the API")
 			}
-
 			// Parse JSON response
 			var apiResp struct {
 				Result struct {
@@ -214,6 +241,11 @@ func fetchAllProductData(cmd *cobra.Command) (*productDataMap, error) {
 			}
 
 			p.Send(productProcessedMsg(productName))
+
+			// Add delay between API requests if configured
+			if apiDelay > 0 {
+				time.Sleep(apiDelay)
+			}
 		}
 	}()
 
@@ -240,6 +272,12 @@ func fetchAllCategories() (map[string]utilities.Category, error) {
 			log.Error().Err(err).Msg("Error closing response body")
 		}
 	}()
+
+	if resp.StatusCode != 200 {
+		log.Error().Msgf("Client error fetching categories: API returned status %d", resp.StatusCode)
+		cleanupDuckDBFiles()
+		log.Fatal().Msg("Try to export GEOL_API_DELAY_MS=200 to add a delay between API requests and avoid overloading the API")
+	}
 
 	var apiResp struct {
 		Result []utilities.Category `json:"result"`
@@ -272,6 +310,12 @@ func fetchAllTags() (map[string]utilities.Tag, error) {
 			log.Error().Err(err).Msg("Error closing response body")
 		}
 	}()
+
+	if resp.StatusCode != 200 {
+		log.Error().Msgf("Client error fetching tags: API returned status %d", resp.StatusCode)
+		cleanupDuckDBFiles()
+		log.Fatal().Msg("Try to export GEOL_API_DELAY_MS=200 to add a delay between API requests and avoid overloading the API")
+	}
 
 	var apiResp struct {
 		Result []utilities.Tag `json:"result"`
@@ -753,7 +797,7 @@ func createProductIdentifiersTable(db *sql.DB, allData *productDataMap) error {
 				// Special handling for repology identifiers - store full URL
 				identifierValue := identifier.ID
 				if identifier.Type == "repology" {
-					identifierValue = "https://repology.org/project/" + identifier.ID
+					identifierValue = "repology:" + identifier.ID
 				}
 
 				allIdentifiers = append(allIdentifiers, identifierEntry{
@@ -1055,6 +1099,7 @@ If the file already exists, use the --force flag to overwrite it.`,
 
 		utilities.AnalyzeCacheProductsValidity(cmd)
 		dbPath, _ := cmd.Flags().GetString("output")
+		currentDBPath = dbPath
 		forceDuckDB, _ := cmd.Flags().GetBool("force")
 		if _, err := os.Stat(dbPath); err == nil {
 			if !forceDuckDB {
@@ -1077,12 +1122,15 @@ If the file already exists, use the --force flag to overwrite it.`,
 		}()
 
 		if err := populateDuckDB(cmd, db); err != nil {
+			cleanupDuckDBFiles()
 			log.Fatal().Err(err).Msg("Error populating DuckDB database")
 		}
 
 		duration := time.Since(startTime)
 		log.Info().Msgf("DuckDB database created successfully at %s (took %v)", dbPath, duration.Round(time.Millisecond))
-		log.Info().Msg("You can query the database using DuckDB CLI or any compatible client.")
+
+		log.Info().Msg("You can query the database using the DuckDB CLI or any compatible client.")
+		log.Info().Msg("For the best experience, install DuckDB via Homebrew: brew install duckdb")
 		log.Info().Msgf("Example CLI command: duckdb %s", dbPath)
 		log.Info().Msg("Check https://github.com/davidgasquez/awesome-duckdb for more tools and clients.")
 	},
