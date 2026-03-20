@@ -53,7 +53,7 @@ const (
 const (
 	CommentColProductIdentifiersProductID = "Product id referencing the products table"
 	CommentColProductIdentifiersType      = "Type of identifier (e.g., repology, purl, cpe)"
-	CommentColProductIdentifiersValue     = "Value of the identifier"
+	CommentColProductIdentifiersValue     = "Value of the identifier. For repology type, stored with ''repology:'' prefix. Reconstruct full URL with: https://repology.org/project/ + identifier_value (after removing ''repology:'' prefix)"
 )
 
 // Column comments: tags table
