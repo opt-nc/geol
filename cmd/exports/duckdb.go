@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -149,6 +150,15 @@ func fetchAllProductData(cmd *cobra.Command) (*productDataMap, error) {
 		Products: make(map[string]*productData),
 	}
 
+	// Read API delay from environment variable
+	var apiDelay time.Duration
+	if delayStr := os.Getenv("GEOL_API_DELAY_MS"); delayStr != "" {
+		if delayMs, err := strconv.Atoi(delayStr); err == nil && delayMs > 0 {
+			apiDelay = time.Duration(delayMs) * time.Millisecond
+			log.Debug().Msgf("API delay set to %v between requests", apiDelay)
+		}
+	}
+
 	// Initialize the bubbletea model with progress bar
 	m := model{
 		progress:          progress.New(progress.WithWidth(maxWidth)),
@@ -185,8 +195,9 @@ func fetchAllProductData(cmd *cobra.Command) (*productDataMap, error) {
 			}
 
 			if resp.StatusCode != 200 {
+				log.Error().Msgf("Client error for product %s: API returned status %d", productName, resp.StatusCode)
 				cleanupDuckDBFiles()
-				log.Fatal().Msgf("Client error for product %s: API returned status %d", productName, resp.StatusCode)
+				log.Fatal().Msg("Try to export GEOL_API_DELAY_MS=200 to add a delay between API requests and avoid overloading the API")
 			}
 			// Parse JSON response
 			var apiResp struct {
@@ -230,6 +241,11 @@ func fetchAllProductData(cmd *cobra.Command) (*productDataMap, error) {
 			}
 
 			p.Send(productProcessedMsg(productName))
+
+			// Add delay between API requests if configured
+			if apiDelay > 0 {
+				time.Sleep(apiDelay)
+			}
 		}
 	}()
 
@@ -258,8 +274,9 @@ func fetchAllCategories() (map[string]utilities.Category, error) {
 	}()
 
 	if resp.StatusCode != 200 {
+		log.Error().Msgf("Client error fetching categories: API returned status %d", resp.StatusCode)
 		cleanupDuckDBFiles()
-		log.Fatal().Msgf("Client error fetching categories: API returned status %d", resp.StatusCode)
+		log.Fatal().Msg("Try to export GEOL_API_DELAY_MS=200 to add a delay between API requests and avoid overloading the API")
 	}
 
 	var apiResp struct {
@@ -295,8 +312,9 @@ func fetchAllTags() (map[string]utilities.Tag, error) {
 	}()
 
 	if resp.StatusCode != 200 {
+		log.Error().Msgf("Client error fetching tags: API returned status %d", resp.StatusCode)
 		cleanupDuckDBFiles()
-		log.Fatal().Msgf("Client error fetching tags: API returned status %d", resp.StatusCode)
+		log.Fatal().Msg("Try to export GEOL_API_DELAY_MS=200 to add a delay between API requests and avoid overloading the API")
 	}
 
 	var apiResp struct {
