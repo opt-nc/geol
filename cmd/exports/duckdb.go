@@ -167,9 +167,7 @@ func fetchAllProductData(cmd *cobra.Command) (*productDataMap, error) {
 			}
 
 			if resp.StatusCode != 200 {
-				log.Warn().Msgf("Product %s not found on the API (status %d), skipping", productName, resp.StatusCode)
-				p.Send(productProcessedMsg(productName))
-				continue
+				log.Fatal().Msgf("Client error for product %s: API returned status %d", productName, resp.StatusCode)
 			}
 
 			// Parse JSON response
@@ -241,6 +239,10 @@ func fetchAllCategories() (map[string]utilities.Category, error) {
 		}
 	}()
 
+	if resp.StatusCode != 200 {
+		log.Fatal().Msgf("Client error fetching categories: API returned status %d", resp.StatusCode)
+	}
+
 	var apiResp struct {
 		Result []utilities.Category `json:"result"`
 	}
@@ -272,6 +274,10 @@ func fetchAllTags() (map[string]utilities.Tag, error) {
 			log.Error().Err(err).Msg("Error closing response body")
 		}
 	}()
+
+	if resp.StatusCode != 200 {
+		log.Fatal().Msgf("Client error fetching tags: API returned status %d", resp.StatusCode)
+	}
 
 	var apiResp struct {
 		Result []utilities.Tag `json:"result"`
