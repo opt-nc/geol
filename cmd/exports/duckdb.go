@@ -155,7 +155,7 @@ func fetchAllProductData(cmd *cobra.Command) (*productDataMap, error) {
 	if delayStr := os.Getenv("GEOL_API_DELAY_MS"); delayStr != "" {
 		if delayMs, err := strconv.Atoi(delayStr); err == nil && delayMs > 0 {
 			apiDelay = time.Duration(delayMs) * time.Millisecond
-			log.Debug().Msgf("API delay set to %v between requests", apiDelay)
+			log.Info().Msgf("GEOL_API_DELAY_MS: API delay set to %v ms between requests (export GEOL_API_DELAY_MS=50 to change, or 0 to disable)", apiDelay)
 		}
 	}
 
@@ -197,7 +197,7 @@ func fetchAllProductData(cmd *cobra.Command) (*productDataMap, error) {
 			if resp.StatusCode != 200 {
 				log.Error().Msgf("Client error for product %s: API returned status %d", productName, resp.StatusCode)
 				cleanupDuckDBFiles()
-				log.Fatal().Msg("Try to export GEOL_API_DELAY_MS=200 to add a delay between API requests and avoid overloading the API")
+				log.Fatal().Msg("Try to export GEOL_API_DELAY_MS=200 to add a delay between API requests and avoid overloading the API then retry")
 			}
 			// Parse JSON response
 			var apiResp struct {
@@ -276,7 +276,7 @@ func fetchAllCategories() (map[string]utilities.Category, error) {
 	if resp.StatusCode != 200 {
 		log.Error().Msgf("Client error fetching categories: API returned status %d", resp.StatusCode)
 		cleanupDuckDBFiles()
-		log.Fatal().Msg("Try to export GEOL_API_DELAY_MS=200 to add a delay between API requests and avoid overloading the API")
+		log.Fatal().Msg("Try to export GEOL_API_DELAY_MS=200 to add a delay between API requests and avoid overloading the API then retry")
 	}
 
 	var apiResp struct {
@@ -314,7 +314,7 @@ func fetchAllTags() (map[string]utilities.Tag, error) {
 	if resp.StatusCode != 200 {
 		log.Error().Msgf("Client error fetching tags: API returned status %d", resp.StatusCode)
 		cleanupDuckDBFiles()
-		log.Fatal().Msg("Try to export GEOL_API_DELAY_MS=200 to add a delay between API requests and avoid overloading the API")
+		log.Fatal().Msg("Try to export GEOL_API_DELAY_MS=200 to add a delay between API requests and avoid overloading the API then retry")
 	}
 
 	var apiResp struct {
