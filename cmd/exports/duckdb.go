@@ -464,9 +464,20 @@ func createTempDetailsTable(db *sql.DB, allData *productDataMap) error {
 }
 
 // createDetailsTable creates the final 'details' table from 'details_temp' with proper date types
-func createDetailsTable(db *sql.DB) error {
-	// Create 'details' table with DATE columns for release_date, latest_release_date, and eol
-	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS details (
+func createDetailsTable(db *sql.DB, skipIntegrity bool) error {
+	var createTableSQL string
+	if skipIntegrity {
+		createTableSQL = `CREATE TABLE IF NOT EXISTS details (
+			product_id TEXT,
+			release_cycle TEXT,
+			is_lts BOOLEAN,
+			release_date DATE,
+			latest TEXT,
+			latest_release_date DATE,
+			eol_date DATE
+		)`
+	} else {
+		createTableSQL = `CREATE TABLE IF NOT EXISTS details (
 			product_id TEXT NOT NULL,
 			release_cycle TEXT NOT NULL,
 			is_lts BOOLEAN NOT NULL,
@@ -476,7 +487,11 @@ func createDetailsTable(db *sql.DB) error {
 			eol_date DATE,
 			PRIMARY KEY (product_id, release_cycle),
 			FOREIGN KEY (product_id) REFERENCES products(id)
-		)`)
+		)`
+	}
+	
+	// Create 'details' table with DATE columns for release_date, latest_release_date, and eol
+	_, err := db.Exec(createTableSQL)
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'details' table")
 		return err
@@ -527,15 +542,27 @@ func createDetailsTable(db *sql.DB) error {
 }
 
 // createProductsTable creates the 'products' table and inserts product information
-func createProductsTable(db *sql.DB, allData *productDataMap) error {
-	// Create 'products' table if not exists
-	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS products (
+func createProductsTable(db *sql.DB, allData *productDataMap, skipIntegrity bool) error {
+	var createTableSQL string
+	if skipIntegrity {
+		createTableSQL = `CREATE TABLE IF NOT EXISTS products (
+			id TEXT,
+			label TEXT,
+			category_id TEXT,
+			uri TEXT
+		)`
+	} else {
+		createTableSQL = `CREATE TABLE IF NOT EXISTS products (
 			id TEXT PRIMARY KEY NOT NULL,
 			label TEXT NOT NULL,
 			category_id TEXT NOT NULL,
 			uri TEXT NOT NULL,
 			FOREIGN KEY (category_id) REFERENCES categories(id)
-		)`)
+		)`
+	}
+	
+	// Create 'products' table if not exists
+	_, err := db.Exec(createTableSQL)
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'products' table")
 		return err
@@ -616,14 +643,24 @@ func createProductsTable(db *sql.DB, allData *productDataMap) error {
 	return nil
 }
 
-func createAliasesTable(db *sql.DB, allData *productDataMap) error {
-	// Create 'aliases' table if not exists
-	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS aliases (
+func createAliasesTable(db *sql.DB, allData *productDataMap, skipIntegrity bool) error {
+	var createTableSQL string
+	if skipIntegrity {
+		createTableSQL = `CREATE TABLE IF NOT EXISTS aliases (
+			id TEXT,
+			product_id TEXT
+		)`
+	} else {
+		createTableSQL = `CREATE TABLE IF NOT EXISTS aliases (
 			id TEXT NOT NULL,
 			product_id TEXT NOT NULL,
 			PRIMARY KEY (id, product_id),
 			FOREIGN KEY (product_id) REFERENCES products(id)
-		)`)
+		)`
+	}
+	
+	// Create 'aliases' table if not exists
+	_, err := db.Exec(createTableSQL)
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'aliases' table")
 		return err
@@ -724,15 +761,26 @@ func createAliasesTable(db *sql.DB, allData *productDataMap) error {
 	return nil
 }
 
-func createProductIdentifiersTable(db *sql.DB, allData *productDataMap) error {
-	// Create 'product_identifiers' table if not exists
-	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS product_identifiers (
+func createProductIdentifiersTable(db *sql.DB, allData *productDataMap, skipIntegrity bool) error {
+	var createTableSQL string
+	if skipIntegrity {
+		createTableSQL = `CREATE TABLE IF NOT EXISTS product_identifiers (
+			product_id TEXT,
+			identifier_type TEXT,
+			identifier_value TEXT
+		)`
+	} else {
+		createTableSQL = `CREATE TABLE IF NOT EXISTS product_identifiers (
 			product_id TEXT NOT NULL,
 			identifier_type TEXT NOT NULL,
 			identifier_value TEXT NOT NULL,
 			PRIMARY KEY (product_id, identifier_type, identifier_value),
 			FOREIGN KEY (product_id) REFERENCES products(id)
-		)`)
+		)`
+	}
+	
+	// Create 'product_identifiers' table if not exists
+	_, err := db.Exec(createTableSQL)
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'product_identifiers' table")
 		return err
@@ -845,13 +893,24 @@ func createProductIdentifiersTable(db *sql.DB, allData *productDataMap) error {
 	return nil
 }
 
-func createTagsTable(db *sql.DB, allTags map[string]utilities.Tag) error {
-	// Create 'tags' table if not exists
-	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS tags (
+func createTagsTable(db *sql.DB, allTags map[string]utilities.Tag, skipIntegrity bool) error {
+	var createTableSQL string
+	if skipIntegrity {
+		createTableSQL = `CREATE TABLE IF NOT EXISTS tags (
+			id TEXT,
+			uri TEXT,
+			www TEXT
+		)`
+	} else {
+		createTableSQL = `CREATE TABLE IF NOT EXISTS tags (
 			id TEXT PRIMARY KEY,
 			uri TEXT UNIQUE NOT NULL,
 			www TEXT NOT NULL
-		)`)
+		)`
+	}
+	
+	// Create 'tags' table if not exists
+	_, err := db.Exec(createTableSQL)
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'tags' table")
 		return err
@@ -927,12 +986,22 @@ func createTagsTable(db *sql.DB, allTags map[string]utilities.Tag) error {
 	return nil
 }
 
-func createCategoriesTable(db *sql.DB, allCategories map[string]utilities.Category) error {
-	// Create 'categories' table if not exists
-	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS categories (
+func createCategoriesTable(db *sql.DB, allCategories map[string]utilities.Category, skipIntegrity bool) error {
+	var createTableSQL string
+	if skipIntegrity {
+		createTableSQL = `CREATE TABLE IF NOT EXISTS categories (
+			id TEXT,
+			uri TEXT
+		)`
+	} else {
+		createTableSQL = `CREATE TABLE IF NOT EXISTS categories (
 			id TEXT PRIMARY KEY,
 			uri TEXT NOT NULL
-		)`)
+		)`
+	}
+	
+	// Create 'categories' table if not exists
+	_, err := db.Exec(createTableSQL)
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'categories' table")
 		return err
@@ -1003,15 +1072,25 @@ func createCategoriesTable(db *sql.DB, allCategories map[string]utilities.Catego
 	return nil
 }
 
-func createProductTagsTable(db *sql.DB, allData *productDataMap) error {
-	// Create 'product_tags' table if not exists
-	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS product_tags (
+func createProductTagsTable(db *sql.DB, allData *productDataMap, skipIntegrity bool) error {
+	var createTableSQL string
+	if skipIntegrity {
+		createTableSQL = `CREATE TABLE IF NOT EXISTS product_tags (
+			product_id TEXT,
+			tag_id TEXT
+		)`
+	} else {
+		createTableSQL = `CREATE TABLE IF NOT EXISTS product_tags (
 			product_id TEXT NOT NULL,
 			tag_id TEXT NOT NULL,
 			PRIMARY KEY (product_id, tag_id),
 			FOREIGN KEY (product_id) REFERENCES products(id),
 			FOREIGN KEY (tag_id) REFERENCES tags(id)
-		)`)
+		)`
+	}
+	
+	// Create 'product_tags' table if not exists
+	_, err := db.Exec(createTableSQL)
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'product_tags' table")
 		return err
@@ -1101,6 +1180,7 @@ If the file already exists, use the --force flag to overwrite it.`,
 		dbPath, _ := cmd.Flags().GetString("output")
 		currentDBPath = dbPath
 		forceDuckDB, _ := cmd.Flags().GetBool("force")
+		skipIntegrity, _ := cmd.Flags().GetBool("skip-integrity")
 		if _, err := os.Stat(dbPath); err == nil {
 			if !forceDuckDB {
 				log.Fatal().Msgf("File %s already exists. Use --force to overwrite.", dbPath)
@@ -1121,7 +1201,7 @@ If the file already exists, use the --force flag to overwrite it.`,
 			}
 		}()
 
-		if err := populateDuckDB(cmd, db); err != nil {
+		if err := populateDuckDB(cmd, db, skipIntegrity); err != nil {
 			cleanupDuckDBFiles()
 			log.Fatal().Err(err).Msg("Error populating DuckDB database")
 		}
@@ -1138,7 +1218,7 @@ If the file already exists, use the --force flag to overwrite it.`,
 
 // populateDuckDB fetches all data from the API and creates all tables in the given DuckDB database.
 // This function is shared by both the duckdb and sqlite export commands.
-func populateDuckDB(cmd *cobra.Command, db *sql.DB) error {
+func populateDuckDB(cmd *cobra.Command, db *sql.DB, skipIntegrity bool) error {
 	allProductsData, err := fetchAllProductData(cmd)
 	if err != nil {
 		return fmt.Errorf("error fetching product data from API: %w", err)
@@ -1154,28 +1234,28 @@ func populateDuckDB(cmd *cobra.Command, db *sql.DB) error {
 		return fmt.Errorf("error fetching categories from API: %w", err)
 	}
 
-	if err := createTagsTable(db, allTags); err != nil {
+	if err := createTagsTable(db, allTags, skipIntegrity); err != nil {
 		return fmt.Errorf("error creating 'tags' table: %w", err)
 	}
-	if err := createCategoriesTable(db, allCategories); err != nil {
+	if err := createCategoriesTable(db, allCategories, skipIntegrity); err != nil {
 		return fmt.Errorf("error creating 'categories' table: %w", err)
 	}
-	if err := createProductsTable(db, allProductsData); err != nil {
+	if err := createProductsTable(db, allProductsData, skipIntegrity); err != nil {
 		return fmt.Errorf("error creating 'products' table: %w", err)
 	}
 	if err := createTempDetailsTable(db, allProductsData); err != nil {
 		return fmt.Errorf("error creating 'details_temp' table: %w", err)
 	}
-	if err := createDetailsTable(db); err != nil {
+	if err := createDetailsTable(db, skipIntegrity); err != nil {
 		return fmt.Errorf("error creating 'details' table: %w", err)
 	}
-	if err := createAliasesTable(db, allProductsData); err != nil {
+	if err := createAliasesTable(db, allProductsData, skipIntegrity); err != nil {
 		return fmt.Errorf("error creating 'aliases' table: %w", err)
 	}
-	if err := createProductIdentifiersTable(db, allProductsData); err != nil {
+	if err := createProductIdentifiersTable(db, allProductsData, skipIntegrity); err != nil {
 		return fmt.Errorf("error creating 'product_identifiers' table: %w", err)
 	}
-	if err := createProductTagsTable(db, allProductsData); err != nil {
+	if err := createProductTagsTable(db, allProductsData, skipIntegrity); err != nil {
 		return fmt.Errorf("error creating 'product_tags' table: %w", err)
 	}
 	if err := createAboutTable(db); err != nil {
@@ -1189,4 +1269,5 @@ func init() {
 	ExportCmd.AddCommand(duckdbCmd)
 	duckdbCmd.Flags().StringP("output", "o", "geol.duckdb", "Output DuckDB database file path")
 	duckdbCmd.Flags().BoolP("force", "f", false, "Overwrites the DuckDB database file if it already exists")
+	duckdbCmd.Flags().Bool("skip-integrity", false, "Create tables without constraints (no PRIMARY KEY, FOREIGN KEY, NOT NULL, or UNIQUE)")
 }

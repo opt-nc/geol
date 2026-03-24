@@ -31,6 +31,7 @@ If the file already exists, use the --force flag to overwrite it.`,
 		utilities.AnalyzeCacheProductsValidity(cmd)
 		sqlitePath, _ := cmd.Flags().GetString("output")
 		forceSQLite, _ := cmd.Flags().GetBool("force")
+		skipIntegrity, _ := cmd.Flags().GetBool("skip-integrity")
 
 		if _, err := os.Stat(sqlitePath); err == nil {
 			if !forceSQLite {
@@ -53,7 +54,7 @@ If the file already exists, use the --force flag to overwrite it.`,
 		tempDuckDB := filepath.Join(geolConfigDir, "geol_export.duckdb.tmp")
 
 		// Populate DuckDB then export to SQLite, cleaning up DuckDB resources before FK step
-		if err := buildDuckDBAndExportToSQLite(cmd, tempDuckDB, sqlitePath); err != nil {
+		if err := buildDuckDBAndExportToSQLite(cmd, tempDuckDB, sqlitePath, skipIntegrity); err != nil {
 			log.Fatal().Err(err).Msg("Error building DuckDB and exporting to SQLite")
 		}
 
@@ -64,11 +65,14 @@ If the file already exists, use the --force flag to overwrite it.`,
 			}
 		}
 
-		log.Info().Msg("Adding foreign key constraints to SQLite...")
+		// Only add foreign key constraints if not skipping integrity
+		if !skipIntegrity {
+			log.Info().Msg("Adding foreign key constraints to SQLite...")
 
-		// Add foreign key constraints to SQLite (mirrors add_fk.sql)
-		if err := addSQLiteForeignKeys(sqlitePath); err != nil {
-			log.Fatal().Err(err).Msg("Error adding foreign key constraints to SQLite")
+			// Add foreign key constraints to SQLite (mirrors add_fk.sql)
+			if err := addSQLiteForeignKeys(sqlitePath); err != nil {
+				log.Fatal().Err(err).Msg("Error adding foreign key constraints to SQLite")
+			}
 		}
 
 		duration := time.Since(startTime)
@@ -80,7 +84,7 @@ If the file already exists, use the --force flag to overwrite it.`,
 
 // buildDuckDBAndExportToSQLite creates a temporary DuckDB, populates it, and exports to SQLite.
 // The DuckDB connection is closed before returning so the caller can safely open the SQLite file.
-func buildDuckDBAndExportToSQLite(cmd *cobra.Command, tempDuckDB, sqlitePath string) error {
+func buildDuckDBAndExportToSQLite(cmd *cobra.Command, tempDuckDB, sqlitePath string, skipIntegrity bool) error {
 	log.Info().Msg("Creating temporary DuckDB database...")
 
 	db, err := sql.Open("duckdb", tempDuckDB)
@@ -93,19 +97,19 @@ func buildDuckDBAndExportToSQLite(cmd *cobra.Command, tempDuckDB, sqlitePath str
 		}
 	}()
 
-	if err := populateDuckDB(cmd, db); err != nil {
+	if err := populateDuckDB(cmd, db, skipIntegrity); err != nil {
 		return err
 	}
 
 	log.Info().Msg("Converting DuckDB to SQLite...")
 
 	// Export to SQLite using the DuckDB sqlite extension (mirrors export_complete.sql)
-	return exportDuckDBToSQLite(db, sqlitePath)
+	return exportDuckDBToSQLite(db, sqlitePath, skipIntegrity)
 }
 
 // exportDuckDBToSQLite exports the DuckDB database to SQLite using the DuckDB sqlite extension.
 // Tables are created with proper PRIMARY KEY and UNIQUE constraints (mirrors export_complete.sql).
-func exportDuckDBToSQLite(db *sql.DB, sqlitePath string) error {
+func exportDuckDBToSQLite(db *sql.DB, sqlitePath string, skipIntegrity bool) error {
 	if _, err := db.Exec("INSTALL sqlite; LOAD sqlite;"); err != nil {
 		return fmt.Errorf("error loading SQLite extension: %w", err)
 	}
@@ -114,58 +118,112 @@ func exportDuckDBToSQLite(db *sql.DB, sqlitePath string) error {
 		return fmt.Errorf("error attaching SQLite database: %w", err)
 	}
 
-	// Create tables with PRIMARY KEYS and UNIQUE constraints
-	tableCreations := []string{
-		`CREATE TABLE sqlite_db.categories(
-			id TEXT PRIMARY KEY,
-			uri TEXT NOT NULL
-		)`,
-		`CREATE TABLE sqlite_db.tags(
-			id TEXT PRIMARY KEY,
-			uri TEXT UNIQUE NOT NULL,
-			www TEXT NOT NULL
-		)`,
-		`CREATE TABLE sqlite_db.about(
-			git_version TEXT NOT NULL,
-			git_commit TEXT NOT NULL,
-			go_version TEXT NOT NULL,
-			platform TEXT NOT NULL,
-			github_url TEXT NOT NULL,
-			generated_at TEXT NOT NULL,
-			generated_at_tz TEXT NOT NULL
-		)`,
-		`CREATE TABLE sqlite_db.products(
-			id TEXT PRIMARY KEY NOT NULL,
-			label TEXT NOT NULL,
-			category_id TEXT NOT NULL,
-			uri TEXT NOT NULL
-		)`,
-		`CREATE TABLE sqlite_db.aliases(
-			id TEXT NOT NULL,
-			product_id TEXT NOT NULL,
-			PRIMARY KEY(id, product_id)
-		)`,
-		`CREATE TABLE sqlite_db.details(
-			product_id TEXT NOT NULL,
-			release_cycle TEXT NOT NULL,
-			is_lts INTEGER NOT NULL,
-			release_date TEXT NOT NULL,
-			latest TEXT NOT NULL,
-			latest_release_date TEXT,
-			eol_date TEXT,
-			PRIMARY KEY(product_id, release_cycle)
-		)`,
-		`CREATE TABLE sqlite_db.product_identifiers(
-			product_id TEXT NOT NULL,
-			identifier_type TEXT NOT NULL,
-			identifier_value TEXT NOT NULL,
-			PRIMARY KEY(product_id, identifier_type, identifier_value)
-		)`,
-		`CREATE TABLE sqlite_db.product_tags(
-			product_id TEXT NOT NULL,
-			tag_id TEXT NOT NULL,
-			PRIMARY KEY(product_id, tag_id)
-		)`,
+	var tableCreations []string
+	
+	if skipIntegrity {
+		// Create tables without constraints (except about which keeps NOT NULL)
+		tableCreations = []string{
+			`CREATE TABLE sqlite_db.categories(
+				id TEXT,
+				uri TEXT
+			)`,
+			`CREATE TABLE sqlite_db.tags(
+				id TEXT,
+				uri TEXT,
+				www TEXT
+			)`,
+			`CREATE TABLE sqlite_db.about(
+				git_version TEXT NOT NULL,
+				git_commit TEXT NOT NULL,
+				go_version TEXT NOT NULL,
+				platform TEXT NOT NULL,
+				github_url TEXT NOT NULL,
+				generated_at TEXT NOT NULL,
+				generated_at_tz TEXT NOT NULL
+			)`,
+			`CREATE TABLE sqlite_db.products(
+				id TEXT,
+				label TEXT,
+				category_id TEXT,
+				uri TEXT
+			)`,
+			`CREATE TABLE sqlite_db.aliases(
+				id TEXT,
+				product_id TEXT
+			)`,
+			`CREATE TABLE sqlite_db.details(
+				product_id TEXT,
+				release_cycle TEXT,
+				is_lts INTEGER,
+				release_date TEXT,
+				latest TEXT,
+				latest_release_date TEXT,
+				eol_date TEXT
+			)`,
+			`CREATE TABLE sqlite_db.product_identifiers(
+				product_id TEXT,
+				identifier_type TEXT,
+				identifier_value TEXT
+			)`,
+			`CREATE TABLE sqlite_db.product_tags(
+				product_id TEXT,
+				tag_id TEXT
+			)`,
+		}
+	} else {
+		// Create tables with PRIMARY KEYS and UNIQUE constraints
+		tableCreations = []string{
+			`CREATE TABLE sqlite_db.categories(
+				id TEXT PRIMARY KEY,
+				uri TEXT NOT NULL
+			)`,
+			`CREATE TABLE sqlite_db.tags(
+				id TEXT PRIMARY KEY,
+				uri TEXT UNIQUE NOT NULL,
+				www TEXT NOT NULL
+			)`,
+			`CREATE TABLE sqlite_db.about(
+				git_version TEXT NOT NULL,
+				git_commit TEXT NOT NULL,
+				go_version TEXT NOT NULL,
+				platform TEXT NOT NULL,
+				github_url TEXT NOT NULL,
+				generated_at TEXT NOT NULL,
+				generated_at_tz TEXT NOT NULL
+			)`,
+			`CREATE TABLE sqlite_db.products(
+				id TEXT PRIMARY KEY NOT NULL,
+				label TEXT NOT NULL,
+				category_id TEXT NOT NULL,
+				uri TEXT NOT NULL
+			)`,
+			`CREATE TABLE sqlite_db.aliases(
+				id TEXT NOT NULL,
+				product_id TEXT NOT NULL,
+				PRIMARY KEY(id, product_id)
+			)`,
+			`CREATE TABLE sqlite_db.details(
+				product_id TEXT NOT NULL,
+				release_cycle TEXT NOT NULL,
+				is_lts INTEGER NOT NULL,
+				release_date TEXT NOT NULL,
+				latest TEXT NOT NULL,
+				latest_release_date TEXT,
+				eol_date TEXT,
+				PRIMARY KEY(product_id, release_cycle)
+			)`,
+			`CREATE TABLE sqlite_db.product_identifiers(
+				product_id TEXT NOT NULL,
+				identifier_type TEXT NOT NULL,
+				identifier_value TEXT NOT NULL,
+				PRIMARY KEY(product_id, identifier_type, identifier_value)
+			)`,
+			`CREATE TABLE sqlite_db.product_tags(
+				product_id TEXT NOT NULL,
+				tag_id TEXT NOT NULL,
+				PRIMARY KEY(product_id, tag_id)
+			)`,
+		}
 	}
 
 	for _, ddl := range tableCreations {
@@ -354,4 +412,5 @@ func init() {
 	ExportCmd.AddCommand(sqliteCmd)
 	sqliteCmd.Flags().StringP("output", "o", "geol.sqlite", "Output SQLite database file path")
 	sqliteCmd.Flags().BoolP("force", "f", false, "Overwrites the SQLite database file if it already exists")
+	sqliteCmd.Flags().Bool("skip-integrity", false, "Create tables without constraints (no PRIMARY KEY, FOREIGN KEY, NOT NULL, or UNIQUE)")
 }
