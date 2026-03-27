@@ -50,3 +50,4 @@ manpages/
 *.duckdb
 *.sqlite
 geol-build/
+geol_lint.html

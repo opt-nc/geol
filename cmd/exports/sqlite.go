@@ -75,6 +75,11 @@ If the file already exists, use the --force flag to overwrite it.`,
 			if err := addSQLiteForeignKeys(sqlitePath); err != nil {
 				log.Fatal().Err(err).Msg("Error adding foreign key constraints to SQLite")
 			}
+
+			// Create indexes on foreign key columns
+			if err := createSQLiteIndexes(sqlitePath); err != nil {
+				log.Fatal().Err(err).Msg("Error creating indexes on SQLite foreign keys")
+			}
 		}
 
 		duration := time.Since(startTime)
@@ -180,12 +185,12 @@ func exportDuckDBToSQLite(db *sql.DB, sqlitePath string, skipIntegrity bool) err
 		if err != nil {
 			return fmt.Errorf("error parsing table template %d: %w", i, err)
 		}
-		
+
 		var buf bytes.Buffer
 		if err := tmpl.Execute(&buf, struct{ SkipIntegrity bool }{skipIntegrity}); err != nil {
 			return fmt.Errorf("error executing table template %d: %w", i, err)
 		}
-		
+
 		if _, err := db.Exec(buf.String()); err != nil {
 			return fmt.Errorf("error creating SQLite table %d: %w", i, err)
 		}
@@ -364,6 +369,68 @@ func addSQLiteForeignKeys(sqlitePath string) error {
 		log.Info().Msgf("Added foreign key constraints to \"%s\" table", migration.name)
 	}
 
+	return nil
+}
+
+// createSQLiteIndexes creates indexes on foreign key columns for optimal join performance
+func createSQLiteIndexes(sqlitePath string) error {
+	log.Info().Msg("Creating indexes on foreign key columns...")
+
+	db, err := sql.Open("sqlite3", sqlitePath)
+	if err != nil {
+		return fmt.Errorf("error opening SQLite database: %w", err)
+	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			log.Warn().Err(err).Msg("Error closing SQLite database")
+		}
+	}()
+
+	indexes := []struct {
+		name  string
+		query string
+	}{
+		// Index on products.category_id (FK to categories)
+		{
+			name:  "idx_products_category_id",
+			query: "CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id)",
+		},
+		// Index on details.product_id (FK to products)
+		{
+			name:  "idx_details_product_id",
+			query: "CREATE INDEX IF NOT EXISTS idx_details_product_id ON details(product_id)",
+		},
+		// Index on aliases.product_id (FK to products)
+		{
+			name:  "idx_aliases_product_id",
+			query: "CREATE INDEX IF NOT EXISTS idx_aliases_product_id ON aliases(product_id)",
+		},
+		// Index on product_identifiers.product_id (FK to products)
+		{
+			name:  "idx_product_identifiers_product_id",
+			query: "CREATE INDEX IF NOT EXISTS idx_product_identifiers_product_id ON product_identifiers(product_id)",
+		},
+		// Index on product_tags.product_id (FK to products)
+		{
+			name:  "idx_product_tags_product_id",
+			query: "CREATE INDEX IF NOT EXISTS idx_product_tags_product_id ON product_tags(product_id)",
+		},
+		// Index on product_tags.tag_id (FK to tags)
+		{
+			name:  "idx_product_tags_tag_id",
+			query: "CREATE INDEX IF NOT EXISTS idx_product_tags_tag_id ON product_tags(tag_id)",
+		},
+	}
+
+	for _, idx := range indexes {
+		if _, err := db.Exec(idx.query); err != nil {
+			log.Error().Err(err).Msgf("Error creating index %s", idx.name)
+			return fmt.Errorf("error creating index %s: %w", idx.name, err)
+		}
+		log.Info().Msgf("Created index: %s", idx.name)
+	}
+
+	log.Info().Msg("All foreign key indexes created successfully")
 	return nil
 }
 

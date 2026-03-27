@@ -484,7 +484,7 @@ func createDetailsTable(db *sql.DB, skipIntegrity bool) error {
 		log.Error().Err(err).Msg("Error executing template for 'details' table")
 		return err
 	}
-	
+
 	// Create 'details' table with DATE columns for release_date, latest_release_date, and eol
 	_, err := db.Exec(buf.String())
 	if err != nil {
@@ -551,7 +551,7 @@ func createProductsTable(db *sql.DB, allData *productDataMap, skipIntegrity bool
 		log.Error().Err(err).Msg("Error executing template for 'products' table")
 		return err
 	}
-	
+
 	// Create 'products' table if not exists
 	_, err := db.Exec(buf.String())
 	if err != nil {
@@ -647,7 +647,7 @@ func createAliasesTable(db *sql.DB, allData *productDataMap, skipIntegrity bool)
 		log.Error().Err(err).Msg("Error executing template for 'aliases' table")
 		return err
 	}
-	
+
 	// Create 'aliases' table if not exists
 	_, err := db.Exec(buf.String())
 	if err != nil {
@@ -764,7 +764,7 @@ func createProductIdentifiersTable(db *sql.DB, allData *productDataMap, skipInte
 		log.Error().Err(err).Msg("Error executing template for 'product_identifiers' table")
 		return err
 	}
-	
+
 	// Create 'product_identifiers' table if not exists
 	_, err := db.Exec(buf.String())
 	if err != nil {
@@ -891,7 +891,7 @@ func createTagsTable(db *sql.DB, allTags map[string]utilities.Tag, skipIntegrity
 		log.Error().Err(err).Msg("Error executing template for 'tags' table")
 		return err
 	}
-	
+
 	// Create 'tags' table if not exists
 	_, err := db.Exec(buf.String())
 	if err != nil {
@@ -980,7 +980,7 @@ func createCategoriesTable(db *sql.DB, allCategories map[string]utilities.Catego
 		log.Error().Err(err).Msg("Error executing template for 'categories' table")
 		return err
 	}
-	
+
 	// Create 'categories' table if not exists
 	_, err := db.Exec(buf.String())
 	if err != nil {
@@ -1067,7 +1067,7 @@ func createProductTagsTable(db *sql.DB, allData *productDataMap, skipIntegrity b
 		log.Error().Err(err).Msg("Error executing template for 'product_tags' table")
 		return err
 	}
-	
+
 	// Create 'product_tags' table if not exists
 	_, err := db.Exec(buf.String())
 	if err != nil {
@@ -1139,6 +1139,59 @@ func createProductTagsTable(db *sql.DB, allData *productDataMap, skipIntegrity b
 
 	log.Info().Msg("Created and populated \"product_tags\" table")
 
+	return nil
+}
+
+// createIndexes creates indexes on foreign key columns for optimal join performance
+func createIndexes(db *sql.DB) error {
+	log.Info().Msg("Creating indexes on foreign key columns...")
+
+	indexes := []struct {
+		name  string
+		query string
+	}{
+		// Index on products.category_id (FK to categories)
+		{
+			name:  "idx_products_category_id",
+			query: "CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id)",
+		},
+		// Index on details.product_id (FK to products)
+		{
+			name:  "idx_details_product_id",
+			query: "CREATE INDEX IF NOT EXISTS idx_details_product_id ON details(product_id)",
+		},
+		// Index on aliases.product_id (FK to products)
+		{
+			name:  "idx_aliases_product_id",
+			query: "CREATE INDEX IF NOT EXISTS idx_aliases_product_id ON aliases(product_id)",
+		},
+		// Index on product_identifiers.product_id (FK to products)
+		{
+			name:  "idx_product_identifiers_product_id",
+			query: "CREATE INDEX IF NOT EXISTS idx_product_identifiers_product_id ON product_identifiers(product_id)",
+		},
+		// Index on product_tags.product_id (FK to products)
+		{
+			name:  "idx_product_tags_product_id",
+			query: "CREATE INDEX IF NOT EXISTS idx_product_tags_product_id ON product_tags(product_id)",
+		},
+		// Index on product_tags.tag_id (FK to tags)
+		{
+			name:  "idx_product_tags_tag_id",
+			query: "CREATE INDEX IF NOT EXISTS idx_product_tags_tag_id ON product_tags(tag_id)",
+		},
+	}
+
+	for _, idx := range indexes {
+		_, err := db.Exec(idx.query)
+		if err != nil {
+			log.Error().Err(err).Msgf("Error creating index %s", idx.name)
+			return fmt.Errorf("error creating index %s: %w", idx.name, err)
+		}
+		log.Info().Msgf("Created index: %s", idx.name)
+	}
+
+	log.Info().Msg("All foreign key indexes created successfully")
 	return nil
 }
 
@@ -1239,6 +1292,11 @@ func populateDuckDB(cmd *cobra.Command, db *sql.DB, skipIntegrity bool) error {
 	}
 	if err := createAboutTable(db); err != nil {
 		return fmt.Errorf("error creating 'about' table: %w", err)
+	}
+
+	// Create indexes on foreign key columns
+	if err := createIndexes(db); err != nil {
+		return fmt.Errorf("error creating indexes: %w", err)
 	}
 
 	return nil
