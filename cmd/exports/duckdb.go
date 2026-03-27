@@ -1,6 +1,7 @@
 package exports
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	"charm.land/bubbles/v2/progress"
@@ -465,33 +467,26 @@ func createTempDetailsTable(db *sql.DB, allData *productDataMap) error {
 
 // createDetailsTable creates the final 'details' table from 'details_temp' with proper date types
 func createDetailsTable(db *sql.DB, skipIntegrity bool) error {
-	var createTableSQL string
-	if skipIntegrity {
-		createTableSQL = `CREATE TABLE IF NOT EXISTS details (
-			product_id TEXT,
-			release_cycle TEXT,
-			is_lts BOOLEAN,
-			release_date DATE,
-			latest TEXT,
-			latest_release_date DATE,
-			eol_date DATE
-		)`
-	} else {
-		createTableSQL = `CREATE TABLE IF NOT EXISTS details (
-			product_id TEXT NOT NULL,
-			release_cycle TEXT NOT NULL,
-			is_lts BOOLEAN NOT NULL,
-			release_date DATE NOT NULL,
-			latest TEXT NOT NULL,
-			latest_release_date DATE,
-			eol_date DATE,
-			PRIMARY KEY (product_id, release_cycle),
-			FOREIGN KEY (product_id) REFERENCES products(id)
-		)`
+	tmpl := template.Must(template.New("details").Parse(`CREATE TABLE IF NOT EXISTS details (
+		product_id TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
+		release_cycle TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
+		is_lts BOOLEAN{{if not .SkipIntegrity}} NOT NULL{{end}},
+		release_date DATE{{if not .SkipIntegrity}} NOT NULL{{end}},
+		latest TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
+		latest_release_date DATE,
+		eol_date DATE{{if not .SkipIntegrity}},
+		PRIMARY KEY (product_id, release_cycle),
+		FOREIGN KEY (product_id) REFERENCES products(id){{end}}
+	)`))
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, struct{ SkipIntegrity bool }{skipIntegrity}); err != nil {
+		log.Error().Err(err).Msg("Error executing template for 'details' table")
+		return err
 	}
 	
 	// Create 'details' table with DATE columns for release_date, latest_release_date, and eol
-	_, err := db.Exec(createTableSQL)
+	_, err := db.Exec(buf.String())
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'details' table")
 		return err
@@ -543,26 +538,22 @@ func createDetailsTable(db *sql.DB, skipIntegrity bool) error {
 
 // createProductsTable creates the 'products' table and inserts product information
 func createProductsTable(db *sql.DB, allData *productDataMap, skipIntegrity bool) error {
-	var createTableSQL string
-	if skipIntegrity {
-		createTableSQL = `CREATE TABLE IF NOT EXISTS products (
-			id TEXT,
-			label TEXT,
-			category_id TEXT,
-			uri TEXT
-		)`
-	} else {
-		createTableSQL = `CREATE TABLE IF NOT EXISTS products (
-			id TEXT PRIMARY KEY NOT NULL,
-			label TEXT NOT NULL,
-			category_id TEXT NOT NULL,
-			uri TEXT NOT NULL,
-			FOREIGN KEY (category_id) REFERENCES categories(id)
-		)`
+	tmpl := template.Must(template.New("products").Parse(`CREATE TABLE IF NOT EXISTS products (
+		id TEXT{{if not .SkipIntegrity}} PRIMARY KEY NOT NULL{{end}},
+		label TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
+		category_id TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
+		uri TEXT{{if not .SkipIntegrity}} NOT NULL{{end}}{{if not .SkipIntegrity}},
+		FOREIGN KEY (category_id) REFERENCES categories(id){{end}}
+	)`))
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, struct{ SkipIntegrity bool }{skipIntegrity}); err != nil {
+		log.Error().Err(err).Msg("Error executing template for 'products' table")
+		return err
 	}
 	
 	// Create 'products' table if not exists
-	_, err := db.Exec(createTableSQL)
+	_, err := db.Exec(buf.String())
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'products' table")
 		return err
@@ -644,23 +635,21 @@ func createProductsTable(db *sql.DB, allData *productDataMap, skipIntegrity bool
 }
 
 func createAliasesTable(db *sql.DB, allData *productDataMap, skipIntegrity bool) error {
-	var createTableSQL string
-	if skipIntegrity {
-		createTableSQL = `CREATE TABLE IF NOT EXISTS aliases (
-			id TEXT,
-			product_id TEXT
-		)`
-	} else {
-		createTableSQL = `CREATE TABLE IF NOT EXISTS aliases (
-			id TEXT NOT NULL,
-			product_id TEXT NOT NULL,
-			PRIMARY KEY (id, product_id),
-			FOREIGN KEY (product_id) REFERENCES products(id)
-		)`
+	tmpl := template.Must(template.New("aliases").Parse(`CREATE TABLE IF NOT EXISTS aliases (
+		id TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
+		product_id TEXT{{if not .SkipIntegrity}} NOT NULL{{end}}{{if not .SkipIntegrity}},
+		PRIMARY KEY (id, product_id),
+		FOREIGN KEY (product_id) REFERENCES products(id){{end}}
+	)`))
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, struct{ SkipIntegrity bool }{skipIntegrity}); err != nil {
+		log.Error().Err(err).Msg("Error executing template for 'aliases' table")
+		return err
 	}
 	
 	// Create 'aliases' table if not exists
-	_, err := db.Exec(createTableSQL)
+	_, err := db.Exec(buf.String())
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'aliases' table")
 		return err
@@ -762,25 +751,22 @@ func createAliasesTable(db *sql.DB, allData *productDataMap, skipIntegrity bool)
 }
 
 func createProductIdentifiersTable(db *sql.DB, allData *productDataMap, skipIntegrity bool) error {
-	var createTableSQL string
-	if skipIntegrity {
-		createTableSQL = `CREATE TABLE IF NOT EXISTS product_identifiers (
-			product_id TEXT,
-			identifier_type TEXT,
-			identifier_value TEXT
-		)`
-	} else {
-		createTableSQL = `CREATE TABLE IF NOT EXISTS product_identifiers (
-			product_id TEXT NOT NULL,
-			identifier_type TEXT NOT NULL,
-			identifier_value TEXT NOT NULL,
-			PRIMARY KEY (product_id, identifier_type, identifier_value),
-			FOREIGN KEY (product_id) REFERENCES products(id)
-		)`
+	tmpl := template.Must(template.New("product_identifiers").Parse(`CREATE TABLE IF NOT EXISTS product_identifiers (
+		product_id TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
+		identifier_type TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
+		identifier_value TEXT{{if not .SkipIntegrity}} NOT NULL{{end}}{{if not .SkipIntegrity}},
+		PRIMARY KEY (product_id, identifier_type, identifier_value),
+		FOREIGN KEY (product_id) REFERENCES products(id){{end}}
+	)`))
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, struct{ SkipIntegrity bool }{skipIntegrity}); err != nil {
+		log.Error().Err(err).Msg("Error executing template for 'product_identifiers' table")
+		return err
 	}
 	
 	// Create 'product_identifiers' table if not exists
-	_, err := db.Exec(createTableSQL)
+	_, err := db.Exec(buf.String())
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'product_identifiers' table")
 		return err
@@ -894,23 +880,20 @@ func createProductIdentifiersTable(db *sql.DB, allData *productDataMap, skipInte
 }
 
 func createTagsTable(db *sql.DB, allTags map[string]utilities.Tag, skipIntegrity bool) error {
-	var createTableSQL string
-	if skipIntegrity {
-		createTableSQL = `CREATE TABLE IF NOT EXISTS tags (
-			id TEXT,
-			uri TEXT,
-			www TEXT
-		)`
-	} else {
-		createTableSQL = `CREATE TABLE IF NOT EXISTS tags (
-			id TEXT PRIMARY KEY,
-			uri TEXT UNIQUE NOT NULL,
-			www TEXT NOT NULL
-		)`
+	tmpl := template.Must(template.New("tags").Parse(`CREATE TABLE IF NOT EXISTS tags (
+		id TEXT{{if not .SkipIntegrity}} PRIMARY KEY{{end}},
+		uri TEXT{{if not .SkipIntegrity}} UNIQUE NOT NULL{{end}},
+		www TEXT{{if not .SkipIntegrity}} NOT NULL{{end}}
+	)`))
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, struct{ SkipIntegrity bool }{skipIntegrity}); err != nil {
+		log.Error().Err(err).Msg("Error executing template for 'tags' table")
+		return err
 	}
 	
 	// Create 'tags' table if not exists
-	_, err := db.Exec(createTableSQL)
+	_, err := db.Exec(buf.String())
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'tags' table")
 		return err
@@ -987,21 +970,19 @@ func createTagsTable(db *sql.DB, allTags map[string]utilities.Tag, skipIntegrity
 }
 
 func createCategoriesTable(db *sql.DB, allCategories map[string]utilities.Category, skipIntegrity bool) error {
-	var createTableSQL string
-	if skipIntegrity {
-		createTableSQL = `CREATE TABLE IF NOT EXISTS categories (
-			id TEXT,
-			uri TEXT
-		)`
-	} else {
-		createTableSQL = `CREATE TABLE IF NOT EXISTS categories (
-			id TEXT PRIMARY KEY,
-			uri TEXT NOT NULL
-		)`
+	tmpl := template.Must(template.New("categories").Parse(`CREATE TABLE IF NOT EXISTS categories (
+		id TEXT{{if not .SkipIntegrity}} PRIMARY KEY{{end}},
+		uri TEXT{{if not .SkipIntegrity}} NOT NULL{{end}}
+	)`))
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, struct{ SkipIntegrity bool }{skipIntegrity}); err != nil {
+		log.Error().Err(err).Msg("Error executing template for 'categories' table")
+		return err
 	}
 	
 	// Create 'categories' table if not exists
-	_, err := db.Exec(createTableSQL)
+	_, err := db.Exec(buf.String())
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'categories' table")
 		return err
@@ -1073,24 +1054,22 @@ func createCategoriesTable(db *sql.DB, allCategories map[string]utilities.Catego
 }
 
 func createProductTagsTable(db *sql.DB, allData *productDataMap, skipIntegrity bool) error {
-	var createTableSQL string
-	if skipIntegrity {
-		createTableSQL = `CREATE TABLE IF NOT EXISTS product_tags (
-			product_id TEXT,
-			tag_id TEXT
-		)`
-	} else {
-		createTableSQL = `CREATE TABLE IF NOT EXISTS product_tags (
-			product_id TEXT NOT NULL,
-			tag_id TEXT NOT NULL,
-			PRIMARY KEY (product_id, tag_id),
-			FOREIGN KEY (product_id) REFERENCES products(id),
-			FOREIGN KEY (tag_id) REFERENCES tags(id)
-		)`
+	tmpl := template.Must(template.New("product_tags").Parse(`CREATE TABLE IF NOT EXISTS product_tags (
+		product_id TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
+		tag_id TEXT{{if not .SkipIntegrity}} NOT NULL{{end}}{{if not .SkipIntegrity}},
+		PRIMARY KEY (product_id, tag_id),
+		FOREIGN KEY (product_id) REFERENCES products(id),
+		FOREIGN KEY (tag_id) REFERENCES tags(id){{end}}
+	)`))
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, struct{ SkipIntegrity bool }{skipIntegrity}); err != nil {
+		log.Error().Err(err).Msg("Error executing template for 'product_tags' table")
+		return err
 	}
 	
 	// Create 'product_tags' table if not exists
-	_, err := db.Exec(createTableSQL)
+	_, err := db.Exec(buf.String())
 	if err != nil {
 		log.Error().Err(err).Msg("Error creating 'product_tags' table")
 		return err

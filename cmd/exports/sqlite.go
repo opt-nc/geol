@@ -1,10 +1,12 @@
 package exports
 
 import (
+	"bytes"
 	"database/sql"
 	"fmt"
 	"os"
 	"path/filepath"
+	"text/template"
 	"time"
 
 	_ "github.com/duckdb/duckdb-go/v2"
@@ -118,117 +120,74 @@ func exportDuckDBToSQLite(db *sql.DB, sqlitePath string, skipIntegrity bool) err
 		return fmt.Errorf("error attaching SQLite database: %w", err)
 	}
 
-	var tableCreations []string
-	
-	if skipIntegrity {
-		// Create tables without constraints (except about which keeps NOT NULL)
-		tableCreations = []string{
-			`CREATE TABLE sqlite_db.categories(
-				id TEXT,
-				uri TEXT
-			)`,
-			`CREATE TABLE sqlite_db.tags(
-				id TEXT,
-				uri TEXT,
-				www TEXT
-			)`,
-			`CREATE TABLE sqlite_db.about(
-				git_version TEXT NOT NULL,
-				git_commit TEXT NOT NULL,
-				go_version TEXT NOT NULL,
-				platform TEXT NOT NULL,
-				github_url TEXT NOT NULL,
-				generated_at TEXT NOT NULL,
-				generated_at_tz TEXT NOT NULL
-			)`,
-			`CREATE TABLE sqlite_db.products(
-				id TEXT,
-				label TEXT,
-				category_id TEXT,
-				uri TEXT
-			)`,
-			`CREATE TABLE sqlite_db.aliases(
-				id TEXT,
-				product_id TEXT
-			)`,
-			`CREATE TABLE sqlite_db.details(
-				product_id TEXT,
-				release_cycle TEXT,
-				is_lts INTEGER,
-				release_date TEXT,
-				latest TEXT,
-				latest_release_date TEXT,
-				eol_date TEXT
-			)`,
-			`CREATE TABLE sqlite_db.product_identifiers(
-				product_id TEXT,
-				identifier_type TEXT,
-				identifier_value TEXT
-			)`,
-			`CREATE TABLE sqlite_db.product_tags(
-				product_id TEXT,
-				tag_id TEXT
-			)`,
-		}
-	} else {
-		// Create tables with PRIMARY KEYS and UNIQUE constraints
-		tableCreations = []string{
-			`CREATE TABLE sqlite_db.categories(
-				id TEXT PRIMARY KEY,
-				uri TEXT NOT NULL
-			)`,
-			`CREATE TABLE sqlite_db.tags(
-				id TEXT PRIMARY KEY,
-				uri TEXT UNIQUE NOT NULL,
-				www TEXT NOT NULL
-			)`,
-			`CREATE TABLE sqlite_db.about(
-				git_version TEXT NOT NULL,
-				git_commit TEXT NOT NULL,
-				go_version TEXT NOT NULL,
-				platform TEXT NOT NULL,
-				github_url TEXT NOT NULL,
-				generated_at TEXT NOT NULL,
-				generated_at_tz TEXT NOT NULL
-			)`,
-			`CREATE TABLE sqlite_db.products(
-				id TEXT PRIMARY KEY NOT NULL,
-				label TEXT NOT NULL,
-				category_id TEXT NOT NULL,
-				uri TEXT NOT NULL
-			)`,
-			`CREATE TABLE sqlite_db.aliases(
-				id TEXT NOT NULL,
-				product_id TEXT NOT NULL,
-				PRIMARY KEY(id, product_id)
-			)`,
-			`CREATE TABLE sqlite_db.details(
-				product_id TEXT NOT NULL,
-				release_cycle TEXT NOT NULL,
-				is_lts INTEGER NOT NULL,
-				release_date TEXT NOT NULL,
-				latest TEXT NOT NULL,
-				latest_release_date TEXT,
-				eol_date TEXT,
-				PRIMARY KEY(product_id, release_cycle)
-			)`,
-			`CREATE TABLE sqlite_db.product_identifiers(
-				product_id TEXT NOT NULL,
-				identifier_type TEXT NOT NULL,
-				identifier_value TEXT NOT NULL,
-				PRIMARY KEY(product_id, identifier_type, identifier_value)
-			)`,
-			`CREATE TABLE sqlite_db.product_tags(
-				product_id TEXT NOT NULL,
-				tag_id TEXT NOT NULL,
-				PRIMARY KEY(product_id, tag_id)
-			)`,
-		}
+	// Define table templates
+	tableTemplates := []string{
+		`CREATE TABLE sqlite_db.categories(
+			id TEXT{{if not .SkipIntegrity}} PRIMARY KEY{{end}},
+			uri TEXT{{if not .SkipIntegrity}} NOT NULL{{end}}
+		)`,
+		`CREATE TABLE sqlite_db.tags(
+			id TEXT{{if not .SkipIntegrity}} PRIMARY KEY{{end}},
+			uri TEXT{{if not .SkipIntegrity}} UNIQUE NOT NULL{{end}},
+			www TEXT{{if not .SkipIntegrity}} NOT NULL{{end}}
+		)`,
+		`CREATE TABLE sqlite_db.about(
+			git_version TEXT NOT NULL,
+			git_commit TEXT NOT NULL,
+			go_version TEXT NOT NULL,
+			platform TEXT NOT NULL,
+			github_url TEXT NOT NULL,
+			generated_at TEXT NOT NULL,
+			generated_at_tz TEXT NOT NULL
+		)`,
+		`CREATE TABLE sqlite_db.products(
+			id TEXT{{if not .SkipIntegrity}} PRIMARY KEY NOT NULL{{end}},
+			label TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
+			category_id TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
+			uri TEXT{{if not .SkipIntegrity}} NOT NULL{{end}}
+		)`,
+		`CREATE TABLE sqlite_db.aliases(
+			id TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
+			product_id TEXT{{if not .SkipIntegrity}} NOT NULL{{end}}{{if not .SkipIntegrity}},
+			PRIMARY KEY(id, product_id){{end}}
+		)`,
+		`CREATE TABLE sqlite_db.details(
+			product_id TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
+			release_cycle TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
+			is_lts INTEGER{{if not .SkipIntegrity}} NOT NULL{{end}},
+			release_date TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
+			latest TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
+			latest_release_date TEXT,
+			eol_date TEXT{{if not .SkipIntegrity}},
+			PRIMARY KEY(product_id, release_cycle){{end}}
+		)`,
+		`CREATE TABLE sqlite_db.product_identifiers(
+			product_id TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
+			identifier_type TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
+			identifier_value TEXT{{if not .SkipIntegrity}} NOT NULL{{end}}{{if not .SkipIntegrity}},
+			PRIMARY KEY(product_id, identifier_type, identifier_value){{end}}
+		)`,
+		`CREATE TABLE sqlite_db.product_tags(
+			product_id TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
+			tag_id TEXT{{if not .SkipIntegrity}} NOT NULL{{end}}{{if not .SkipIntegrity}},
+			PRIMARY KEY(product_id, tag_id){{end}}
+		)`,
 	}
 
-	for _, ddl := range tableCreations {
-		if _, err := db.Exec(ddl); err != nil {
-			return fmt.Errorf("error creating SQLite table: %w", err)
+	// Execute table creation templates
+	for i, tmplStr := range tableTemplates {
+		tmpl, err := template.New(fmt.Sprintf("table_%d", i)).Parse(tmplStr)
+		if err != nil {
+			return fmt.Errorf("error parsing table template %d: %w", i, err)
+		}
+		
+		var buf bytes.Buffer
+		if err := tmpl.Execute(&buf, struct{ SkipIntegrity bool }{skipIntegrity}); err != nil {
+			return fmt.Errorf("error executing table template %d: %w", i, err)
+		}
+		
+		if _, err := db.Exec(buf.String()); err != nil {
+			return fmt.Errorf("error creating SQLite table %d: %w", i, err)
 		}
 	}
 
