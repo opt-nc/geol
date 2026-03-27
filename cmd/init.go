@@ -9,6 +9,7 @@ import (
 )
 
 var output string
+var force bool
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
@@ -17,15 +18,18 @@ var initCmd = &cobra.Command{
 	Short:   "Generate a valid template configuration file for check command",
 	Long: `The init command generates a default configuration file for the check command.
 Use this command to create a starter YAML file that you can customize for your environment.
-You can specify the output path with the --output flag.`,
+You can specify the output path with the --output flag.
+Use --force to overwrite an existing file.`,
 	Example: `geol check init
-geol check init --output stack.yaml`,
+geol check init --output stack.yaml
+geol check init --output stack.yaml --force`,
 	Run: func(cmd *cobra.Command, args []string) {
-		templates.GenerateTemplate(output)
+		templates.GenerateTemplate(output, force)
 	},
 }
 
 func init() {
 	checkCmd.AddCommand(initCmd)
 	initCmd.Flags().StringVarP(&output, "output", "o", ".geol.yaml", "Path to the output file")
+	initCmd.Flags().BoolVarP(&force, "force", "f", false, "Overwrite the file if it already exists")
 }
