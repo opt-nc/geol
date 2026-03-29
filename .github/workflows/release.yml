@@ -46,7 +46,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install cross-compiler for linux/arm64
-        run: sudo apt install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+        run: sudo apt update && sudo apt install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
       
       - uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # installs syft
       - name: Run GoReleaser for Linux
