@@ -33,6 +33,7 @@ type stackItem struct {
 	IdEol                string `yaml:"id_eol"`
 	Skip                 bool   `yaml:"skip,omitempty"`
 	ShouldAlwaysBeLatest bool   `yaml:"always-latest,omitempty"`
+	ManualEol            string `yaml:"manual_eol,omitempty"`
 }
 type geolConfig struct {
 	AppName string      `yaml:"app_name"`
@@ -59,6 +60,53 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 		// Skip items marked with skip: true
 		if item.Skip {
 			log.Info().Msgf("Found skip:true for %s %s, product will be skipped", item.Name, item.Version)
+			continue
+		}
+
+		// Handle items with manual_eol set (product not in eol.date API)
+		if item.ManualEol != "" {
+			log.Info().Msgf("Using manual EOL date for %s %s: %s (product not available in eol.date API)", item.Name, item.Version, item.ManualEol)
+			eolDate := item.ManualEol
+			var status string
+			var daysStr string
+			var daysInt int
+			eolT, parseErr := time.Parse("2006-01-02", eolDate)
+			if parseErr != nil {
+				log.Error().Msgf("Invalid manual_eol date format for %s %s: %s (expected YYYY-MM-DD)", item.Name, item.Version, item.ManualEol)
+				violations = append(violations, fmt.Sprintf("%s %s has invalid manual_eol date format: %s (expected YYYY-MM-DD)", item.Name, item.Version, item.ManualEol))
+				errorOut = true
+				continue
+			}
+			daysInt = int(eolT.Sub(today).Hours() / 24)
+			daysStr = fmt.Sprintf("%d", daysInt)
+			if daysInt < 0 {
+				status = "EOL"
+				errorOut = true
+				years := -daysInt / 365
+				months := (-daysInt % 365) / 30
+				days := (-daysInt % 365) % 30
+				log.Error().Msgf(
+					"%s %s (%s) is %dy %dm %dd past EOL (manual EOL: %s)",
+					item.Name, item.Version, item.Name, years, months, days, eolDate,
+				)
+			} else if daysInt < 30 {
+				status = "WARN"
+				log.Warn().Msgf(
+					"%s %s (%s) is nearing EOL in %dd (manual EOL: %s)",
+					item.Name, item.Version, item.Name, daysInt, eolDate,
+				)
+			} else {
+				status = "OK"
+			}
+			rows = append(rows, stackTableRow{
+				Software:      item.Name,
+				Version:       item.Version,
+				EolDate:       eolDate,
+				Status:        status,
+				Days:          daysStr,
+				IsLatest:      false,
+				LatestVersion: "-",
+			})
 			continue
 		}
 
