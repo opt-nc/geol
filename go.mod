@@ -13,7 +13,7 @@ require (
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
 	github.com/duckdb/duckdb-go/v2 v2.10501.0
 	github.com/mattn/go-sqlite3 v1.14.38
-	github.com/phuslu/log v1.0.123
+	github.com/phuslu/log v1.0.124
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/term v0.41.0
 	gopkg.in/yaml.v3 v3.0.1
