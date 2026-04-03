@@ -65,6 +65,34 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 
 		// Handle items with manual_eol set (product not in eol.date API)
 		if item.ManualEol != "" {
+			// Check if product exists in the API cache
+			productsPath, err := utilities.GetProductsPath()
+			if err == nil {
+				products, err := utilities.GetProductsWithCacheRefresh(nil, productsPath)
+				if err == nil {
+					prod := item.IdEol
+					found := false
+					for name, aliases := range products.Products {
+						if strings.EqualFold(prod, name) {
+							found = true
+							break
+						}
+						for _, alias := range aliases {
+							if strings.EqualFold(prod, alias) {
+								found = true
+								break
+							}
+						}
+						if found {
+							break
+						}
+					}
+					if found {
+						log.Warn().Msgf("Product %s is available in eol.date API but has manual_eol set. Consider removing manual_eol to use official EOL data", item.Name)
+					}
+				}
+			}
+
 			log.Info().Msgf("Using manual EOL date for %s %s: %s (product not available in eol.date API)", item.Name, item.Version, item.ManualEol)
 			eolDate := item.ManualEol
 			var status string
