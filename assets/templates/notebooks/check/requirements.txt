@@ -1,0 +1,14 @@
+# Core dependencies for Quarto Python execution
+jupyter-client>=8.6.0
+ipykernel>=6.29.0
+nbformat>=5.10.0
+nbclient>=0.10.0
+papermill>=2.7.0
+
+# Data processing and visualization
+pandas>=2.2.0
+plotly>=5.24.0
+
+# Utilities
+packaging>=24.0
+pyyaml>=6.0

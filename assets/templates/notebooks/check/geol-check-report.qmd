@@ -1,0 +1,1050 @@
+---
+title: "geol EoL Stack Report"
+author: "geol"
+subtitle: "Automated Technology Lifecycle Audit"
+date: last-modified
+description: "End-of-Life analysis for software components based on endoflife.date API."
+keywords: [EOL, Security, Compliance, DevOps]
+params:
+  config_file: ".geol.yaml"
+  additional_context: ""
+format:
+  html:
+    theme:
+      dark: darkly
+      light: flatly
+    quarto-color-scheme:
+      default: dark
+      toggle: true
+    toc: true
+    toc-location: right
+    toc-title: "Navigation"
+    code-fold: true
+    embed-resources: true
+    include-in-header:
+      text: |
+        <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48dGV4dCB5PSIuOWVtIiBmb250LXNpemU9IjkwIj7ij7M8L3RleHQ+PC9zdmc+">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+        <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+        <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+        <style>
+        html { scroll-behavior: smooth; }
+        /* Force Font Awesome Visibility */
+        .fa-solid, .fa-brands, .fas, .fa {
+            font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+            font-weight: 900 !important;
+            display: inline-block !important;
+            font-style: normal !important;
+            font-variant: normal !important;
+            text-rendering: auto !important;
+            -webkit-font-smoothing: antialiased !important;
+        }
+        body.quarto-dark { background-color: #222 !important; color: #eee !important; }
+        .quarto-dark .metric-card { background: #2d2d2d; border: 1px solid #444; }
+        .thead-dark th { background-color: #333 !important; }
+        .fa-circle-check, .status-ok { color: #50fa7b !important; }
+        .fa-circle-exclamation, .status-eol { color: #ff5555 !important; }
+        .fa-circle-question, .status-skip { color: #8be9fd !important; }
+        .fa-triangle-exclamation, .status-warning { color: #ffb86c !important; }
+        .fa-shield-halved { color: #8be9fd !important; margin-left: 8px !important; }
+        .fa-fire-flame-curved { color: #ff5555 !important; }
+        .metric-card { border-radius: 8px; padding: 20px; text-align: center; border: 1px solid #ddd; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 140px; }
+        .metric-icon { font-size: 1.8rem; margin-bottom: 10px; opacity: 0.8; }
+        .metric-value { font-size: 2.5rem; font-weight: bold; display: block; }
+        .metric-label { font-size: 1rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+        .finding-box { padding: 15px 20px; border-radius: 8px; margin: 20px 0; display: flex; align-items: center; gap: 15px; border-left: 5px solid; }
+        .finding-critical { background-color: rgba(255, 85, 85, 0.1); border-color: #ff5555; color: #ff5555; }
+        .finding-warning { background-color: rgba(255, 184, 108, 0.1); border-color: #ffb86c; color: #ffb86c; }
+        .finding-safe { background-color: rgba(80, 250, 123, 0.1); border-color: #50fa7b; color: #50fa7b; }
+        .finding-icon { font-size: 1.5rem; }
+        .finding-text { font-size: 1.1rem; font-weight: 500; }
+
+        /* Pro Tip Visibility */
+        .protip-box code {
+            background-color: #444 !important;
+            color: #fff !important;
+            padding: 2px 5px !important;
+            border-radius: 3px !important;
+        }
+
+        .report-header { text-align: center; margin-bottom: 30px; }
+        .report-header h1 { font-size: 2.5rem; font-weight: 700; }
+        
+        /* Executive One-Pager Print Mode */
+        @media print {
+            body, .quarto-container, #quarto-content {
+                background-color: white !important;
+                color: black !important;
+            }
+            .report-header h1 { color: black !important; margin-top: 0; }
+            .metric-card {
+                background: white !important;
+                border: 2px solid #333 !important;
+                color: black !important;
+                break-inside: avoid;
+            }
+            .metric-label { color: #444 !important; }
+            .status-ok, .status-eol, .status-warning, .status-skip { color: black !important; font-weight: bold !important; }
+            
+            /* Hide interactive/digital-only elements */
+            .dt-buttons, .dataTables_filter, .dataTables_length, .dataTables_paginate, .dataTables_info,
+            #quarto-sidebar, .toc-actions, #TOC, .navbar, .quarto-color-scheme-toggle {
+                display: none !important;
+            }
+            
+            /* Expand tables to full length */
+            table { width: 100% !important; border-collapse: collapse !important; }
+            table.dataTable tbody tr { background-color: white !important; color: black !important; }
+            .thead-dark th { background-color: #eee !important; color: black !important; border: 1px solid #333 !important; }
+            td { border: 1px solid #ddd !important; }
+            
+            /* Ensure charts are visible (or consider hiding sunburst if too complex for print) */
+            .js-plotly-plot { margin-bottom: 20px; }
+            
+            /* Add page break control */
+            h2 { page-break-before: always; margin-top: 30px !important; }
+            h2:first-of-type { page-break-before: avoid; }
+            .finding-box { border: 2px solid black !important; background: transparent !important; color: black !important; }
+            #back-to-top { display: none !important; }
+        }
+
+        /* Back to top button */
+        #back-to-top {
+            position: fixed; bottom: 30px; right: 30px; z-index: 9999;
+            width: 44px; height: 44px; border-radius: 50%;
+            background: rgba(80, 250, 123, 0.85); color: #222;
+            border: none; cursor: pointer; font-size: 1.3rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            opacity: 0; transition: opacity 0.3s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #back-to-top.visible { opacity: 1; }
+        #back-to-top:hover { background: #50fa7b; transform: scale(1.1); }
+
+        /* Metric card tooltip */
+        .metric-card { position: relative; cursor: default; }
+        .metric-card .metric-tooltip {
+            visibility: hidden; opacity: 0;
+            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+            background: #333; color: #eee; padding: 6px 10px; border-radius: 5px;
+            font-size: 0.75rem; white-space: nowrap; z-index: 10;
+            transition: opacity 0.2s; pointer-events: none;
+            margin-bottom: 6px; border: 1px solid #555;
+        }
+        .metric-card:hover .metric-tooltip { visibility: visible; opacity: 1; }
+        </style>
+
+        <script>
+        // Runtime FA loader (required because embed-resources cannot inline webfonts)
+        (function() {
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css';
+            document.head.appendChild(link);
+        })();
+
+        // Back to top button
+        document.addEventListener('DOMContentLoaded', function() {
+            var btn = document.createElement('button');
+            btn.id = 'back-to-top';
+            btn.title = 'Back to top';
+            btn.innerHTML = '<span class="fa-solid fa-arrow-up"></span>';
+            btn.onclick = function() { window.scrollTo({top: 0, behavior: 'smooth'}); };
+            document.body.appendChild(btn);
+            window.addEventListener('scroll', function() {
+                btn.classList.toggle('visible', window.scrollY > 400);
+            });
+        });
+        </script>
+        <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+        <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+        <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+        <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+        <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
+---
+
+```{python}
+#| tags: [parameters]
+#| echo: false
+config_file = ".geol.yaml"
+additional_context = ""
+```
+
+```{python}
+#| echo: false
+# --- Imports & Constants ---
+import subprocess, shutil, sys, yaml, json, os, hashlib, time, html, logging
+from datetime import datetime, timezone as dt_timezone
+from IPython.display import display, HTML, Markdown
+from packaging.version import parse as parse_v
+import pandas as pd
+import plotly.express as px
+
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger("geol-report")
+
+RISK_THRESHOLD_DAYS = 180
+SUBPROCESS_TIMEOUT = 30
+
+COLORS = {
+    "healthy": "#50fa7b",
+    "warning": "#ffb86c",
+    "critical": "#ff5555",
+    "info": "#8be9fd",
+}
+
+SUNBURST_COLOR_MAP = {
+    "EOL": COLORS["critical"],
+    "Healthy": COLORS["healthy"],
+    "Upcoming Risk": COLORS["warning"],
+    "Untracked": COLORS["info"],
+}
+
+TIMELINE_COLOR_MAP = {
+    "EOL": COLORS["critical"],
+    "Active": COLORS["healthy"],
+    "Upcoming": COLORS["info"],
+}
+
+start_time = time.time()
+```
+
+```{python}
+#| echo: false
+# --- Tool Detection & Config Loading ---
+
+if not shutil.which("geol"):
+    display(HTML("<h2><span class='fa-solid fa-triangle-exclamation'></span> [CRITICAL ERROR] geol is NOT installed</h2>"))
+    raise RuntimeError("geol CLI is not installed. Install from https://github.com/opt-nc/geol")
+
+try:
+    geol_version = subprocess.run(
+        ['geol', 'version'], capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT
+    ).stdout.strip()
+    quarto_version = subprocess.run(
+        ['quarto', '--version'], capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT
+    ).stdout.strip()
+    uv_version = subprocess.run(
+        ['uv', '--version'], capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT
+    ).stdout.strip().replace('uv ', '')
+    import packaging
+    packaging_version = packaging.__version__
+except Exception as e:
+    logger.warning("Failed to detect tool versions: %s", e)
+    geol_version = quarto_version = uv_version = packaging_version = "Unknown"
+
+# Git Detection
+git_commit = None
+config_git_commit = None
+try:
+    if shutil.which("git"):
+        is_git = subprocess.run(
+            ['git', 'rev-parse', '--is-inside-work-tree'],
+            capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT,
+        )
+        if is_git.returncode == 0:
+            git_commit = subprocess.run(
+                ['git', 'rev-parse', 'HEAD'],
+                capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT,
+            ).stdout.strip()
+            config_git_res = subprocess.run(
+                ['git', 'log', '-n', '1', '--format=%H', '--', config_file],
+                capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT,
+            )
+            if config_git_res.returncode == 0 and config_git_res.stdout.strip():
+                config_git_commit = config_git_res.stdout.strip()
+except Exception as e:
+    logger.warning("Git detection failed: %s", e)
+
+# Load Config
+with open(config_file, 'rb') as f:
+    config_bytes = f.read()
+    config_sha256 = hashlib.sha256(config_bytes).hexdigest()
+    config_raw = config_bytes.decode('utf-8')
+    config_data = yaml.safe_load(config_raw)
+
+app_name = html.escape(config_data.get('app_name', 'Unnamed Project'))
+```
+
+```{python}
+#| echo: false
+# --- Data Fetching & Enrichment ---
+
+# Run geol check with output validation
+result = subprocess.run(
+    ['geol', 'check', config_file, '--json'],
+    capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT,
+)
+try:
+    check_data = json.loads(result.stdout)
+    df_raw = pd.DataFrame(check_data['software_components'])
+except (json.JSONDecodeError, KeyError) as e:
+    display(HTML(
+        f"<h2><span class='fa-solid fa-triangle-exclamation'></span> geol check failed</h2>"
+        f"<pre>{html.escape(result.stderr or str(e))}</pre>"
+    ))
+    raise RuntimeError(f"geol check produced invalid output: {e}")
+
+# Build ID mapping and fetch product extended data ONCE (cached)
+name_to_id = {
+    str(item.get('name')).strip().lower(): item.get('id_eol')
+    for item in config_data.get('stack', [])
+}
+ids_to_check = list(set([
+    item['id_eol']
+    for item in config_data.get('stack', [])
+    if 'id_eol' in item and not item.get('skip', False)
+]))
+
+# Reverse mapping: id_eol → user's display name from YAML
+id_to_display_name = {
+    item.get('id_eol'): item.get('name', item.get('id_eol', ''))
+    for item in config_data.get('stack', [])
+    if 'id_eol' in item
+}
+
+# Build always-latest set from YAML config
+always_latest_set = {
+    str(item.get('name')).strip().lower()
+    for item in config_data.get('stack', [])
+    if item.get('always-latest', False)
+}
+
+product_extended_cache = {}
+for product_id in ids_to_check:
+    try:
+        res = subprocess.run(
+            ['geol', 'product', 'extended', product_id, '--json'],
+            capture_output=True, text=True, timeout=SUBPROCESS_TIMEOUT,
+        )
+        if res.returncode == 0:
+            data = json.loads(res.stdout)
+            if data:
+                product_extended_cache[product_id] = data[0]
+    except Exception as e:
+        logger.warning("Failed to fetch extended data for %s: %s", product_id, e)
+
+# Build LTS map from cached data
+lts_map = {}
+for product_id, product_data in product_extended_cache.items():
+    lts_cycles = [
+        str(rel.get('cycle')).strip()
+        for rel in product_data.get('releases', [])
+        if rel.get('isLts')
+    ]
+    if lts_cycles:
+        lts_map[product_id] = lts_cycles
+
+# Determine latest LTS cycle per product
+latest_lts_map = {}
+for product_id, cycles in lts_map.items():
+    try:
+        latest_lts_map[product_id] = max(cycles, key=lambda c: parse_v(c))
+    except Exception:
+        latest_lts_map[product_id] = cycles[0] if cycles else None
+
+
+def enrich_row(row):
+    software_name = str(row['software']).strip().lower()
+    product_id = name_to_id.get(software_name)
+    version_str = str(row['version']).strip()
+
+    # LTS detection
+    row['is_lts'] = False
+    row['is_latest_lts'] = False
+    if product_id in lts_map:
+        cycles = lts_map[product_id]
+        if version_str in cycles or any(version_str.startswith(c + '.') for c in cycles):
+            row['is_lts'] = True
+            latest_cycle = latest_lts_map.get(product_id)
+            if latest_cycle and (version_str == latest_cycle or version_str.startswith(latest_cycle + '.')):
+                row['is_latest_lts'] = True
+
+    # Version lag analysis
+    latest_str = str(row['latest_version']).strip()
+    if not latest_str or latest_str == '-' or version_str == latest_str:
+        row['lag'] = 'Current'
+    else:
+        try:
+            current_ver = parse_v(version_str)
+            latest_ver = parse_v(latest_str)
+            if latest_ver > current_ver:
+                current_major = current_ver.release[0] if current_ver.release else None
+                latest_major = latest_ver.release[0] if latest_ver.release else None
+                row['lag'] = 'Major Lag' if current_major != latest_major else 'Minor Lag'
+            else:
+                row['lag'] = 'Current'
+        except Exception:
+            row['lag'] = 'Major Lag' if version_str.split('.')[0] != latest_str.split('.')[0] else 'Minor Lag'
+
+    # Software link
+    if row['status'] != 'UNKNOWN':
+        eol_slug = product_id if product_id else software_name
+        row['soft_html'] = f'<a href="https://endoflife.date/{eol_slug}" target="_blank">{html.escape(row["software"])}</a>'
+    else:
+        row['soft_html'] = html.escape(row['software'])
+
+    # Always-latest policy flag
+    row['always_latest'] = software_name in always_latest_set
+
+    return row
+
+
+df_raw = df_raw.apply(enrich_row, axis=1)
+
+# Add skipped products
+skipped_products = [item for item in config_data.get('stack', []) if item.get('skip', False)]
+if skipped_products:
+    skipped_rows = [{
+        'software': item.get('name', 'Unknown'),
+        'version': item.get('version', ''),
+        'status': 'UNKNOWN',
+        'eol_date': '',
+        'days': '',
+        'latest_version': '',
+        'is_latest': False,
+        'lag': 'Untracked',
+        'is_lts': False,
+        'is_latest_lts': False,
+        'always_latest': item.get('always-latest', False),
+        'soft_html': html.escape(item.get('name', 'Unknown')),
+    } for item in skipped_products]
+    df_raw = pd.concat([df_raw, pd.DataFrame(skipped_rows)], ignore_index=True)
+
+# Compute metrics
+df_raw['days_num'] = pd.to_numeric(df_raw['days'], errors='coerce').fillna(float('inf'))
+total_comp = len(df_raw)
+eol_comp = len(df_raw[df_raw['status'] == 'EOL'])
+upcoming_risks = df_raw[
+    (df_raw['status'] == 'OK') & (df_raw['days_num'] > 0) & (df_raw['days_num'] < RISK_THRESHOLD_DAYS)
+]
+upcoming_count = len(upcoming_risks)
+ok_comp = len(df_raw[df_raw['status'] == 'OK']) - upcoming_count
+untracked_comp = len(df_raw[df_raw['status'] == 'UNKNOWN'])
+
+# Build component name lists for metric card tooltips
+all_names = ', '.join(df_raw['software'].tolist()) or 'None'
+ok_names = ', '.join(df_raw[(df_raw['status'] == 'OK') & ~df_raw.index.isin(upcoming_risks.index)]['software'].tolist()) or 'None'
+upcoming_names = ', '.join(upcoming_risks['software'].tolist()) or 'None'
+eol_names = ', '.join(df_raw[df_raw['status'] == 'EOL']['software'].tolist()) or 'None'
+
+# Compute per-component health scores
+def compute_health_score(row):
+    if row['status'] == 'UNKNOWN':
+        return None
+    if row['status'] == 'EOL':
+        return 0
+
+    is_lts = row.get('is_lts', False)
+    is_latest_lts = row.get('is_latest_lts', False)
+    is_upcoming = row['days_num'] > 0 and row['days_num'] < RISK_THRESHOLD_DAYS
+    lag = row['lag']
+
+    if is_upcoming:
+        if is_lts and is_latest_lts:
+            return 45
+        elif is_lts:
+            return 35
+        return 30
+
+    if lag == 'Current':
+        return 100
+    elif lag == 'Minor Lag':
+        return 80
+    elif lag == 'Major Lag':
+        if is_lts and is_latest_lts:
+            return 95
+        elif is_lts:
+            return 75
+        return 60
+
+    return 80
+
+df_raw['health_score'] = df_raw.apply(compute_health_score, axis=1)
+scored_components = df_raw[df_raw['health_score'].notna()]
+stack_health_score = round(scored_components['health_score'].mean(), 1) if not scored_components.empty else 0
+```
+
+```{python}
+#| echo: false
+#| output: asis
+# --- Dashboard Header & Metrics ---
+
+print(f'<script>document.title = "{app_name} geol EoL stack reporting";</script>')
+display(HTML(f'<div class="report-header"><h1><span class="fa-solid fa-hourglass-half"></span> {app_name} Geol EoL stack reporting</h1></div>'))
+display(HTML(f'<div style="text-align: center; margin: 20px 0;"><a href="https://github.com/opt-nc/geol" target="_blank"><img src="https://github.com/opt-nc/geol/blob/main/assets/logos/dist/logo-with-name-gradient-black.jpeg?raw=true" alt="Geol Logo" style="max-width: 300px; border-radius: 8px;"></a></div>'))
+
+# Executive summary with risk sparkline
+action_count = eol_comp + upcoming_count + len([1 for _, r in df_raw.iterrows() if r['lag'] in ('Major Lag', 'Minor Lag') and r['status'] != 'EOL' and r['status'] != 'UNKNOWN'])
+tracked_count = total_comp - untracked_comp
+if action_count == 0:
+    summary_icon = f'<span class="fa-solid fa-circle-check" style="color:{COLORS["healthy"]};"></span>'
+    summary_text = f"All {tracked_count} tracked components are up to date — no action required."
+    summary_border = COLORS['healthy']
+elif eol_comp > 0:
+    summary_icon = f'<span class="fa-solid fa-circle-exclamation" style="color:{COLORS["critical"]};"></span>'
+    summary_text = f"{action_count} of {tracked_count} tracked components require action — {eol_comp} past EOL."
+    summary_border = COLORS['critical']
+else:
+    summary_icon = f'<span class="fa-solid fa-triangle-exclamation" style="color:{COLORS["warning"]};"></span>'
+    summary_text = f"{action_count} of {tracked_count} tracked components require attention."
+    summary_border = COLORS['warning']
+
+# Build sparkline bar segments (proportional to component counts)
+ok_pct = round(ok_comp / tracked_count * 100) if tracked_count else 0
+upcoming_pct = round(upcoming_count / tracked_count * 100) if tracked_count else 0
+eol_pct = round(eol_comp / tracked_count * 100) if tracked_count else 0
+# Ensure total doesn't exceed 100 due to rounding
+remainder = 100 - ok_pct - upcoming_pct - eol_pct
+ok_pct += remainder
+sparkline = (
+    f'<div style="display:flex; height:8px; border-radius:4px; overflow:hidden; margin-top:8px; background:rgba(255,255,255,0.1);">'
+    f'<div style="width:{ok_pct}%; background:{COLORS["healthy"]};" title="Healthy: {ok_comp}"></div>'
+    f'<div style="width:{upcoming_pct}%; background:{COLORS["warning"]};" title="Upcoming: {upcoming_count}"></div>'
+    f'<div style="width:{eol_pct}%; background:{COLORS["critical"]};" title="EOL: {eol_comp}"></div>'
+    f'</div>'
+)
+
+display(HTML(f'<div style="text-align:center; margin: 15px auto; padding: 10px 20px; border: 1px solid {summary_border}; border-radius: 8px; font-size: 1.1rem; max-width: 600px;">{summary_icon} {summary_text}{sparkline}</div>'))
+```
+
+## <span class='fa-solid fa-circle-info'></span> Abstract
+
+```{python}
+#| echo: false
+#| output: asis
+print(f"This report provides an EOL analysis for **{app_name}**. Generated using [geol](https://opt-nc.github.io/geol/).")
+
+display(HTML(f"""
+<div class="protip-box" style="font-size: 0.85rem; background: rgba(80, 250, 123, 0.05); border: 1px solid {COLORS['healthy']}; padding: 10px; border-radius: 5px; margin: 15px 0;">
+    <span class="fa-solid fa-file-pdf"></span> <strong>Pro Tip:</strong> Want a PDF? Simply press <code>Ctrl+P</code> (or <code>Cmd+P</code>) in your browser. The report will automatically switch to a clean, white "Executive Print Mode" optimized for paper and PDF sharing.
+</div>
+"""))
+
+if additional_context and str(additional_context).strip():
+    display(HTML("<h2><span class='fa-solid fa-note-sticky'></span> Additional context</h2>"))
+    print(additional_context)
+
+display(HTML(f"""
+<div style="display: flex; gap: 20px; margin-top: 20px; flex-wrap: wrap;">
+    <div class="metric-card" style="flex: 1; min-width: 150px; cursor: pointer;" onclick="document.getElementById('stack-status').scrollIntoView()"><span class="metric-tooltip">{html.escape(all_names)}</span><span class="fa-solid fa-layer-group metric-icon"></span><span class="metric-label">Stack Size</span><span class="metric-value">{total_comp}</span></div>
+    <div class="metric-card" style="flex: 1; min-width: 150px; cursor: pointer;" onclick="document.getElementById('stack-status').scrollIntoView()"><span class="metric-tooltip">{html.escape(ok_names)}</span><span class="fa-solid fa-circle-check metric-icon status-ok"></span><span class="metric-label">Healthy</span><span class="metric-value status-ok">{ok_comp}</span></div>
+    <div class="metric-card" style="flex: 1; min-width: 150px; cursor: pointer;" onclick="document.getElementById('recommended-actions').scrollIntoView()"><span class="metric-tooltip">{html.escape(upcoming_names)}</span><span class="fa-solid fa-triangle-exclamation metric-icon status-warning"></span><span class="metric-label">Upcoming Risks</span><span class="metric-value status-warning">{upcoming_count}</span></div>
+    <div class="metric-card" style="flex: 1; min-width: 150px; cursor: pointer;" onclick="document.getElementById('recommended-actions').scrollIntoView()"><span class="metric-tooltip">{html.escape(eol_names)}</span><span class="fa-solid fa-fire-flame-curved metric-icon status-eol"></span><span class="metric-label">End of Life</span><span class="metric-value status-eol">{eol_comp}</span></div>
+</div>
+"""))
+
+display(Markdown(f"""
+- <span class='fa-solid fa-layer-group'></span> **Stack Size:** Complete inventory of software components.
+- <span class='fa-solid fa-circle-check status-ok'></span> **Healthy:** Supported components with a safe timeframe.
+- <span class='fa-solid fa-triangle-exclamation status-warning'></span> **Upcoming Risks:** Reaching EOL within {RISK_THRESHOLD_DAYS} days.
+- <span class='fa-solid fa-fire-flame-curved status-eol'></span> **End of Life:** Critical items requiring immediate replacement.
+"""))
+```
+
+## <span class='fa-solid fa-heart-pulse'></span> Stack Health Score
+
+```{python}
+#| echo: false
+#| output: asis
+# --- Stack Health Score ---
+
+# Score color
+if stack_health_score >= 80:
+    score_color = COLORS["healthy"]
+    score_label = "Healthy"
+elif stack_health_score >= 50:
+    score_color = COLORS["warning"]
+    score_label = "Needs Attention"
+else:
+    score_color = COLORS["critical"]
+    score_label = "Critical"
+```
+
+```{python}
+#| echo: false
+# --- Stack Health Score (gauge) ---
+
+import plotly.graph_objects as go
+fig_gauge = go.Figure(go.Indicator(
+    mode="gauge+number",
+    value=stack_health_score,
+    number={"suffix": " / 100", "font": {"size": 40, "color": score_color}},
+    gauge={
+        "axis": {"range": [0, 100], "tickwidth": 2, "tickcolor": "#666"},
+        "bar": {"color": score_color, "thickness": 0.3},
+        "bgcolor": "rgba(0,0,0,0)",
+        "borderwidth": 0,
+        "steps": [
+            {"range": [0, 50], "color": "rgba(255, 85, 85, 0.15)"},
+            {"range": [50, 80], "color": "rgba(255, 184, 108, 0.15)"},
+            {"range": [80, 100], "color": "rgba(80, 250, 123, 0.15)"},
+        ],
+        "threshold": {
+            "line": {"color": "white", "width": 3},
+            "thickness": 0.8,
+            "value": stack_health_score,
+        },
+    },
+))
+fig_gauge.update_layout(
+    template="plotly_dark",
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+    height=280,
+    margin=dict(t=30, b=10, l=40, r=40),
+)
+display(fig_gauge)
+```
+
+```{python}
+#| echo: false
+#| output: asis
+# --- Stack Health Score (details) ---
+
+display(Markdown(f"""
+The **Stack Health Score** is the average of individual component scores (0–100).
+It allows comparing stacks against each other on the same scale: **the higher the better**.
+"""))
+
+display(HTML(f"""
+<ul style="list-style: none; padding-left: 0; margin: 10px 0;">
+    <li>🟢 <strong>80–100</strong> — Stack is in great shape</li>
+    <li>🟠 <strong>50–79</strong> — Some components need attention</li>
+    <li>🔴 <strong>0–49</strong> — Significant risk exposure</li>
+</ul>
+<p>Untracked/skipped components are excluded from the calculation ({untracked_comp} excluded here).</p>
+"""))
+
+# Scoring methodology (collapsed by default)
+print(f"""<details style="margin: 15px 0;">
+<summary style="cursor: pointer; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px;">
+<span class="fa-solid fa-book-open"></span> <strong>Scoring Methodology</strong> — click to expand
+</summary>
+<div style="margin-top: 10px;">
+<table class="table" style="max-width: 700px;">
+<thead><tr class="thead-dark"><th style="text-align:left;">Status</th><th style="text-align:center;">LTS?</th><th style="text-align:center;">Latest LTS?</th><th style="text-align:right;">Score</th><th style="text-align:left;">Example</th></tr></thead>
+<tbody>
+<tr><td style="text-align:left;">✅ Healthy + Current</td><td style="text-align:center;">—</td><td style="text-align:center;">—</td><td style="text-align:right;"><strong>100</strong></td><td style="text-align:left;">On the latest release</td></tr>
+<tr><td style="text-align:left;">✅ Healthy + Major Lag</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅ Latest</td><td style="text-align:right;"><strong>95</strong></td><td style="text-align:left;">Java 21 LTS when 24 exists</td></tr>
+<tr><td style="text-align:left;">✅ Healthy + Minor Lag</td><td style="text-align:center;">—</td><td style="text-align:center;">—</td><td style="text-align:right;"><strong>80</strong></td><td style="text-align:left;">Patch/minor update available</td></tr>
+<tr><td style="text-align:left;">✅ Healthy + Major Lag</td><td style="text-align:center;">✅</td><td style="text-align:center;">❌ Older</td><td style="text-align:right;"><strong>75</strong></td><td style="text-align:left;">Java 17 LTS when 21 LTS exists</td></tr>
+<tr><td style="text-align:left;">✅ Healthy + Major Lag</td><td style="text-align:center;">❌</td><td style="text-align:center;">—</td><td style="text-align:right;"><strong>60</strong></td><td style="text-align:left;">Behind with no LTS safety net</td></tr>
+<tr><td style="text-align:left;">⚠️ Upcoming Risk</td><td style="text-align:center;">✅</td><td style="text-align:center;">✅ Latest</td><td style="text-align:right;"><strong>45</strong></td><td style="text-align:left;">Latest LTS nearing EOL</td></tr>
+<tr><td style="text-align:left;">⚠️ Upcoming Risk</td><td style="text-align:center;">✅</td><td style="text-align:center;">❌ Older</td><td style="text-align:right;"><strong>35</strong></td><td style="text-align:left;">Old LTS expiring</td></tr>
+<tr><td style="text-align:left;">⚠️ Upcoming Risk</td><td style="text-align:center;">❌</td><td style="text-align:center;">—</td><td style="text-align:right;"><strong>30</strong></td><td style="text-align:left;">Non-LTS expiring soon</td></tr>
+<tr><td style="text-align:left;">🔴 End of Life</td><td style="text-align:center;">—</td><td style="text-align:center;">—</td><td style="text-align:right;"><strong>0</strong></td><td style="text-align:left;">Unsupported</td></tr>
+<tr><td style="text-align:left;">❓ Untracked</td><td style="text-align:center;">—</td><td style="text-align:center;">—</td><td style="text-align:right;"><em>excluded</em></td><td style="text-align:left;">Not enough data</td></tr>
+</tbody>
+</table>
+</div>
+</details>""")
+
+# Per-component detail table
+display(Markdown("### Score Breakdown"))
+
+score_rows = ""
+for _, row in df_raw.iterrows():
+    score_val = row['health_score']
+    if score_val is None or pd.isna(score_val):
+        score_display = f'<span style="color:{COLORS["info"]};">excluded</span>'
+    elif score_val >= 80:
+        score_display = f'<span style="color:{COLORS["healthy"]}; font-weight:bold;">{int(score_val)}</span>'
+    elif score_val >= 50:
+        score_display = f'<span style="color:{COLORS["warning"]}; font-weight:bold;">{int(score_val)}</span>'
+    else:
+        score_display = f'<span style="color:{COLORS["critical"]}; font-weight:bold;">{int(score_val)}</span>'
+
+    lts_badge = ""
+    if row.get('is_latest_lts'):
+        lts_badge = '<span class="fa-solid fa-shield-halved" title="Latest LTS" style="color:#50fa7b;"></span> Latest'
+    elif row.get('is_lts'):
+        lts_badge = '<span class="fa-solid fa-shield-halved" title="Older LTS" style="color:#8be9fd;"></span> Older'
+    else:
+        lts_badge = "—"
+
+    # Mini-bar for visual scanning
+    if score_val is None or pd.isna(score_val):
+        bar_html = ''
+    else:
+        sv = int(score_val)
+        bar_color = COLORS["healthy"] if sv >= 80 else COLORS["warning"] if sv >= 50 else COLORS["critical"]
+        bar_html = (f'<div style="display:inline-block; width:60px; height:8px; background:rgba(255,255,255,0.1); '
+                    f'border-radius:4px; vertical-align:middle; margin-left:6px;">'
+                    f'<div style="width:{sv}%; height:100%; background:{bar_color}; border-radius:4px;"></div></div>')
+
+    score_rows += f'<tr><td>{html.escape(row["software"])}</td><td>{html.escape(str(row["version"]))}</td><td>{row["status"]}</td><td>{row["lag"]}</td><td>{lts_badge}</td><td>{score_display} {bar_html}</td></tr>'
+
+scored_count = len(scored_components)
+display(HTML(f"""
+<table class="table display nowrap" style="width:100%">
+<thead><tr class="thead-dark"><th>Software</th><th>Version</th><th>Status</th><th>Lag</th><th>LTS</th><th>Score</th></tr></thead>
+<tbody>{score_rows}</tbody>
+<tfoot><tr style="font-weight:bold; border-top: 2px solid {score_color};"><td colspan="5" style="text-align:right;">Average ({scored_count} components)</td><td style="color:{score_color}; font-size:1.2rem;">{stack_health_score}</td></tr></tfoot>
+</table>
+"""))
+```
+
+## <span class='fa-solid fa-list-check'></span> Recommended Actions
+
+```{python}
+#| echo: false
+#| output: asis
+# --- Recommended Actions ---
+
+# Build prioritized action list from enriched data
+actions = []
+
+for _, row in df_raw.iterrows():
+    sw = row['software']
+    sw_slug = sw.lower().replace(' ', '-').replace('_', '-')
+    ver = str(row['version']).strip()
+    latest = str(row.get('latest_version', '')).strip()
+    status = row['status']
+    lag = row.get('lag', '')
+    score = row.get('health_score')
+    eol_date = str(row.get('eol_date', '')).strip()
+    is_lts = row.get('is_lts', False)
+    is_latest_lts = row.get('is_latest_lts', False)
+
+    if status == 'UNKNOWN':
+        continue
+
+    if status == 'EOL':
+        since = f" (EOL since {eol_date})" if eol_date and eol_date != '-' else ""
+        target = f" → {latest}" if latest and latest != '-' else ""
+        actions.append((0, score or 0, sw_slug, f'<span class="fa-solid fa-circle-exclamation" style="color:{COLORS["critical"]};"></span> '
+            f'<strong>Upgrade {html.escape(sw)}</strong> from <code>{html.escape(ver)}</code>{target}{since} — <em>unsupported, critical risk</em>'))
+
+    elif row['days_num'] > 0 and row['days_num'] < RISK_THRESHOLD_DAYS:
+        days_left = int(row['days_num'])
+        target = f" → {latest}" if latest and latest != '-' and latest != ver else ""
+        actions.append((1, score or 0, sw_slug, f'<span class="fa-solid fa-triangle-exclamation" style="color:{COLORS["warning"]};"></span> '
+            f'<strong>Plan migration for {html.escape(sw)}</strong> <code>{html.escape(ver)}</code>{target} — <em>EOL in {days_left} days</em>'))
+
+    elif lag == 'Major Lag' and not is_lts:
+        target = f" → {latest}" if latest and latest != '-' else ""
+        actions.append((2, score or 0, sw_slug, f'<span class="fa-solid fa-arrow-up" style="color:{COLORS["warning"]};"></span> '
+            f'<strong>Upgrade {html.escape(sw)}</strong> from <code>{html.escape(ver)}</code>{target} — <em>major version behind, no LTS</em>'))
+
+    elif lag == 'Major Lag' and is_lts and not is_latest_lts:
+        target = f" → {latest}" if latest and latest != '-' else ""
+        actions.append((3, score or 0, sw_slug, f'<span class="fa-solid fa-shield-halved" style="color:{COLORS["info"]};"></span> '
+            f'<strong>Consider upgrading {html.escape(sw)}</strong> from <code>{html.escape(ver)}</code>{target} — <em>older LTS, newer LTS available</em>'))
+
+    elif lag == 'Minor Lag':
+        target = f" → {latest}" if latest and latest != '-' else ""
+        actions.append((4, score or 0, sw_slug, f'<span class="fa-solid fa-wrench" style="color:{COLORS["healthy"]};"></span> '
+            f'<strong>Update {html.escape(sw)}</strong> from <code>{html.escape(ver)}</code>{target} — <em>minor/patch update available</em>'))
+
+    # Always-latest policy: flag components not on latest version
+    if row.get('always_latest') and lag in ('Major Lag', 'Minor Lag') and status != 'EOL':
+        target = f" → {latest}" if latest and latest != '-' else ""
+        actions.append((-1, score or 0, f"policy-{sw_slug}", f'<span class="fa-solid fa-bolt" style="color:{COLORS["warning"]};"></span> '
+            f'<strong>Policy: {html.escape(sw)}</strong> must be on latest (<code>{html.escape(ver)}</code>{target}) — <em>always-latest policy requires immediate update</em>'))
+
+# Sort by priority (lower = more urgent), then by score (lower = more urgent)
+actions.sort(key=lambda a: (a[0], a[1]))
+
+if actions:
+    # First item gets a stronger visual treatment as the worst offender
+    first_item = f'<li id="action-{actions[0][2]}" style="font-size: 1.1rem; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">{actions[0][3]}</li>'
+    rest_items = "".join(f'<li id="action-{a[2]}">{a[3]}</li>' for a in actions[1:])
+
+    display(HTML(f"""
+<div style="margin: 10px 0; padding: 15px 20px; border-left: 4px solid {COLORS['warning']}; background: rgba(255,184,108,0.07); border-radius: 0 6px 6px 0;">
+    <p style="margin: 0 0 10px 0; font-weight: bold;">
+        <span class="fa-solid fa-bolt" style="color:{COLORS['warning']};"></span>
+        {len(actions)} action{"s" if len(actions) != 1 else ""} identified — sorted by priority
+    </p>
+    <ol style="margin: 0; padding-left: 20px; line-height: 2;">
+        {first_item}{rest_items}
+    </ol>
+</div>
+"""))
+else:
+    display(HTML(f"""
+<div style="margin: 10px 0; padding: 15px 20px; border-left: 4px solid {COLORS['healthy']}; background: rgba(80,250,123,0.07); border-radius: 0 6px 6px 0;">
+    <p style="margin: 0;"><span class="fa-solid fa-circle-check" style="color:{COLORS['healthy']};"></span> <strong>No actions needed</strong> — all components are up to date!</p>
+</div>
+"""))
+```
+
+## <span class='fa-solid fa-chart-pie'></span> Status Overview
+
+```{python}
+#| echo: false
+#| message: false
+#| warning: false
+# --- Status Overview (Sunburst Chart) ---
+
+if not df_raw.empty:
+    df_raw['Root'] = app_name
+    df_raw['Chart_Status'] = df_raw.apply(
+        lambda r: 'EOL' if r['status'] == 'EOL'
+        else 'Untracked' if r['status'] == 'UNKNOWN'
+        else 'Upcoming Risk' if r['days_num'] < RISK_THRESHOLD_DAYS
+        else 'Healthy',
+        axis=1,
+    )
+    fig_sun = px.sunburst(
+        df_raw,
+        path=['Root', 'Chart_Status', 'software'],
+        color='Chart_Status',
+        color_discrete_map=SUNBURST_COLOR_MAP,
+    )
+    fig_sun.update_layout(
+        template="plotly_dark",
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        margin=dict(t=0, b=0, l=0, r=0),
+        height=450,
+    )
+    display(fig_sun)
+
+    findings = ""
+    if eol_comp > 0:
+        findings += f'<div class="finding-box finding-critical"><div class="finding-icon"><span class="fa-solid fa-fire-flame-curved"></span></div><div class="finding-text"><strong>Critical Risk:</strong> {eol_comp} past EOL.</div></div>'
+    if upcoming_count > 0:
+        findings += f'<div class="finding-box finding-warning"><div class="finding-icon"><span class="fa-solid fa-triangle-exclamation"></span></div><div class="finding-text"><strong>Upcoming:</strong> {upcoming_count} reach EOL soon.</div></div>'
+    if not findings:
+        findings = '<div class="finding-box finding-safe"><div class="finding-icon"><span class="fa-solid fa-circle-check"></span></div><div class="finding-text"><strong>Healthy:</strong> All components are supported.</div></div>'
+    display(HTML(findings))
+```
+
+## <span class='fa-solid fa-list-check'></span> Stack Status
+
+```{python}
+#| echo: false
+#| output: asis
+# --- Stack Status (DataTable) ---
+
+try:
+    df = df_raw.copy()
+    df['sort_rank'] = df.apply(
+        lambda r: 0 if r['status'] == 'EOL'
+        else 1 if (r['status'] == 'OK' and r['days_num'] < RISK_THRESHOLD_DAYS)
+        else 2 if r['status'] == 'OK'
+        else 3,
+        axis=1,
+    )
+    df = df.sort_values(by=['sort_rank', 'days_num'], ascending=[True, True])
+
+    def style_status(row):
+        status, days = row['status'], row['days_num']
+        if status == 'EOL':
+            return f'<span class="fa-solid fa-circle-exclamation"></span> <span style="color:{COLORS["critical"]}; font-weight:bold;">{status}</span>'
+        if status == 'UNKNOWN':
+            return f'<span class="fa-solid fa-circle-question"></span> <span style="color:{COLORS["info"]};">{status}</span>'
+        if days < RISK_THRESHOLD_DAYS:
+            return f'<span class="fa-solid fa-triangle-exclamation"></span> <span style="color:{COLORS["warning"]}; font-weight:bold;">WARNING</span>'
+        return f'<span class="fa-solid fa-circle-check"></span> <span style="color:{COLORS["healthy"]};">{status}</span>'
+
+    def style_version(row):
+        version = str(row['version'])
+        if row.get('is_lts') is True:
+            return f'{html.escape(version)} <span class="fa-solid fa-shield-halved" title="Long Term Support (LTS)"></span>'
+        return html.escape(version)
+
+    def style_lag(lag_value):
+        if lag_value == 'Current':
+            color = COLORS["healthy"]
+        elif lag_value == 'Minor Lag':
+            color = COLORS["warning"]
+        elif lag_value == 'Major Lag':
+            color = COLORS["critical"]
+        else:
+            color = COLORS["info"]
+        icon = "fa-circle-check" if lag_value == "Current" else "fa-circle-chevron-up"
+        return f'<span style="color:{color};"><span class="fa-solid {icon}"></span> {lag_value}</span>'
+
+    df['Stat'] = df.apply(style_status, axis=1)
+    df['Ver'] = df.apply(style_version, axis=1)
+    df['Lag'] = df['lag'].apply(style_lag)
+
+    table_html = '<table id="stack-table" class="display table nowrap" style="width:100%"><thead><tr class="thead-dark"><th>Software</th><th>Version</th><th>Status</th><th>Lag</th><th>EOL Date</th><th>Latest</th></tr></thead><tbody>'
+    for _, row in df.iterrows():
+        if row['status'] == 'EOL':
+            row_bg = f'background-color: rgba(255, 85, 85, 0.1);'
+        elif row['status'] == 'OK' and row['days_num'] < RISK_THRESHOLD_DAYS:
+            row_bg = f'background-color: rgba(255, 184, 108, 0.1);'
+        elif row['status'] == 'UNKNOWN':
+            row_bg = f'background-color: rgba(139, 233, 253, 0.05);'
+        else:
+            row_bg = ''
+        always_latest_badge = ' <span class="fa-solid fa-bolt" title="Always-latest policy" style="color:#ffb86c;"></span>' if row.get('always_latest') else ''
+        table_html += f'<tr style="{row_bg}"><td>{row["soft_html"]}{always_latest_badge}</td><td>{row["Ver"]}</td><td>{row["Stat"]}</td><td>{row["Lag"]}</td><td>{row["eol_date"]}</td><td>{row["latest_version"]}</td></tr>'
+    table_html += '</tbody></table>'
+    table_html += '<script>$(document).ready(function() { if (!$.fn.DataTable.isDataTable("#stack-table")) { $("#stack-table").DataTable({ dom: "Bfrtip", buttons: ["copy", "csv", "excel", "print", "colvis"], pageLength: 15, responsive: true, order: [] }); } });</script>'
+    display(HTML(table_html))
+except Exception as e:
+    logger.error("Failed to render Stack Status table: %s", e)
+    print(f"Error: {e}")
+```
+
+## <span class='fa-solid fa-calendar-days'></span> Lifecycle Timeline
+
+```{python}
+#| echo: false
+#| message: false
+#| warning: false
+# --- Lifecycle Timeline (using cached data) ---
+
+# Build map of deployed version cycles per product for highlighting
+deployed_cycles = {}
+for _, row in df_raw.iterrows():
+    sw_name = str(row['software']).strip().lower()
+    pid = name_to_id.get(sw_name)
+    if pid and pid in product_extended_cache:
+        display_name = id_to_display_name.get(pid, product_extended_cache[pid].get('name', ''))
+        ver = str(row['version']).strip()
+        for rel in product_extended_cache[pid].get('releases', []):
+            cycle = str(rel.get('cycle', '')).strip()
+            if cycle and (ver == cycle or ver.startswith(cycle + '.')):
+                deployed_cycles[f"{display_name}|{cycle}"] = True
+                break
+
+lifecycle_events = []
+for product_id, product_data in product_extended_cache.items():
+    display_name = id_to_display_name.get(product_id, product_data.get('name', product_id))
+    try:
+        for release in product_data.get('releases', [])[:6]:
+            start_date = release.get('releaseDate')
+            end_date = release.get('eolFrom')
+            cycle = release.get('cycle', 'unknown')
+            if start_date and end_date and end_date != "false":
+                try:
+                    start_dt = datetime.strptime(start_date, '%Y-%m-%d')
+                    end_dt = datetime.strptime(end_date, '%Y-%m-%d')
+                    today = datetime.now()
+                    if end_dt < today:
+                        status = "EOL"
+                    elif start_dt <= today <= end_dt:
+                        status = "Active"
+                    else:
+                        status = "Upcoming"
+                    is_deployed = f"{display_name}|{cycle}" in deployed_cycles
+                    is_lts_cycle = release.get('isLts', False)
+                    lifecycle_events.append({
+                        "Product": display_name,
+                        "Cycle": str(cycle),
+                        "Start": start_date,
+                        "End": end_date,
+                        "Status": status,
+                        "Label": f"{display_name} {cycle}",
+                        "Deployed": is_deployed,
+                        "LTS": "Yes" if is_lts_cycle else "No",
+                        "DeployedLabel": "✅ Deployed" if is_deployed else "",
+                    })
+                except (ValueError, KeyError) as e:
+                    logger.warning("Skipping malformed release for %s cycle %s: %s", product_id, cycle, e)
+    except Exception as e:
+        logger.warning("Failed to process timeline for %s: %s", product_id, e)
+
+if lifecycle_events:
+    df_lifecycle = pd.DataFrame(lifecycle_events)
+    # Mark deployed cycles in the display text
+    df_lifecycle['DisplayCycle'] = df_lifecycle.apply(
+        lambda r: f"▶ {r['Cycle']}" if r['Deployed'] else r['Cycle'], axis=1
+    )
+    fig = px.timeline(
+        df_lifecycle,
+        x_start="Start",
+        x_end="End",
+        y="Product",
+        color="Status",
+        hover_name="Label",
+        text="DisplayCycle",
+        custom_data=["Cycle", "Start", "End", "LTS", "DeployedLabel"],
+        color_discrete_map=TIMELINE_COLOR_MAP,
+        category_orders={"Status": ["Active", "Upcoming", "EOL"]},
+    )
+    fig.update_traces(
+        textposition="inside",
+        hovertemplate="<b>%{customdata[0]}</b><br>Release: %{customdata[1]}<br>EOL: %{customdata[2]}<br>LTS: %{customdata[3]}<br>%{customdata[4]}<extra>%{y}</extra>",
+    )
+    fig.update_yaxes(autorange="reversed")
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        height=400 + (len(df_lifecycle['Product'].unique()) * 30),
+        xaxis_title="",
+    )
+    fig.add_vline(x=datetime.now().timestamp() * 1000, line_dash="dash", line_color="white")
+    fig.add_annotation(
+        x=datetime.now().timestamp() * 1000,
+        y=1.06, yref="paper",
+        text="Today", showarrow=False,
+        font=dict(color="white", size=11, family="Arial"),
+        bgcolor="rgba(255,255,255,0.15)",
+        borderpad=3, bordercolor="rgba(255,255,255,0.3)", borderwidth=1,
+    )
+    display(fig)
+```
+
+## <span class='fa-solid fa-database'></span> Report Metadata
+
+```{python}
+#| echo: false
+#| output: asis
+now_local = datetime.now().astimezone()
+now_utc = datetime.now(dt_timezone.utc)
+
+metadata_items = []
+metadata_items.append(f"<li><span class='fa-solid fa-clock'></span> <strong>Local:</strong> {now_local.strftime('%Y-%m-%d %H:%M:%S %Z')}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-earth-americas'></span> <strong>UTC:</strong> {now_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}</li>")
+
+if git_commit:
+    metadata_items.append(f"<li><span class='fa-brands fa-git-alt'></span> <strong>Workspace Git Commit:</strong> <code>{git_commit[:8]}</code></li>")
+if config_git_commit:
+    metadata_items.append(f"<li><span class='fa-solid fa-code-commit'></span> <strong>geol input check file commit:</strong> <code>{config_git_commit[:8]}</code></li>")
+
+metadata_items.append(f"<li><span class='fa-brands fa-python'></span> <strong>Python:</strong> {sys.version.split()[0]}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-bolt'></span> <strong><a href='https://docs.astral.sh/uv/' target='_blank'>UV</a>:</strong> {uv_version}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-gears'></span> <strong><a href='https://github.com/opt-nc/geol' target='_blank'>Geol</a>:</strong> {geol_version}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-box-open'></span> <strong><a href='https://pypi.org/project/packaging/' target='_blank'>Packaging</a>:</strong> {packaging_version} (used for robust SemVer and Calendar version comparison, following the <a href='https://peps.python.org/pep-0440/' target='_blank'>PEP 440</a> initiative)</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-book-open'></span> <strong><a href='https://quarto.org/' target='_blank'>Quarto</a>:</strong> {quarto_version}</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-file-code'></span> <strong>geol input check file:</strong> <code>{config_file}</code> (SHA-256: <code>{config_sha256[:12]}...</code>)</li>")
+metadata_items.append(f"<li><span class='fa-solid fa-link'></span> <strong>Data Source:</strong> <a href='https://endoflife.date/docs/api/v1' target='_blank'>endoflife.date API</a></li>")
+
+display(HTML("<ul>" + "".join(metadata_items) + "</ul>"))
+```
+
+## <span class='fa-solid fa-code'></span> Configuration Source
+
+```{python}
+#| echo: false
+#| output: asis
+print(f"""<details>
+<summary style="cursor: pointer; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; margin-bottom: 10px;">
+<span class="fa-solid fa-file-invoice"></span> Click to view the <code>geol</code> input configuration
+</summary>
+<p style="margin-top: 10px;">Built using <code>geol check</code>. (see <a href="https://opt-nc.github.io/geol/docs/tutorial-basics/check-command" target="_blank">tutorial</a> for more)</p>
+""")
+print(f"```yaml\n{config_raw}\n```")
+print("</details>")
+```
+
+## <span class='fa-solid fa-handshake-angle'></span> License & Contribution
+
+```{python}
+#| echo: false
+#| output: asis
+generation_duration = round(time.time() - start_time, 2)
+generation_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S %Z')
+
+display(HTML(f"""
+<div style="font-size: 1rem; margin-bottom: 30px;">
+    <p><span class="fa-solid fa-code-fork"></span> <strong>Open Source & Customizable</strong></p>
+    <p>This reporting notebook is open-source and part of the <a href="https://github.com/opt-nc/geol" target="_blank">geol project</a> ecosystem. You are encouraged to fork this repository and customize it to meet your specific auditing needs, and share your contributions back with the community.</p>
+    <p><span class="fa-solid fa-scale-balanced"></span> <strong>Disclaimer & License</strong></p>
+    <p>This tool is provided "as is", without warranty of any kind, under the <a href="https://github.com/opt-nc/geol/blob/main/LICENSE" target="_blank">geol license</a>. It is designed to assist decision-making through KPIs, but the authors are not accountable for governance choices or technical implementations made based on this report.</p>
+    <p><span class="fa-solid fa-gears"></span> <strong>Build Information</strong></p>
+    <p>Generated with <a href="https://github.com/opt-nc/geol" target="_blank">geol</a> and <a href="https://quarto.org/" target="_blank">Quarto</a> on <strong>{generation_date}</strong> in <strong>{generation_duration} seconds</strong>.</p>
+    <p><em>End-of-Life data provided by the <a href="https://endoflife.date/" target="_blank">endoflife.date</a> API.</em></p>
+</div>
+"""))
+```
