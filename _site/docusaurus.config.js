@@ -8,7 +8,7 @@ import {themes as prismThemes} from 'prism-react-renderer';
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: 'geol',
+  title: 'geol - Software End-of-Life Management Tool',
   tagline: 'Software End Of Life management is too important to be boring',
   // Favicon (restored to original image)
   favicon: 'img/logo-no-name-gradient.png',
@@ -61,15 +61,16 @@ const config = {
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */ ({
       metadata: [
-        {name: 'description', content: 'geol — manage software end-of-life and track supported versions.'},
+        {name: 'description', content: 'geol - Efficiently show and monitor end-of-life dates for a number of products in your terminal and CI using endoflife.date API'},
         {name: 'og:site_name', content: 'geol'},
         {name: 'og:type', content: 'website'},
         {name: 'twitter:card', content: 'summary_large_image'},
+        {name: 'og:description', content: 'geol - Efficiently show and monitor end-of-life dates for a number of products in your terminal and CI using endoflife.date API'},
       ],
       image: 'img/geol.png',
       colorMode: { respectPrefersColorScheme: true },
       navbar: {
-        title: 'geol',
+        title: 'geol - Efficiently show and monitor end-of-life dates for a number of products in your terminal and CI using endoflife.date API ',
         logo: { alt: 'geol Logo', src: 'img/logo-no-name-gradient.png' },
         items: [
           { to: '/search', label: 'Search', position: 'right' },

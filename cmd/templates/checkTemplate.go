@@ -10,14 +10,17 @@ import (
 //go:embed checkTemplate.yaml
 var GeolTemplate string
 
-func GenerateTemplate(outputPath string) {
+func GenerateTemplate(outputPath string, force bool) {
 	if outputPath == "" {
 		outputPath = "stack.yaml"
 	}
 
 	if _, err := os.Stat(outputPath); err == nil {
-		log.Error().Msgf("the file %s already exists", outputPath)
-		os.Exit(1)
+		if !force {
+			log.Error().Msgf("the file %s already exists", outputPath)
+			os.Exit(1)
+		}
+		log.Warn().Msgf("Overwriting existing file %s", outputPath)
 	}
 
 	log.Info().Msgf("Generating template file at %s", outputPath)

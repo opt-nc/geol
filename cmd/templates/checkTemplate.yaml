@@ -28,18 +28,29 @@ stack:
     version: "3.6"
     id_eol: apache-maven
 
-  # Example: Using the skip field for products not yet in endoflife.date API
+  # Example: Using the skip field for products you want to ignore completely
   # The skip field allows you to:
-  # - Keep the product in your inventory for other tools (export, reporting)
-  # - Document WHY it's not checked (e.g., waiting for API support)
-  # - Easily enable checking when the product becomes available
+  # - Keep the product in your inventory for documentation purposes
+  # - Exclude it from EOL checks and reports
   # See: https://endoflife.date/docs/api/adding-a-new-product
   - name: non-existent-product
     version: "1.0"
     id_eol: non-existent-product
     skip: true
 
-  # Example: Using the always-latest flag for products that should always be on the latest version
+  # Example: Using manual_eol for products not yet in endoflife.date API
+  # The manual_eol field allows you to:
+  # - Set a custom EOL date for products not available in the API
+  # - Track EOL status in your reports with manual dates
+  # - Get warnings/alerts based on the manual EOL date
+  - name: gcc
+    version: "12"
+    id_eol: gcc
+    manual_eol: "2025-07-11"
+
+  # Example: Using the always-latest flag for products that should always be
+  # on the latest version
+  #
   # The always-latest field allows you to:
   # - Mark products that your organization requires to be on the latest version
   # - Get warnings/alerts when not using the most recent release

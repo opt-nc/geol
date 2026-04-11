@@ -33,6 +33,7 @@ type stackItem struct {
 	IdEol                string `yaml:"id_eol"`
 	Skip                 bool   `yaml:"skip,omitempty"`
 	ShouldAlwaysBeLatest bool   `yaml:"always-latest,omitempty"`
+	ManualEol            string `yaml:"manual_eol,omitempty"`
 }
 type geolConfig struct {
 	AppName string      `yaml:"app_name"`
@@ -59,6 +60,81 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 		// Skip items marked with skip: true
 		if item.Skip {
 			log.Info().Msgf("Found skip:true for %s %s, product will be skipped", item.Name, item.Version)
+			continue
+		}
+
+		// Handle items with manual_eol set (product not in eol.date API)
+		if item.ManualEol != "" {
+			// Check if product exists in the API cache
+			productsPath, err := utilities.GetProductsPath()
+			if err == nil {
+				products, err := utilities.GetProductsWithCacheRefresh(nil, productsPath)
+				if err == nil {
+					prod := item.IdEol
+					found := false
+					for name, aliases := range products.Products {
+						if strings.EqualFold(prod, name) {
+							found = true
+							break
+						}
+						for _, alias := range aliases {
+							if strings.EqualFold(prod, alias) {
+								found = true
+								break
+							}
+						}
+						if found {
+							break
+						}
+					}
+					if found {
+						log.Warn().Msgf("Product %s is available in eol.date API but has manual_eol set. Consider removing manual_eol to use official EOL data", item.Name)
+					}
+				}
+			}
+
+			log.Info().Msgf("Using manual EOL date for %s %s: %s (product not available in eol.date API)", item.Name, item.Version, item.ManualEol)
+			eolDate := item.ManualEol
+			var status string
+			var daysStr string
+			var daysInt int
+			eolT, parseErr := time.Parse("2006-01-02", eolDate)
+			if parseErr != nil {
+				log.Error().Msgf("Invalid manual_eol date format for %s %s: %s (expected YYYY-MM-DD)", item.Name, item.Version, item.ManualEol)
+				violations = append(violations, fmt.Sprintf("%s %s has invalid manual_eol date format: %s (expected YYYY-MM-DD)", item.Name, item.Version, item.ManualEol))
+				errorOut = true
+				continue
+			}
+			daysInt = int(eolT.Sub(today).Hours() / 24)
+			daysStr = fmt.Sprintf("%d", daysInt)
+			if daysInt < 0 {
+				status = "EOL"
+				errorOut = true
+				years := -daysInt / 365
+				months := (-daysInt % 365) / 30
+				days := (-daysInt % 365) % 30
+				log.Error().Msgf(
+					"%s %s (%s) is %dy %dm %dd past EOL (manual EOL: %s)",
+					item.Name, item.Version, item.Name, years, months, days, eolDate,
+				)
+			} else if daysInt < 30 {
+				status = "WARN"
+				log.Warn().Msgf(
+					"%s %s (%s) is nearing EOL in %dd (manual EOL: %s)",
+					item.Name, item.Version, item.Name, daysInt, eolDate,
+				)
+			} else {
+				status = "OK"
+			}
+			rows = append(rows, stackTableRow{
+				Software:      item.Name,
+				Version:       item.Version,
+				EolDate:       eolDate,
+				Status:        status,
+				Days:          daysStr,
+				IsLatest:      false,
+				LatestVersion: "-",
+			})
 			continue
 		}
 
@@ -377,7 +453,7 @@ var checkCmd = &cobra.Command{
 	Aliases: []string{"chk"},
 	Short:   "Analyzes a stack from a YAML file, checks each component’s EOL status.",
 	Long: `The 'check' command analyzes each software component listed in your stack YAML file (default: .geol.yaml), retrieves End-of-Life (EOL) information, and displays the EOL status report. Great to identify outdated software in a given stack.
-Try using 'geol check init' to generate a sample stack YAML file.`,
+Try using 'geol check init' to generate a sample stack YAML file. See https://opt-nc.github.io/geol/docs/tutorial-basics/check-command for more`,
 	Example: `geol check
 geol check --file stack.yaml
 geol check --json`,
