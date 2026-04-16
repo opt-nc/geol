@@ -1,0 +1,3 @@
+[[PackageOverrides]]
+ignore = true
+reason = "Python packages are not being scanned for vulnerabilities. It's just used to create reportings and notebooks"

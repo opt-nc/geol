@@ -1,2 +1,3 @@
 [[PackageOverrides]]
 ignore = true
+reason = "Js packages are not being scanned for vulnerabilities. It's just used to create the website for documentation"
