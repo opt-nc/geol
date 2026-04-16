@@ -531,11 +531,10 @@ geol check --json`,
 			for _, violation := range violations {
 				log.Error().Msg(violation)
 			}
-			log.Fatal().Msg("Some products have always-latest flag set but are not on the latest version")
 		}
 
 		if errorOut && strict {
-			os.Exit(1)
+			log.Fatal().Msg("One or more products are past EOL or not in latest version. Exiting with error due to strict mode.")
 		}
 	},
 }
