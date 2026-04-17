@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 
 # geol Installation Script
-# Usage: curl -fsSL https://raw.githubusercontent.com/opt-nc/geol/main/install.sh | bash
+# Usage: 
+#   curl -fsSL https://raw.githubusercontent.com/opt-nc/geol/main/install.sh | bash
+#   ./install.sh [version]
+# Examples:
+#   ./install.sh          # Install latest version
+#   ./install.sh v1.2.3   # Install specific version
 
 set -e
 
@@ -119,10 +124,15 @@ main() {
         exit 1
     fi
 
-    # Get latest version
-    print_info "Fetching latest release..."
-    VERSION=$(get_latest_version)
-    print_success "Latest version: $VERSION"
+    # Get version (from argument or latest)
+    if [ -n "$1" ]; then
+        VERSION="$1"
+        print_info "Using specified version: $VERSION"
+    else
+        print_info "Fetching latest release..."
+        VERSION=$(get_latest_version)
+        print_success "Latest version: $VERSION"
+    fi
 
 
     # Fetch asset list from GitHub API
@@ -217,4 +227,4 @@ main() {
 }
 
 # Run main installation
-main
+main "$@"
