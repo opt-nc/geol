@@ -125,7 +125,7 @@ main() {
     fi
 
     # Get version (from argument or latest)
-    if [ -n "$1" ]; then
+    if [ -n "$1" ] && [ "$1" != "latest" ]; then
         VERSION="$1"
         print_info "Using specified version: $VERSION"
     else
