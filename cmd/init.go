@@ -10,6 +10,7 @@ import (
 
 var output string
 var force bool
+var appName string
 
 // initCmd represents the init command
 var initCmd = &cobra.Command{
@@ -24,7 +25,7 @@ Use --force to overwrite an existing file.`,
 geol check init --output stack.yaml
 geol check init --output stack.yaml --force`,
 	Run: func(cmd *cobra.Command, args []string) {
-		templates.GenerateTemplate(output, force)
+		templates.GenerateTemplate(output, force, appName)
 	},
 }
 
@@ -32,4 +33,5 @@ func init() {
 	checkCmd.AddCommand(initCmd)
 	initCmd.Flags().StringVarP(&output, "output", "o", ".geol.yaml", "Path to the output file")
 	initCmd.Flags().BoolVarP(&force, "force", "f", false, "Overwrite the file if it already exists")
+	initCmd.Flags().StringVarP(&appName, "app-name", "a", "", "Application name to use in the generated template")
 }

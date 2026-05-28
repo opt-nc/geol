@@ -3,6 +3,7 @@ package templates
 import (
 	_ "embed"
 	"os"
+	"strings"
 
 	"github.com/phuslu/log"
 )
@@ -10,7 +11,7 @@ import (
 //go:embed checkTemplate.yaml
 var GeolTemplate string
 
-func GenerateTemplate(outputPath string, force bool) {
+func GenerateTemplate(outputPath string, force bool, appName string) {
 	if outputPath == "" {
 		outputPath = "stack.yaml"
 	}
@@ -24,7 +25,11 @@ func GenerateTemplate(outputPath string, force bool) {
 	}
 
 	log.Info().Msgf("Generating template file at %s", outputPath)
-	if err := os.WriteFile(outputPath, []byte(GeolTemplate), 0o644); err != nil {
+	content := GeolTemplate
+	if appName != "" {
+		content = strings.ReplaceAll(content, "MySuperApp", appName)
+	}
+	if err := os.WriteFile(outputPath, []byte(content), 0o644); err != nil {
 		log.Error().Msgf("failed to write template file: %v", err)
 		os.Exit(1)
 	}
