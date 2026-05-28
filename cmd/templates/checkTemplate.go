@@ -11,7 +11,7 @@ import (
 //go:embed checkTemplate.yaml
 var GeolTemplate string
 
-func GenerateTemplate(outputPath string, force bool, appName string) {
+func GenerateTemplate(outputPath string, force bool, appName string, appID string) {
 	if outputPath == "" {
 		outputPath = "stack.yaml"
 	}
@@ -28,6 +28,9 @@ func GenerateTemplate(outputPath string, force bool, appName string) {
 	content := GeolTemplate
 	if appName != "" {
 		content = strings.ReplaceAll(content, "MySuperApp", appName)
+	}
+	if appID != "" {
+		content = strings.ReplaceAll(content, "mysuperapp", appID)
 	}
 	if err := os.WriteFile(outputPath, []byte(content), 0o644); err != nil {
 		log.Error().Msgf("failed to write template file: %v", err)
