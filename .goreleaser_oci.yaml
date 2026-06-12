@@ -35,8 +35,8 @@ dockers_v2:
       - geol-oci
     dockerfile: Containerfile
     images:
-      - "optnc/geol"
-      - "ghcr.io/opt-nc/geol"
+      - "docker.io/optnc/geol"
+      # - "ghcr.io/opt-nc/geol"
     tags:
       - "{{ .Tag }}"
       - "{{ if not .Prerelease }}latest{{ end }}"
