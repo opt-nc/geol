@@ -1,0 +1,61 @@
+version: 2
+
+project_name: geol
+
+builds:
+  - id: geol-oci
+    main: main.go
+    binary: geol
+    env:
+      - CGO_ENABLED=1
+    goos:
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    overrides:
+      - goos: linux
+        goarch: amd64
+        env:
+          - CC=gcc
+      - goos: linux
+        goarch: arm64
+        env:
+          - CC=aarch64-linux-gnu-gcc
+    ldflags:
+      - "-s -w"
+      - "-X 'main.version={{.Version}}'"
+      - "-X 'main.commit={{.Commit}}'"
+      - "-X 'main.date={{.Date}}'"
+      - "-X 'main.builtBy=GoReleaser'"
+
+dockers_v2:
+  - id: geol
+    ids:
+      - geol-oci
+    dockerfile: Containerfile
+    images:
+      - "docker.io/optnc/geol"
+      # - "ghcr.io/opt-nc/geol"
+    tags:
+      - "{{ .Tag }}"
+      - "{{ if not .Prerelease }}latest{{ end }}"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    annotations:
+      "org.opencontainers.image.title": "geol"
+      "org.opencontainers.image.description": "geol CLI – End-of-Life dates for your stack"
+      "org.opencontainers.image.url": "https://github.com/opt-nc/geol"
+      "org.opencontainers.image.source": "{{.GitURL}}"
+      "org.opencontainers.image.version": "{{.Version}}"
+      "org.opencontainers.image.revision": "{{.FullCommit}}"
+      "org.opencontainers.image.licenses": "Apache-2.0"
+      "org.opencontainers.image.base.name": "{{.BaseImage}}"
+      "org.opencontainers.image.base.digest": "{{.BaseImageDigest}}"
+
+release:
+  disable: true
+
+changelog:
+  disable: true
