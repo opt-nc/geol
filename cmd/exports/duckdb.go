@@ -19,6 +19,7 @@ import (
 	_ "github.com/duckdb/duckdb-go/v2"
 	"github.com/phuslu/log"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 
 	"github.com/opt-nc/geol/v2/cmd/product"
 	"github.com/opt-nc/geol/v2/utilities"
@@ -161,100 +162,110 @@ func fetchAllProductData(cmd *cobra.Command) (*productDataMap, error) {
 		}
 	}
 
-	// Initialize the bubbletea model with progress bar
-	m := model{
-		progress:          progress.New(progress.WithWidth(maxWidth)),
-		totalProducts:     len(products.Products),
-		processed:         0,
-		done:              false,
-		progressMessage:   "Fetching all product data from API...",
-		completionMessage: "All product data fetched!",
+	isTTY := term.IsTerminal(int(os.Stdout.Fd()))
+
+	// processProduct fetches and stores all data for a single product, returning false on fatal error.
+	processProduct := func(productName string) bool {
+		url := utilities.APIUrl + "products/" + productName
+		resp, err := http.Get(url)
+		if err != nil {
+			log.Warn().Err(err).Msgf("Error requesting %s, skipping", productName)
+			return true
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		if cerr := resp.Body.Close(); cerr != nil {
+			log.Warn().Err(cerr).Msgf("Error closing HTTP body for %s", productName)
+		}
+		if err != nil {
+			log.Warn().Err(err).Msgf("Error reading response for %s, skipping", productName)
+			return true
+		}
+
+		if resp.StatusCode != 200 {
+			log.Error().Msgf("Client error for product %s: API returned status %d", productName, resp.StatusCode)
+			cleanupDuckDBFiles()
+			log.Fatal().Msg("Try to export GEOL_API_DELAY_MS=200 to add a delay between API requests and avoid overloading the API then retry")
+			return false
+		}
+
+		var apiResp struct {
+			Result struct {
+				Name        string        `json:"name"`
+				Aliases     []string      `json:"aliases"`
+				Label       string        `json:"label"`
+				Category    string        `json:"category"`
+				Tags        []string      `json:"tags"`
+				Identifiers []identifiers `json:"identifiers"`
+				Links       struct {
+					Html string `json:"html"`
+				} `json:"links"`
+			} `json:"result"`
+		}
+
+		if err := json.Unmarshal(body, &apiResp); err != nil {
+			log.Warn().Err(err).Msgf("Error decoding JSON for %s, skipping", productName)
+			return true
+		}
+
+		prodData, err := product.FetchProductData(productName)
+		if err != nil {
+			log.Warn().Err(err).Msgf("Error fetching product data for %s, skipping", productName)
+			return true
+		}
+
+		allData.Products[productName] = &productData{
+			Name:        apiResp.Result.Name,
+			Aliases:     apiResp.Result.Aliases,
+			Label:       apiResp.Result.Label,
+			Category:    apiResp.Result.Category,
+			Tags:        utilities.ConvertTagStringsToTags(apiResp.Result.Tags),
+			Identifiers: apiResp.Result.Identifiers,
+			URI:         apiResp.Result.Links.Html,
+			Releases:    prodData.Releases,
+		}
+		return true
 	}
 
-	// Start the TUI in a goroutine
-	p := tea.NewProgram(m)
+	if isTTY {
+		// Interactive mode: show bubbletea progress bar
+		m := model{
+			progress:          progress.New(progress.WithWidth(maxWidth)),
+			totalProducts:     len(products.Products),
+			processed:         0,
+			done:              false,
+			progressMessage:   "Fetching all product data from API...",
+			completionMessage: "All product data fetched!",
+		}
 
-	// Process products in a goroutine
-	go func() {
+		p := tea.NewProgram(m)
+
+		go func() {
+			for productName := range products.Products {
+				processProduct(productName)
+				p.Send(productProcessedMsg(productName))
+				if apiDelay > 0 {
+					time.Sleep(apiDelay)
+				}
+			}
+		}()
+
+		if _, err := p.Run(); err != nil {
+			log.Error().Err(err).Msg("Error running progress display")
+			return nil, err
+		}
+	} else {
+		// Non-interactive mode (no TTY): process sequentially with log output
+		total := len(products.Products)
+		i := 0
 		for productName := range products.Products {
-			// Fetch basic product info
-			url := utilities.APIUrl + "products/" + productName
-			resp, err := http.Get(url)
-			if err != nil {
-				log.Warn().Err(err).Msgf("Error requesting %s, skipping", productName)
-				p.Send(productProcessedMsg(productName))
-				continue
-			}
-
-			body, err := io.ReadAll(resp.Body)
-			if cerr := resp.Body.Close(); cerr != nil {
-				log.Warn().Err(cerr).Msgf("Error closing HTTP body for %s", productName)
-			}
-			if err != nil {
-				log.Warn().Err(err).Msgf("Error reading response for %s, skipping", productName)
-				p.Send(productProcessedMsg(productName))
-				continue
-			}
-
-			if resp.StatusCode != 200 {
-				log.Error().Msgf("Client error for product %s: API returned status %d", productName, resp.StatusCode)
-				cleanupDuckDBFiles()
-				log.Fatal().Msg("Try to export GEOL_API_DELAY_MS=200 to add a delay between API requests and avoid overloading the API then retry")
-			}
-			// Parse JSON response
-			var apiResp struct {
-				Result struct {
-					Name        string        `json:"name"`
-					Aliases     []string      `json:"aliases"`
-					Label       string        `json:"label"`
-					Category    string        `json:"category"`
-					Tags        []string      `json:"tags"`
-					Identifiers []identifiers `json:"identifiers"`
-					Links       struct {
-						Html string `json:"html"`
-					} `json:"links"`
-				} `json:"result"`
-			}
-
-			if err := json.Unmarshal(body, &apiResp); err != nil {
-				log.Warn().Err(err).Msgf("Error decoding JSON for %s, skipping", productName)
-				p.Send(productProcessedMsg(productName))
-				continue
-			}
-
-			// Fetch product details (releases)
-			prodData, err := product.FetchProductData(productName)
-			if err != nil {
-				log.Warn().Err(err).Msgf("Error fetching product data for %s, skipping", productName)
-				p.Send(productProcessedMsg(productName))
-				continue
-			}
-
-			// Store all data
-			allData.Products[productName] = &productData{
-				Name:        apiResp.Result.Name,
-				Aliases:     apiResp.Result.Aliases,
-				Label:       apiResp.Result.Label,
-				Category:    apiResp.Result.Category,
-				Tags:        utilities.ConvertTagStringsToTags(apiResp.Result.Tags),
-				Identifiers: apiResp.Result.Identifiers,
-				URI:         apiResp.Result.Links.Html,
-				Releases:    prodData.Releases,
-			}
-
-			p.Send(productProcessedMsg(productName))
-
-			// Add delay between API requests if configured
+			i++
+			log.Info().Msgf("Fetching product data [%d/%d]: %s", i, total, productName)
+			processProduct(productName)
 			if apiDelay > 0 {
 				time.Sleep(apiDelay)
 			}
 		}
-	}()
-
-	// Run the program and wait for completion
-	if _, err := p.Run(); err != nil {
-		log.Error().Err(err).Msg("Error running progress display")
-		return nil, err
 	}
 
 	log.Info().Msgf("Fetched data for %d products", len(allData.Products))

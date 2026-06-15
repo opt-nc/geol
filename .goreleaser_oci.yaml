@@ -36,7 +36,6 @@ dockers_v2:
     dockerfile: Containerfile
     images:
       - "docker.io/optnc/geol"
-      # - "ghcr.io/opt-nc/geol"
     tags:
       - "{{ .Tag }}"
       - "{{ if not .Prerelease }}latest{{ end }}"
