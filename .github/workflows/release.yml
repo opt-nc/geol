@@ -270,13 +270,6 @@ jobs:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3
 
-      # - name: 🔐 Login to GitHub Container Registry
-      #   uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
-      #   with:
-      #     registry: ghcr.io
-      #     username: ${{ secrets.OPT_CI_LOGIN }}
-      #     password: ${{ secrets.OPT_CI_TOKEN }}
-
       - name: 🔐 Login Docker Hub
         uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4.2.0
         with:
@@ -291,6 +284,15 @@ jobs:
           args: release --clean --config .goreleaser_oci.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ✏️ Update Docker Hub Description
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
+        with:
+          username: ${{ secrets.OPT_DOCKERHUB_LOGIN }}
+          password: ${{ secrets.OPT_DOCKERHUB_PASSWORD }}
+          repository: optnc/geol
+          short-description: ${{ github.event.repository.description }}
+          readme-filepath: .DOCKERHUB.md
 
   post-release:
     name: 📝 Post-Release Tasks
