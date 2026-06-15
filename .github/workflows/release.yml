@@ -285,6 +285,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: ✏️ Update Docker Hub Description
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
+        with:
+          username: ${{ secrets.OPT_DOCKERHUB_LOGIN }}
+          password: ${{ secrets.OPT_DOCKERHUB_PASSWORD }}
+          repository: optnc/geol
+          short-description: ${{ github.event.repository.description }}
+          readme-filepath: .DOCKERHUB.md
+
   post-release:
     name: 📝 Post-Release Tasks
     runs-on: ubuntu-latest
