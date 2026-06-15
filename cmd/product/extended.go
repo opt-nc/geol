@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -38,7 +39,8 @@ geol product extended golang --json`,
 	Run: func(cmd *cobra.Command, args []string) {
 		numberFlag, _ := cmd.Flags().GetInt("number")
 		jsonFlag, _ := cmd.Flags().GetBool("json")
-		mdFlag := !term.IsTerminal(os.Stdout.Fd()) // detect if output is not a terminal
+		cliColorForced, _ := strconv.ParseBool(os.Getenv("CLICOLOR_FORCE"))
+		mdFlag := !term.IsTerminal(os.Stdout.Fd()) && !cliColorForced // detect if output is not a terminal
 
 		if numberFlag < 0 {
 			log.Fatal().Msg("The number of rows must be zero or positive.")
