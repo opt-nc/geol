@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
         - name: Checkout repository
-          uses: actions/checkout@v7.0.0
+          uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
         - name: Ensure stale label exists with correct properties
           run: |
             gh label create stale --force --color FFD700 --description "Issues and PRs marked as stale"
