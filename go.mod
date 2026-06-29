@@ -7,7 +7,7 @@ require (
 	charm.land/bubbletea/v2 v2.0.7
 	charm.land/glamour/v2 v2.0.1
 	charm.land/lipgloss/v2 v2.0.4
-	cuelang.org/go v0.16.1
+	cuelang.org/go v0.17.0
 	github.com/charmbracelet/fang v1.0.0
 	github.com/charmbracelet/x/term v0.2.2
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
