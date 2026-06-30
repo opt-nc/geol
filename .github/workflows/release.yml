@@ -287,6 +287,7 @@ jobs:
 
       - name: ✏️ Update Docker Hub Description
         uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
+        if: github.ref == 'refs/heads/main'
         with:
           username: ${{ secrets.OPT_DOCKERHUB_LOGIN }}
           password: ${{ secrets.OPT_DOCKERHUB_PASSWORD }}
