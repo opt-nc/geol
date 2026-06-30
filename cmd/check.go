@@ -25,6 +25,7 @@ func init() {
 	checkCmd.Flags().StringP("file", "f", ".geol.yaml", "File to check (default .geol.yaml)")
 	checkCmd.Flags().BoolP("strict", "s", false, "Exit with error if any product is EOL")
 	checkCmd.Flags().Bool("json", false, "Output in JSON format")
+	checkCmd.Flags().StringP("date", "d", "", "Reference date for EOL calculations (format YYYY-MM-DD, default: today)")
 }
 
 type stackItem struct {
@@ -502,6 +503,14 @@ geol check --json`,
 
 		utilities.AnalyzeCacheProductsValidity(cmd)
 		today := time.Now()
+		if dateStr, _ := cmd.Flags().GetString("date"); dateStr != "" {
+			parsed, err := time.Parse("2006-01-02", dateStr)
+			if err != nil {
+				log.Fatal().Msgf("Invalid --date format: %q (expected YYYY-MM-DD)", dateStr)
+			}
+			today = parsed
+			log.Info().Msgf("Using reference date: %s", dateStr)
+		}
 		rows, errorOut, violations := getStackTableRows(config.Stack, today)
 
 		if jsonOutput {

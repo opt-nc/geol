@@ -7,34 +7,34 @@ require (
 	charm.land/bubbletea/v2 v2.0.7
 	charm.land/glamour/v2 v2.0.1
 	charm.land/lipgloss/v2 v2.0.4
-	cuelang.org/go v0.16.1
+	cuelang.org/go v0.17.0
 	github.com/charmbracelet/fang v1.0.0
 	github.com/charmbracelet/x/term v0.2.2
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
 	github.com/duckdb/duckdb-go/v2 v2.10504.0
-	github.com/mattn/go-sqlite3 v1.14.45
-	github.com/phuslu/log v1.0.126
+	github.com/mattn/go-sqlite3 v1.14.47
+	github.com/phuslu/log v1.0.127
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/term v0.44.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
-	github.com/alecthomas/chroma/v2 v2.26.1 // indirect
+	github.com/alecthomas/chroma/v2 v2.27.0 // indirect
 	github.com/apache/arrow-go/v18 v18.6.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
 	github.com/charmbracelet/harmonica v0.2.0 // indirect
-	github.com/charmbracelet/ultraviolet v0.0.0-20260608091853-35bcb7319efa // indirect
+	github.com/charmbracelet/ultraviolet v0.0.0-20260622092850-f39628c8a989 // indirect
 	github.com/charmbracelet/x/ansi v0.11.7 // indirect
-	github.com/charmbracelet/x/exp/charmtone v0.0.0-20260614010340-86573f9427fd // indirect
-	github.com/charmbracelet/x/exp/slice v0.0.0-20260614010340-86573f9427fd // indirect
+	github.com/charmbracelet/x/exp/charmtone v0.0.0-20260629091435-9c70f75e26a4 // indirect
+	github.com/charmbracelet/x/exp/slice v0.0.0-20260629091435-9c70f75e26a4 // indirect
 	github.com/charmbracelet/x/termios v0.1.1 // indirect
 	github.com/charmbracelet/x/windows v0.2.2 // indirect
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.3 // indirect
-	github.com/dlclark/regexp2/v2 v2.2.1 // indirect
+	github.com/dlclark/regexp2/v2 v2.2.2 // indirect
 	github.com/duckdb/duckdb-go-bindings v0.10504.0 // indirect
 	github.com/duckdb/duckdb-go-bindings/lib/darwin-amd64 v0.10504.0 // indirect
 	github.com/duckdb/duckdb-go-bindings/lib/darwin-arm64 v0.10504.0 // indirect
@@ -59,7 +59,7 @@ require (
 	github.com/muesli/mango-cobra v1.3.0 // indirect
 	github.com/muesli/mango-pflag v0.2.0 // indirect
 	github.com/muesli/roff v0.1.0 // indirect
-	github.com/pelletier/go-toml/v2 v2.3.1 // indirect
+	github.com/pelletier/go-toml/v2 v2.4.2 // indirect
 	github.com/pierrec/lz4/v4 v4.1.27 // indirect
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20260420112717-c39628bde8b5 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
