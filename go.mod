@@ -4,7 +4,7 @@ go 1.26.4
 
 require (
 	charm.land/bubbles/v2 v2.1.0
-	charm.land/bubbletea/v2 v2.0.7
+	charm.land/bubbletea/v2 v2.0.8
 	charm.land/glamour/v2 v2.0.1
 	charm.land/lipgloss/v2 v2.0.4
 	cuelang.org/go v0.17.0
@@ -25,7 +25,7 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
 	github.com/charmbracelet/harmonica v0.2.0 // indirect
-	github.com/charmbracelet/ultraviolet v0.0.0-20260622092850-f39628c8a989 // indirect
+	github.com/charmbracelet/ultraviolet v0.0.0-20260703014108-f5a850f9c2b7 // indirect
 	github.com/charmbracelet/x/ansi v0.11.7 // indirect
 	github.com/charmbracelet/x/exp/charmtone v0.0.0-20260629091435-9c70f75e26a4 // indirect
 	github.com/charmbracelet/x/exp/slice v0.0.0-20260629091435-9c70f75e26a4 // indirect
