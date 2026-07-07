@@ -11,6 +11,7 @@ stack:
   - name: java temurin
     version: "21"
     id_eol: eclipse-temurin
+    lts_strategy: any
 
   - name: quarkus
     version: "3.12"
