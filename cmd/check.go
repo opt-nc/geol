@@ -35,6 +35,7 @@ type stackItem struct {
 	Skip                 bool   `yaml:"skip,omitempty"`
 	ShouldAlwaysBeLatest bool   `yaml:"always-latest,omitempty"`
 	ManualEol            string `yaml:"manual_eol,omitempty"`
+	LtsStrategy          string `yaml:"lts_strategy,omitempty"` // "any" or "latest"
 }
 type geolConfig struct {
 	AppName string      `yaml:"app_name"`
@@ -49,6 +50,7 @@ type stackTableRow struct {
 	Days          string `json:"days"`
 	IsLatest      bool   `json:"is_latest"`
 	LatestVersion string `json:"latest_version"`
+	LtsStrategy   string `json:"lts_strategy,omitempty"`
 }
 
 // getStackTableRows returns a slice of StackTableRow for a given stack and today date
@@ -139,6 +141,45 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			continue
 		}
 
+		// Handle lts_strategy enforcement
+		if item.LtsStrategy != "" {
+			activeLts, latestLts, ltsErr := lookupLtsInfo(item.IdEol)
+			if ltsErr != nil {
+				log.Error().Msgf("LTS strategy check failed for %s: %v", item.Name, ltsErr)
+				violations = append(violations, fmt.Sprintf("%s: LTS strategy check failed: %v", item.Name, ltsErr))
+				errorOut = true
+				continue
+			}
+			if len(activeLts) == 0 {
+				log.Error().Msgf("%s (%s): lts_strategy is set to '%s' but no active LTS versions are available for this product", item.Name, item.IdEol, item.LtsStrategy)
+				violations = append(violations, fmt.Sprintf("%s (%s): lts_strategy '%s' cannot be enforced — no active LTS versions found", item.Name, item.IdEol, item.LtsStrategy))
+				errorOut = true
+				continue
+			}
+
+			switch item.LtsStrategy {
+			case "any":
+				isLts := false
+				for _, lts := range activeLts {
+					if lts == item.Version {
+						isLts = true
+						break
+					}
+				}
+				if !isLts {
+					log.Error().Msgf("%s %s: lts_strategy 'any' requires an active LTS version, but %s is not LTS (active LTS: %s)", item.Name, item.Version, item.Version, strings.Join(activeLts, ", "))
+					violations = append(violations, fmt.Sprintf("%s %s is not an active LTS version (lts_strategy: any, active LTS: %s)", item.Name, item.Version, strings.Join(activeLts, ", ")))
+					errorOut = true
+				}
+			case "latest":
+				if item.Version != latestLts {
+					log.Error().Msgf("%s %s: lts_strategy 'latest' requires the latest LTS version (%s), but got %s", item.Name, item.Version, latestLts, item.Version)
+					violations = append(violations, fmt.Sprintf("%s %s is not the latest LTS version (lts_strategy: latest, latest LTS: %s)", item.Name, item.Version, latestLts))
+					errorOut = true
+				}
+			}
+		}
+
 		eolDate, isLatest, latestVersion := lookupEolDate(item.IdEol, item.Version)
 		var status string
 		var daysStr string
@@ -180,6 +221,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			Days:          daysStr,
 			IsLatest:      isLatest,
 			LatestVersion: latestVersion,
+			LtsStrategy:   item.LtsStrategy,
 		})
 
 		// Check always-latest flag
@@ -346,6 +388,85 @@ func lookupEolDate(idEol, version string) (string, bool, string) {
 	return "", false, ""
 }
 
+// lookupLtsInfo returns the currently active LTS release names (isLts=true, isEol=false) for a product,
+// ordered from latest to oldest, and the name of the latest active LTS release.
+// Returns an error if the product is not found or the API call fails.
+func lookupLtsInfo(idEol string) ([]string, string, error) {
+	productsPath, err := utilities.GetProductsPath()
+	if err != nil {
+		return nil, "", fmt.Errorf("error retrieving products path: %w", err)
+	}
+	products, err := utilities.GetProductsWithCacheRefresh(nil, productsPath)
+	if err != nil {
+		return nil, "", fmt.Errorf("error retrieving products from cache: %w", err)
+	}
+
+	prod := idEol
+	found := false
+	for name, aliases := range products.Products {
+		if strings.EqualFold(prod, name) {
+			found = true
+			prod = name
+			break
+		}
+		for _, alias := range aliases {
+			if strings.EqualFold(prod, alias) {
+				found = true
+				prod = name
+				break
+			}
+		}
+		if found {
+			break
+		}
+	}
+	if !found {
+		return nil, "", fmt.Errorf("product with id_eol %s not found in the API", idEol)
+	}
+
+	url := utilities.APIUrl + "products/" + prod
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, "", fmt.Errorf("error requesting %s: %w", prod, err)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if cerr := resp.Body.Close(); cerr != nil {
+		return nil, "", fmt.Errorf("error closing HTTP body for %s: %w", prod, cerr)
+	}
+	if err != nil {
+		return nil, "", fmt.Errorf("error reading response for %s: %w", prod, err)
+	}
+	if resp.StatusCode != 200 {
+		return nil, "", fmt.Errorf("product %s not found (status %d)", prod, resp.StatusCode)
+	}
+
+	var apiRespProd struct {
+		Result struct {
+			Releases []struct {
+				Name  string `json:"name"`
+				IsLts bool   `json:"isLts"`
+				IsEol bool   `json:"isEol"`
+			} `json:"releases"`
+		} `json:"result"`
+	}
+	if err := json.Unmarshal(body, &apiRespProd); err != nil {
+		return nil, "", fmt.Errorf("error decoding JSON for %s: %w", prod, err)
+	}
+
+	var activeLts []string
+	for _, r := range apiRespProd.Result.Releases {
+		if r.IsLts && !r.IsEol {
+			activeLts = append(activeLts, r.Name)
+		}
+	}
+
+	latestLts := ""
+	if len(activeLts) > 0 {
+		latestLts = activeLts[0]
+	}
+	return activeLts, latestLts, nil
+}
+
 // renderStackTable renders the stack table using lipgloss/table
 func renderStackTable(rows []stackTableRow) string {
 	green := lipgloss.NewStyle().Foreground(lipgloss.Color("46"))
@@ -438,11 +559,15 @@ func checkRequiredKeys(config geolConfig) validationResult {
 			}
 			namesSeen[item.Name] = i
 		}
+		// version is always required
 		if item.Version == "" {
 			result.missing = append(result.missing, fmt.Sprintf("stack[%d].version", i))
 		}
 		if item.IdEol == "" {
 			result.missing = append(result.missing, fmt.Sprintf("stack[%d].id_eol", i))
+		}
+		if item.LtsStrategy != "" && item.LtsStrategy != "any" && item.LtsStrategy != "latest" {
+			result.missing = append(result.missing, fmt.Sprintf("stack[%d].lts_strategy must be 'any' or 'latest', got '%s'", i, item.LtsStrategy))
 		}
 	}
 	return result

@@ -43,4 +43,11 @@ stack: [...{
     // This allows you to get alerts when not using the most recent release
     // and helps enforce up-to-date policies for critical components.
     "always-latest"?: bool | *false
+
+    // lts_strategy: optional LTS enforcement strategy.
+    // - "any": requires the version to be any currently active LTS release.
+    // - "latest": requires the version to match the latest active LTS release.
+    // version is always required; lts_strategy validates it against the LTS policy.
+    // If lts_strategy is set but the product has no active LTS versions, the check fails.
+    lts_strategy?: "any" | "latest"
 }]
