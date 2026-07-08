@@ -4,46 +4,58 @@ sidebar_position: 1
 
 # Getting Started
 
-Let's discover **geol in less than 5 minutes**.
+Get up and running with `geol` in less than 5 minutes.
 
-Get started by **installing with <code>brew</code>**.
+`geol` is a command-line tool that helps you check the End-of-Life (EOL) status of your application stack, so you can keep your dependencies healthy and up to date.
 
-Note: Homebrew often provides more up-to-date packages than other sources, so installing via `brew` will typically give you a newer version.
+:::info Prerequisite:
+You need [Homebrew](https://brew.sh/) installed on your machine.
+:::
 
-### How to install?
+## 📦 Install `geol`
 
-- <code>brew</code> installed on your machine. See the official <a href="https://brew.sh/" target="_blank" rel="noreferrer noopener">Homebrew website</a> for installation instructions.
-
+Homebrew requires its own version of `curl` to download casks from GitHub — even if `curl` is already available on your system.
 ```bash
 brew install curl
+```
+:::warning
+Skipping this step will cause the next command to fail with a *"Homebrew-installed `curl` is not installed"* error.
+:::
+
+Installs `geol` on your machine using Homebrew.
+```bash
 brew install --cask opt-nc/homebrew-tap/geol
 ```
+:::tip
+Homebrew usually ships more up-to-date packages than system package managers, which is why we recommend it as the default install method.
+:::
 
-If your installed `geol` version is out of date, you can update it (Homebrew) with:
-
+## 🔄 Update `geol`
+Updates Homebrew and upgrades `geol` to the latest version.
 ```bash
-# Update Homebrew and upgrade the geol cask
 brew update && brew upgrade --cask geol
 ```
 
-## Get `geol` version
+## 🏷️ Get `geol` version
+Displays the installed version of `geol`
 ```bash
 geol version
 ```
 
-## Know a bit more about `geol`
+## ℹ️ About `geol`
 Displays a brief description and information about `geol`.
 ```bash
 geol about
 ```
 
-## Get help
+## ❓ Get help
 Displays quick help and the main commands.
 ```bash
 geol help
 ```
 
-Shows the full man page: all commands and detailed help (includes the information from `geol help`).
+## 📖 Open the full manual
+Shows all commands and detailed help (includes the information from `geol help`).
 ```bash
 man geol
 ```
