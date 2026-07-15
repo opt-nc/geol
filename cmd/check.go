@@ -180,7 +180,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			}
 		}
 
-		eolDate, isLatest, latestVersion := lookupEolDate(item.IdEol, item.Version)
+		eolDate, isLatest, latestVersion := lookupEolDate(item.IdEol, item.Version, today)
 		var status string
 		var daysStr string
 		var daysInt int
@@ -267,8 +267,11 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 	return rows, errorOut, violations
 }
 
-// lookupEolDate should return the EOL date for a given id_eol and version (YYYY-MM-DD)
-func lookupEolDate(idEol, version string) (string, bool, string) {
+// lookupEolDate returns the EOL date for a given id_eol and version, along with whether the
+// version is the latest cycle available as of referenceDate, and the name of that latest cycle.
+// Cycles released after referenceDate are excluded so that Latest/Is Latest reflect what was
+// available at the reference point in time rather than the current API snapshot.
+func lookupEolDate(idEol, version string, referenceDate time.Time) (string, bool, string) {
 	// Try to get products cache path
 	productsPath, err := utilities.GetProductsPath()
 	if err != nil {
@@ -364,7 +367,8 @@ func lookupEolDate(idEol, version string) (string, bool, string) {
 		var apiRespProd struct {
 			Result struct {
 				Releases []struct {
-					Name string `json:"name"`
+					Name        string `json:"name"`
+					ReleaseDate string `json:"releaseDate"`
 				} `json:"releases"`
 			} `json:"result"`
 		}
@@ -374,13 +378,24 @@ func lookupEolDate(idEol, version string) (string, bool, string) {
 			os.Exit(1)
 		}
 
+		// Determine latest cycle available as of referenceDate by excluding cycles
+		// whose releaseDate is after the reference date.
 		isLatest := false
 		latestVersion := ""
-		if len(apiRespProd.Result.Releases) > 0 {
-			latestVersion = apiRespProd.Result.Releases[0].Name
-			if latestVersion == version {
-				isLatest = true
+		for _, rel := range apiRespProd.Result.Releases {
+			if rel.ReleaseDate != "" {
+				relDate, parseErr := time.Parse("2006-01-02", rel.ReleaseDate)
+				if parseErr == nil && relDate.After(referenceDate) {
+					continue
+				}
 			}
+			// API returns releases newest-first; the first one that passes the
+			// date filter is the latest cycle available at referenceDate.
+			latestVersion = rel.Name
+			break
+		}
+		if latestVersion != "" && latestVersion == version {
+			isLatest = true
 		}
 
 		return apiResp.Result.EolFrom, isLatest, latestVersion
