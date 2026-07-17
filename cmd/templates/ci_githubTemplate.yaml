@@ -1,0 +1,26 @@
+name: Test Geol Installation
+
+on:
+  push:
+    branches: [ main ]
+
+
+permissions:
+  contents: read
+
+jobs:
+  install-geol:          
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8b85537a2997854f79cd5d66820b972035120992
+      
+      - name: Install Geol
+        uses: opt-nc/geol-action@8b85537a2997854f79cd5d66820b972035120992
+        #with:
+          #version: 'v2.12.1' # Optional: Specify a specific version of Geol to install. If not provided, the latest version will be installed.
+      
+      - name: Verify Geol Installation
+        run: |
+          geol about
