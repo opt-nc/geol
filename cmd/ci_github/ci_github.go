@@ -1,4 +1,4 @@
-package cmd
+package ci_github
 
 import (
 	"fmt"
@@ -6,8 +6,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// ciGithubCmd represents the ci-github command
-var ciGithubCmd = &cobra.Command{
+// CiGithubCmd represents the ci-github command
+var CiGithubCmd = &cobra.Command{
 	Use:     "ci-github",
 	Aliases: []string{"ci-gh"},
 	Short:   "A brief description of your command",
@@ -20,9 +20,4 @@ to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("ci-github called")
 	},
-}
-
-func init() {
-	rootCmd.AddCommand(ciGithubCmd)
-
 }

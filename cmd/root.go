@@ -14,6 +14,7 @@ import (
 
 	"github.com/opt-nc/geol/v2/cmd/cache"
 	"github.com/opt-nc/geol/v2/cmd/check"
+	"github.com/opt-nc/geol/v2/cmd/ci_github"
 	"github.com/opt-nc/geol/v2/cmd/exports"
 	"github.com/opt-nc/geol/v2/cmd/list"
 	"github.com/opt-nc/geol/v2/cmd/product"
@@ -93,6 +94,7 @@ func validateWithCue(yamlFile string) error {
 func init() {
 	rootCmd.AddCommand(cache.CacheCmd)
 	rootCmd.AddCommand(check.CheckCmd)
+	rootCmd.AddCommand(ci_github.CiGithubCmd)
 	rootCmd.AddCommand(product.ProductCmd)
 	rootCmd.AddCommand(list.ListCmd)
 	rootCmd.AddCommand(exports.ExportCmd)
