@@ -21,3 +21,7 @@ to quickly create a Cobra application.`,
 		fmt.Println("ci-github called")
 	},
 }
+
+func init() {
+	CiGithubCmd.AddCommand(InitCmd)
+}

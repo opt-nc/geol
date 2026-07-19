@@ -26,7 +26,7 @@ Use --force to overwrite an existing file.`,
 geol check init --output stack.yaml
 geol check init --output stack.yaml --force`,
 	Run: func(cmd *cobra.Command, args []string) {
-		templates.GenerateTemplate(output, force, appName, appID)
+		templates.GenerateCheckTemplate(output, force, appName, appID)
 	},
 }
 

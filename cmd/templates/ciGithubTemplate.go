@@ -3,17 +3,16 @@ package templates
 import (
 	_ "embed"
 	"os"
-	"strings"
 
 	"github.com/phuslu/log"
 )
 
-//go:embed checkTemplate.yaml
-var GeolTemplate string
+//go:embed ci_githubTemplate.yaml
+var CIGithubTemplate string
 
-func GenerateCheckTemplate(outputPath string, force bool, appName string, appID string) {
+func GenerateCGithubTemplate(outputPath string, force bool) {
 	if outputPath == "" {
-		outputPath = "stack.yaml"
+		outputPath = ".github/workflows/geol-action.yml"
 	}
 
 	if _, err := os.Stat(outputPath); err == nil {
@@ -25,17 +24,11 @@ func GenerateCheckTemplate(outputPath string, force bool, appName string, appID 
 	}
 
 	log.Info().Msgf("Generating template file at %s", outputPath)
-	content := GeolTemplate
-	if appName != "" {
-		content = strings.ReplaceAll(content, "MySuperApp", appName)
-	}
-	if appID != "" {
-		content = strings.ReplaceAll(content, "mysuperapp", appID)
-	}
+	content := CIGithubTemplate
 	if err := os.WriteFile(outputPath, []byte(content), 0o644); err != nil {
 		log.Error().Msgf("failed to write template file: %v", err)
 		os.Exit(1)
 	}
 	log.Info().Msgf("Template file %s generated successfully", outputPath)
-	log.Info().Msg("You can now analyze your stack by running 'geol check --file " + outputPath + "'")
+	log.Info().Msg("You can now use or customize the GitHub Actions workflow " + outputPath + " to analyze your stack.")
 }
