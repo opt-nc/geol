@@ -1,4 +1,4 @@
-package cmd
+package check
 
 import (
 	"encoding/json"
@@ -21,11 +21,11 @@ import (
 )
 
 func init() {
-	rootCmd.AddCommand(checkCmd)
-	checkCmd.Flags().StringP("file", "f", ".geol.yaml", "File to check (default .geol.yaml)")
-	checkCmd.Flags().BoolP("strict", "s", false, "Exit with error if any product is EOL")
-	checkCmd.Flags().Bool("json", false, "Output in JSON format")
-	checkCmd.Flags().StringP("date", "d", "", "Reference date for EOL calculations (format YYYY-MM-DD, default: today)")
+	CheckCmd.AddCommand(InitCmd)
+	CheckCmd.Flags().StringP("file", "f", ".geol.yaml", "File to check (default .geol.yaml)")
+	CheckCmd.Flags().BoolP("strict", "s", false, "Exit with error if any product is EOL")
+	CheckCmd.Flags().Bool("json", false, "Output in JSON format")
+	CheckCmd.Flags().StringP("date", "d", "", "Reference date for EOL calculations (format YYYY-MM-DD, default: today)")
 }
 
 type stackItem struct {
@@ -589,7 +589,7 @@ func checkRequiredKeys(config geolConfig) validationResult {
 }
 
 // checkCmd represents the check command
-var checkCmd = &cobra.Command{
+var CheckCmd = &cobra.Command{
 	Use:     "check",
 	Aliases: []string{"chk"},
 	Short:   "Analyzes a stack from a YAML file, checks each component’s EOL status.",
