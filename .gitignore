@@ -54,4 +54,3 @@ geol-build/
 .task/
 
 geol
-.github/workflows/geol-action.yml

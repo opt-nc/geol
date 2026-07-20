@@ -15,7 +15,7 @@ var force bool
 var InitCmd = &cobra.Command{
 	Use:     "init",
 	Aliases: []string{"i"},
-	Short:   "Generate a GitHub Actions workflow file for ci-github command",
+	Short:   "Generate a ready to use GitHub Actions workflow file for ci-github command",
 	Long: `The init command generates a GitHub Actions workflow file for the ci-github command.
 Use this command to create a starter workflow that you can customize for your environment.
 You can specify the output path with the --output flag.

@@ -6,14 +6,14 @@ import (
 
 // CiGithubCmd represents the ci-github command
 var CiGithubCmd = &cobra.Command{
-	Use:   "ci-github",
+	Use:     "ci-github",
 	Aliases: []string{"ci-gh"},
-	Short: "Manage GitHub Actions CI configuration",
+	Short:   "Manage GitHub Actions CI configuration",
 	Long: `Manage GitHub Actions CI configuration for Geol.
 By default, this command generates a GitHub Actions workflow (equivalent to 'ci-github init').
 
 Available subcommands:
-- init: Generate a GitHub Actions workflow file (default)`,
+- init: Generate a ready to use GitHub Actions workflow file (default)`,
 	Run: func(cmd *cobra.Command, args []string) {
 		InitCmd.Run(cmd, args)
 	},
