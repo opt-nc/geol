@@ -24,6 +24,8 @@ Use --force to overwrite an existing file.`,
 geol ci-github init --output .github/workflows/geol-check.yml
 geol ci-github init --output .github/workflows/geol-check.yml --force`,
 	Run: func(cmd *cobra.Command, args []string) {
+		output, _ := cmd.Flags().GetString("output")
+		force, _ := cmd.Flags().GetBool("force")
 		templates.GenerateCGithubTemplate(output, force)
 	},
 }

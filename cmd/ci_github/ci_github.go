@@ -1,27 +1,26 @@
 package ci_github
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
 // CiGithubCmd represents the ci-github command
 var CiGithubCmd = &cobra.Command{
-	Use:     "ci-github",
+	Use:   "ci-github",
 	Aliases: []string{"ci-gh"},
-	Short:   "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Manage GitHub Actions CI configuration",
+	Long: `Manage GitHub Actions CI configuration for Geol.
+By default, this command generates a GitHub Actions workflow (equivalent to 'ci-github init').
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+Available subcommands:
+- init: Generate a GitHub Actions workflow file (default)`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("ci-github called")
+		InitCmd.Run(cmd, args)
 	},
 }
 
 func init() {
 	CiGithubCmd.AddCommand(InitCmd)
+	CiGithubCmd.Flags().StringP("output", "o", ".github/workflows/geol-action.yml", "Path to the output file")
+	CiGithubCmd.Flags().BoolP("force", "f", false, "Overwrite the file if it already exists")
 }
