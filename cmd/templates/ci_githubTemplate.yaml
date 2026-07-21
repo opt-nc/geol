@@ -1,0 +1,32 @@
+name: Test Geol Installation
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 15 * * 0'
+
+
+permissions:
+  contents: read
+
+jobs:
+  install-geol:          
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0
+      
+      - name: Install Geol
+        uses: opt-nc/geol-action@8b85537a2997854f79cd5d66820b972035120992
+        #with:
+          #version: 'v2.12.1' # Optional: Specify a specific version of Geol to install. If not provided, the latest version will be installed.
+      
+      - name: Verify Geol Installation
+        run: |
+          geol about
+
+      - name: Run Geol Check stack status # will fail if the .geol file is not present, you can use the geol check init command to create one
+        run: |
+          geol check --strict
