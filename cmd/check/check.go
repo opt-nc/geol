@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Masterminds/semver/v3"
 	"golang.org/x/term"
 	"gopkg.in/yaml.v3"
 
@@ -180,7 +181,13 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			}
 		}
 
-		eolDate, isLatest, latestVersion := lookupEolDate(item.IdEol, item.Version, today)
+		eolDate, isLatest, latestVersion, eolLookupErr := lookupEolDate(item.IdEol, item.Version, today)
+		if eolLookupErr != nil {
+			log.Error().Msgf("%s %s: %v", item.Name, item.Version, eolLookupErr)
+			violations = append(violations, fmt.Sprintf("%s %s: %v", item.Name, item.Version, eolLookupErr))
+			errorOut = true
+			continue
+		}
 		var status string
 		var daysStr string
 		var daysInt int
@@ -267,23 +274,76 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 	return rows, errorOut, violations
 }
 
+// findVersionSuggestion fetches all releases for a product and uses semver to suggest
+// a valid release name that best matches the given version (by major.minor, then major).
+// Returns an empty string if no suggestion is found or the version is already valid.
+func findVersionSuggestion(prod, version string) string {
+	v, err := semver.NewVersion(version)
+	if err != nil {
+		return ""
+	}
+
+	url := utilities.APIUrl + "products/" + prod
+	resp, err := http.Get(url)
+	if err != nil {
+		return ""
+	}
+	body, err := io.ReadAll(resp.Body)
+	if cerr := resp.Body.Close(); cerr != nil || err != nil || resp.StatusCode != 200 {
+		return ""
+	}
+
+	var apiRespProd struct {
+		Result struct {
+			Releases []struct {
+				Name string `json:"name"`
+			} `json:"releases"`
+		} `json:"result"`
+	}
+	if err := json.Unmarshal(body, &apiRespProd); err != nil {
+		return ""
+	}
+
+	releases := apiRespProd.Result.Releases
+
+	// First pass: match on major.minor
+	for _, rel := range releases {
+		rv, err := semver.NewVersion(rel.Name)
+		if err != nil {
+			continue
+		}
+		if rv.Major() == v.Major() && rv.Minor() == v.Minor() {
+			return rel.Name
+		}
+	}
+	// Second pass: match on major only
+	for _, rel := range releases {
+		rv, err := semver.NewVersion(rel.Name)
+		if err != nil {
+			continue
+		}
+		if rv.Major() == v.Major() {
+			return rel.Name
+		}
+	}
+	return ""
+}
+
 // lookupEolDate returns the EOL date for a given id_eol and version, along with whether the
 // version is the latest cycle available as of referenceDate, and the name of that latest cycle.
 // Cycles released after referenceDate are excluded so that Latest/Is Latest reflect what was
 // available at the reference point in time rather than the current API snapshot.
-func lookupEolDate(idEol, version string, referenceDate time.Time) (string, bool, string) {
+func lookupEolDate(idEol, version string, referenceDate time.Time) (string, bool, string, error) {
 	// Try to get products cache path
 	productsPath, err := utilities.GetProductsPath()
 	if err != nil {
-		log.Error().Err(err).Msg("Error retrieving products path")
-		return "", false, ""
+		return "", false, "", fmt.Errorf("error retrieving products path: %w", err)
 	}
 
 	// Get products from cache (refresh if needed)
 	products, err := utilities.GetProductsWithCacheRefresh(nil, productsPath)
 	if err != nil {
-		log.Error().Err(err).Msg("Error retrieving products from cache")
-		return "", false, ""
+		return "", false, "", fmt.Errorf("error retrieving products from cache: %w", err)
 	}
 
 	prod := idEol
@@ -308,29 +368,27 @@ func lookupEolDate(idEol, version string, referenceDate time.Time) (string, bool
 	}
 
 	if !found {
-		log.Error().Msgf("Product with id_eol %s not found in the API", idEol)
-		os.Exit(1)
+		return "", false, "", fmt.Errorf("product with id_eol %s not found in the API", idEol)
 	}
 
 	if len(prod) > 0 {
 		url := utilities.APIUrl + "products/" + prod + "/releases/" + version
 		resp, err := http.Get(url)
 		if err != nil {
-			log.Error().Err(err).Msgf("Error requesting %s", prod)
-			os.Exit(1)
+			return "", false, "", fmt.Errorf("error requesting %s: %w", prod, err)
 		}
 		body, err := io.ReadAll(resp.Body)
 		if cerr := resp.Body.Close(); cerr != nil {
-			log.Error().Err(cerr).Msgf("Error closing HTTP body for %s", prod)
-			os.Exit(1)
+			return "", false, "", fmt.Errorf("error closing HTTP body for %s: %w", prod, cerr)
 		}
 		if err != nil {
-			log.Error().Err(err).Msgf("Error reading response for %s", prod)
-			os.Exit(1)
+			return "", false, "", fmt.Errorf("error reading response for %s: %w", prod, err)
 		}
 		if resp.StatusCode != 200 {
-			log.Error().Msgf("Product %s version %s not found (status %d)", prod, version, resp.StatusCode)
-			os.Exit(1)
+			if suggestion := findVersionSuggestion(prod, version); suggestion != "" {
+				log.Info().Msgf("Version %q not found for product %q in endoflife.date. Did you mean %q? Consider updating your .geol.yaml to: version: \"%s\"", version, prod, suggestion, suggestion)
+			}
+			return "", false, "", fmt.Errorf("product %s version %s not found (status %d)", prod, version, resp.StatusCode)
 		}
 		var apiResp struct {
 			Result struct {
@@ -341,28 +399,23 @@ func lookupEolDate(idEol, version string, referenceDate time.Time) (string, bool
 		}
 
 		if err := json.Unmarshal(body, &apiResp); err != nil {
-			log.Error().Err(err).Msgf("Error decoding JSON for %s", prod)
-			os.Exit(1)
+			return "", false, "", fmt.Errorf("error decoding JSON for %s: %w", prod, err)
 		}
 
 		url = utilities.APIUrl + "products/" + prod
 		resp, err = http.Get(url)
 		if err != nil {
-			log.Error().Err(err).Msgf("Error requesting %s", prod)
-			os.Exit(1)
+			return "", false, "", fmt.Errorf("error requesting %s: %w", prod, err)
 		}
 		body, err = io.ReadAll(resp.Body)
 		if cerr := resp.Body.Close(); cerr != nil {
-			log.Error().Err(cerr).Msgf("Error closing HTTP body for %s", prod)
-			os.Exit(1)
+			return "", false, "", fmt.Errorf("error closing HTTP body for %s: %w", prod, cerr)
 		}
 		if err != nil {
-			log.Error().Err(err).Msgf("Error reading response for %s", prod)
-			os.Exit(1)
+			return "", false, "", fmt.Errorf("error reading response for %s: %w", prod, err)
 		}
 		if resp.StatusCode != 200 {
-			log.Error().Msgf("Product %s not found (status %d)", prod, resp.StatusCode)
-			os.Exit(1)
+			return "", false, "", fmt.Errorf("product %s not found (status %d)", prod, resp.StatusCode)
 		}
 		var apiRespProd struct {
 			Result struct {
@@ -374,8 +427,7 @@ func lookupEolDate(idEol, version string, referenceDate time.Time) (string, bool
 		}
 
 		if err := json.Unmarshal(body, &apiRespProd); err != nil {
-			log.Error().Err(err).Msgf("Error decoding JSON for %s", prod)
-			os.Exit(1)
+			return "", false, "", fmt.Errorf("error decoding JSON for %s: %w", prod, err)
 		}
 
 		// Determine latest cycle available as of referenceDate by excluding cycles
@@ -398,9 +450,9 @@ func lookupEolDate(idEol, version string, referenceDate time.Time) (string, bool
 			isLatest = true
 		}
 
-		return apiResp.Result.EolFrom, isLatest, latestVersion
+		return apiResp.Result.EolFrom, isLatest, latestVersion, nil
 	}
-	return "", false, ""
+	return "", false, "", nil
 }
 
 // lookupLtsInfo returns the currently active LTS release names (isLts=true, isEol=false) for a product,
