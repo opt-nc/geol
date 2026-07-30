@@ -1,0 +1,8 @@
+{
+  "label": "Command Reference",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "description": "Learn how to use each geol command, option, and flag."
+  }
+}
