@@ -77,14 +77,14 @@ This method requires a working Go environment.
 
 You can also download a prebuilt binary from the GitHub releases page.
 
-[Download geol Releases](https://github.com/opt-nc/geol/releases matches your operating system and architecture.
+[Download geol Releases](https://github.com/opt-nc/geol/releases) matches your operating system and architecture.
 
 ## 🔄 Update geol
 
 If you installed **geol** with Homebrew, update it with:
 
 ```bash
-brew update && brew upgrade --cask
+brew update && brew upgrade --cask geol
 ```
 
 ## 🏷️ Check the Installed Version
