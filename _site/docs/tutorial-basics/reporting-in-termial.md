@@ -2,15 +2,20 @@
 sidebar_position: 2
 ---
 
-# Reporting products with `geol`
+# 📦 Get Product Information
 
-`geol` fetches metadata for each product (versions, release dates, and end-of-life dates) and lets you generate summaries, version lists, or exportable reports.
+**geol** retrieves product metadata including available versions, release dates, and end-of-life dates. You can use this information to generate summaries, version lists, or exportable reports.
 
-## Get a product overview
+## 🔍 Get a Product Overview
 
-Displays detailed metadata for a product (description, version command,...); `ubuntu` is an example — replace it with any product name.
+Display detailed information about a product, such as its description, available versions, release dates, end-of-life dates, and version detection command.
+
+The example below uses `ubuntu`, but you can replace it with any supported product.
 
  ```bash
  geol product describe ubuntu
  ```
+
+ :::tip Data source
 This output is a summary of the information available on endoflife.date — for Ubuntu see https://endoflife.date/ubuntu.
+:::
