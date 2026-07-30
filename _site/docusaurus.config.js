@@ -13,9 +13,9 @@ const config = {
   // Favicon (restored to original image)
   favicon: 'img/logo-no-name-gradient.png',
 
-  future: {
+  /*future: {
     v4: true,
-  },
+ },*/
 
   url: 'https://opt-nc.github.io',
   baseUrl: '/geol/',
@@ -90,7 +90,7 @@ const config = {
         footer: {
         style: 'dark',
         links: [
-          { title: 'Docs', items: [{ label: 'Tutorial', to: '/docs/intro' }] },
+          { title: 'Docs', items: [{ label: 'Tutorial', to: '/docs/getting-started/install-geol' }] },
           {
             title: 'Community',
             items: [

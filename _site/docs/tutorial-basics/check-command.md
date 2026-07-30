@@ -2,32 +2,36 @@
 sidebar_position: 3
 ---
 
-# Learn the `check` command
+# ✅ Check Products
 
 Use the `geol check` command to identify products that are approaching or past their end-of-life (EOL) date.
 
-`geol` reads your `.geol.yaml` file and reports support status, warnings, and EOL dates.
-`
+**geol** reads your `.geol.yaml` file and reports support status, warnings, and EOL dates for the products you monitor.
 
+## ❓ Get Help
 
-## ❓ Get help
-Use `geol help check` to display help and available options for the `check` command.
+Display help and available options for the `check` command.
+
 ```bash
 geol help check
 ```
 
-## ⚙️ Initialize a configuration file
+## ⚙️ Initialize a Configuration File
 
 :::note
-Run the commands from the directory where you want to create your `.geol.yaml` file.
+
+Run the following command from the directory where you want to create your `.geol.yaml` file.
+
 :::
-```shell
+
+```bash
 geol check init
 ```
 
-Edit the generated `.geol.yaml` to list the products you want to monitor.
+Edit the generated `.geol.yaml` file to define the products you want to monitor.
 
-Minimal example `.geol.yaml` (created by `geol check init`):
+### Example Configuration
+
 ```yaml
 stack:
   - name: ubuntu
@@ -37,51 +41,67 @@ stack:
   - name: java temurin
     version: "21"
     id_eol: eclipse-temurin
-    
- - name: non-existent-product
+
+  - name: non-existent-product
     version: "1.0"
     id_eol: non-existent-product
     skip: true
 ```
 
-The example also contains a product marked with `skip: true`.
-Skipped products are ignored during the analysis.
+:::info
 
+Products marked with `skip: true` are ignored during the analysis.
 
-## 🔍 Check your stack
+:::
 
-Run the check to view statuses and warnings:
-```shell
+## 🔍 Check Your Stack
+
+Run the following command to analyze all products defined in your configuration file:
+
+```bash
 geol check
 ```
 
-## 🚨 Use strict mode
+**geol** displays the support status, warnings, and end-of-life information for each product.
 
-Use this flag to make `geol check` return a non-zero exit code when any product is past its EOL.
+## 🚨 Use Strict Mode
+
+Enable strict mode to return a non-zero exit code when at least one product has reached its end-of-life date.
+
 ```bash
 geol check --strict
 ```
 
-Run the following command to print the exit status (a non-zero value indicates an error):
+To display the command exit status:
+
 ```bash
 echo $?
 ```
 
-## 📅 Check a stack at a specific date
+:::warning
 
+A non-zero exit code indicates that at least one product is no longer supported.
 
-By default, `geol check` analyzes your stack using today's date.
+:::
 
-Use `-d` or `--date` to evaluate the support status of your products at a specific date.
+## 📅 Check a Stack at a Specific Date
+
+By default, **geol** evaluates products using today's date.
+
+Use the `-d` or `--date` option to analyze your stack at a specific point in time.
 
 ```bash
 geol check --date 2028-01-01
 ```
+
 or
+
 ```bash
 geol check -d 2028-01-01
 ```
 
 :::info
-The date can be in the future or in the past.
+
+The specified date can be in the future or in the past.
+
 :::
