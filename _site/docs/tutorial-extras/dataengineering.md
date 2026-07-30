@@ -125,43 +125,43 @@ Count products:
 select count(*) from products;
 ```
 
-### SQLite E*amples
+### SQLite Examples
 
-Run a query without openin* the interactive shell:
+Run a query without opening the interactive shell:
 
 ```bash
-s*lite3 geol.db "SELECT * FROM produ*ts LIMIT 10;"
+sqlite3 geol.db "SELECT * FROM products LIMIT 10;"
 ```
 
 :::tip
 
-Use `-h*ader` and `-column` for improved r*adability:
+Use `-header` and `-column` for improved readability:
 
 ```bash
-sqlite3 -heade* -column geol.db "SELECT * FROM pr*ducts LIMIT 10;"
+sqlite3 -header -column geol.db "SELECT * FROM products LIMIT 10;"
 ```
 
 :::
 
-Open th* SQLite shell:
+Open the SQLite shell:
 
 ```bash
-sqlite3 ge*l.db
+sqlite3 geol.db
 ```
 
 List tables:
 
 ```sql
-.ta*les
+.tables
 ```
 
 Display a table schema:
 
-*``sql
+```sql
 .schema products
 ```
 
-Count *roducts:
+Count products:
 
 ```sql
 SELECT COUNT(*) FROM products;
@@ -268,8 +268,8 @@ print(f"Found {len(df)} products past EOL")
   height="415"
   src="https://www.youtube.com/embed/G_x2Aven5Yg"
   title="Exploring geol DuckDB export with Quarto"
-  frameborder="0"
-  allowfullscreen>
+  frameBorder="0"
+  allowFullScreen>
 </iframe>
 
 ### Using SQLite with geol
@@ -279,8 +279,8 @@ print(f"Found {len(df)} products past EOL")
   height="415"
   src="https://www.youtube.com/embed/SojNndY8vrk"
   title="Using geol with SQLite"
-  frameborder="0"
-  allowfullscreen>
+  frameBorder="0"
+  allowFullScreen>
 </iframe>
 
 ## 📈 Export to Other Formats

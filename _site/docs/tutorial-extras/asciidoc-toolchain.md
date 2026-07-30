@@ -13,7 +13,7 @@ Asciidoctor is a toolkit for processing AsciiDoc documents and generating profes
 Install it with Homebrew:
 
 ```bash
-brew install asciidoc
+brew install asciidoctor
 ```
 
 :::info

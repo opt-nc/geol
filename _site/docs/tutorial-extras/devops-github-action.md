@@ -17,8 +17,8 @@ See how **geol** integrates with GitHub Actions to provide automated lifecycle c
   height="415"
   src="https://www.youtube.com/embed/0havqKL-Suo"
   title="Use geol in GitHub Actions"
-  frameborder="0"
-  allowfullscreen>
+  frameBorder="0"
+  allowFullScreen>
 </iframe>
 
 ## 🎯 Why Use geol in CI/CD?
