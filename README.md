@@ -84,7 +84,7 @@ curl -fsSL https://raw.githubusercontent.com/opt-nc/geol/main/install.sh | bash
 2. Update:
 
 ```sh
-brew update && brew upgrade --cask
+brew update && brew upgrade --cask geol
 geol version
 ```
 

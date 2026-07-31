@@ -2,41 +2,52 @@
 sidebar_position: 3
 ---
 
-# DevOps with `geol` as a GitHub Action
+# 🚀 Use geol in GitHub Actions
 
-Integrating `geol` into your GitHub Actions workflow allows you to automatically monitor the end-of-life (EOL) status of your stack and fail the build if any product is no longer supported.
+Integrate **geol** into your GitHub Actions workflows to automatically monitor the end-of-life (EOL) status of your software stack.
 
-## See it in action
+With strict mode enabled, workflows can fail when unsupported products are detected.
 
-Watch this video to see how `geol` integrates into GitHub Actions to provide clear EOL reporting and automated checks:
+## 🎬 Watch a Demo
 
-<div style={{position: 'relative', paddingBottom: '56.25%', height: 0, marginBottom: '2rem'}}>
-  <iframe
-    src="https://www.youtube.com/embed/0havqKL-Suo"
-    title="geol as a GitHub Action"
-    frameBorder="0"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-    style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%'}}
-    allowFullScreen
-  />
-</div>
+See how **geol** integrates with GitHub Actions to provide automated lifecycle checks and EOL reporting.
 
-## Why use `geol` in CI/CD?
+<iframe
+  width="100%"
+  height="415"
+  src="https://www.youtube.com/embed/0havqKL-Suo"
+  title="Use geol in GitHub Actions"
+  frameBorder="0"
+  allowFullScreen>
+</iframe>
 
-- **Security**: Ensure no unsupported (and potentially unpatched) software is used in your environment.
-- **Compliance**: Maintain an up-to-date inventory of your stack's lifecycle.
-- **Automation**: Get alerted immediately when a product reaches its end-of-life.
+## 🎯 Why Use geol in CI/CD?
 
-## Official GitHub Action
+Using **geol** in your CI/CD pipeline helps you:
 
-The easiest way to integrate `geol` is to use the official [geol-action](https://github.com/opt-nc/geol-action). It installs the binary and makes it available in your workflow path.
+- 🔒 Detect unsupported software early
+- 📋 Track product lifecycle status
+- ⚡ Automate EOL monitoring
+- 🚨 Alert teams when products reach end-of-life
 
-### Workflow Example
+## ⚙️ Install the GitHub Action
 
-Create a file named `.github/workflows/geol-check.yml` in your repository. 
+The easiest way to integrate **geol** is to use the official GitHub Action:
+
+https://github.com/opt-nc/geol-action
+
+The action downloads the **geol** binary and makes it available in your workflow.
+
+## 📄 Example Workflow
+
+Create a `.github/workflows/geol-check.yml` file in your repository.
 
 :::tip
-It is highly recommended to include a **schedule** trigger (like the Monday morning example below). Since EOL dates are external events, your build should check for them even if you haven't pushed any new code.
+
+It is recommended to use a scheduled workflow in addition to push and pull request triggers.
+
+Since EOL dates change independently from your source code, scheduled checks help detect newly unsupported products even when no code changes have been made.
+
 :::
 
 ```yaml
@@ -45,14 +56,17 @@ name: Check EOL
 on:
   push:
     branches: [ main ]
+
   pull_request:
     branches: [ main ]
+
   schedule:
-    - cron: '0 0 * * 1' # Run every Monday at midnight to catch new EOLs
+    - cron: '0 0 * * 1'
 
 jobs:
   check-eol:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -60,44 +74,61 @@ jobs:
       - name: Install geol
         uses: opt-nc/geol-action@v1
         with:
-          version: 'v2.12.1' # Optional: specify a version or use 'latest'
+          version: 'v2.12.1'
 
       - name: Check stack EOL
         run: |
           geol check --strict
 ```
 
-## How it works
+## 🔍 How It Works
 
-1. **Installation**: The `opt-nc/geol-action` step downloads the specified version of `geol` and adds it to the `PATH`.
-2. **Execution**: You can then call `geol` directly in any subsequent `run` step.
-3. **Strict Mode**: Adding the `--strict` flag to `geol check` is essential for CI/CD. It ensures that the command returns a non-zero exit code if any product is past its EOL date, which effectively "fails" the GitHub Action and alerts your team.
-4. **Schedule**: By running this weekly, you ensure that "stable" projects are still monitored for underlying software obsolescence.
+### 1. Install geol
 
-## Go further
+The `opt-nc/geol-action` step downloads **geol** and adds it to the workflow `PATH`.
 
-### Automate Issue Generation
+### 2. Run Lifecycle Checks
 
-You can go beyond failing the build by automatically opening a GitHub Issue when your stack reaches EOL. This ensures the task is tracked in your backlog.
+Once installed, **geol** can be used in any subsequent workflow step.
 
-You can use a combination of `geol check` (capturing output to a file) and an action like `peter-evans/create-issue-from-file`:
-
-```yaml
-      - name: Check stack EOL and save report
-        id: geol_check
-        continue-on-error: true
-        run: |
-          geol check --strict > eol-report.txt
-
-      - name: Create Issue on EOL failure
-        if: steps.geol_check.outcome == 'failure'
-        uses: peter-evans/create-issue-from-file@v5
-        with:
-          title: "Critical: End-of-Life software detected in stack"
-          content-filepath: eol-report.txt
-          labels: |
-            security
-            obsolescence
+```bash
+geol check --strict
 ```
 
-For more details on how to configure your products and the `.geol.yaml` format, see the [Learn the check command](../tutorial-basics/check-command) tutorial.
+### 3. Enable Strict Mode
+
+The `--strict` option causes `geol check` to return a non-zero exit code when at least one product has reached its end-of-life date.
+
+This allows GitHub Actions to fail the workflow and notify the team.
+
+### 4. Schedule Regular Checks
+
+Scheduled workflows ensure that lifecycle monitoring continues even when no new code is pushed.
+
+## 📝 Create Issues Automatically
+
+Instead of only failing the workflow, you can automatically create a GitHub issue when unsupported software is detected.
+
+```yaml
+- name: Check stack EOL and save report
+  id: geol_check
+  continue-on-error: true
+  run: |
+    geol check --strict > eol-report.txt
+
+- name: Create Issue on EOL failure
+  if: steps.geol_check.outcome == 'failure'
+  uses: peter-evans/create-issue-from-file@v5
+  with:
+    title: "Critical: End-of-Life software detected in stack"
+    content-filepath: eol-report.txt
+    labels: |
+      security
+      obsolescence
+```
+
+:::tip
+
+Automatically creating issues helps track remediation work and ensures that EOL findings are visible in your backlog.
+
+:::
