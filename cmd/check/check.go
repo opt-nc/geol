@@ -36,7 +36,8 @@ type stackItem struct {
 	Skip                 bool   `yaml:"skip,omitempty"`
 	ShouldAlwaysBeLatest bool   `yaml:"always-latest,omitempty"`
 	ManualEol            string `yaml:"manual_eol,omitempty"`
-	LtsStrategy          string `yaml:"lts_strategy,omitempty"` // "any" or "latest"
+	LtsStrategy          string `yaml:"lts_strategy,omitempty"`  // "any" or "latest"
+	LtsGraceDays         int    `yaml:"lts_grace_days,omitempty"` // grace period (days) before failing when a newer LTS exists; only applies to lts_strategy: "latest"
 }
 type geolConfig struct {
 	AppName string      `yaml:"app_name"`
@@ -144,7 +145,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 
 		// Handle lts_strategy enforcement
 		if item.LtsStrategy != "" {
-			activeLts, latestLts, ltsErr := lookupLtsInfo(item.IdEol)
+			activeLts, latestLts, latestLtsDate, ltsErr := lookupLtsInfo(item.IdEol)
 			if ltsErr != nil {
 				log.Error().Msgf("LTS strategy check failed for %s: %v", item.Name, ltsErr)
 				violations = append(violations, fmt.Sprintf("%s: LTS strategy check failed: %v", item.Name, ltsErr))
@@ -174,9 +175,26 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 				}
 			case "latest":
 				if item.Version != latestLts {
-					log.Error().Msgf("%s %s: lts_strategy 'latest' requires the latest LTS version (%s), but got %s", item.Name, item.Version, latestLts, item.Version)
-					violations = append(violations, fmt.Sprintf("%s %s is not the latest LTS version (lts_strategy: latest, latest LTS: %s)", item.Name, item.Version, latestLts))
-					errorOut = true
+					// Apply grace period: if lts_grace_days > 0 and the latest LTS was released
+					// less than lts_grace_days days ago, warn instead of failing.
+					withinGrace := false
+					if item.LtsGraceDays > 0 && latestLtsDate != "" {
+						if ltsRelDate, parseErr := time.Parse("2006-01-02", latestLtsDate); parseErr == nil {
+							daysSinceLatestLts := int(today.Sub(ltsRelDate).Hours() / 24)
+							if daysSinceLatestLts < item.LtsGraceDays {
+								withinGrace = true
+								log.Warn().Msgf(
+									"%s %s: lts_strategy 'latest' — newer LTS %s was released %dd ago (grace period: %dd). Update before grace period expires.",
+									item.Name, item.Version, latestLts, daysSinceLatestLts, item.LtsGraceDays,
+								)
+							}
+						}
+					}
+					if !withinGrace {
+						log.Error().Msgf("%s %s: lts_strategy 'latest' requires the latest LTS version (%s), but got %s", item.Name, item.Version, latestLts, item.Version)
+						violations = append(violations, fmt.Sprintf("%s %s is not the latest LTS version (lts_strategy: latest, latest LTS: %s)", item.Name, item.Version, latestLts))
+						errorOut = true
+					}
 				}
 			}
 		}
@@ -456,16 +474,21 @@ func lookupEolDate(idEol, version string, referenceDate time.Time) (string, bool
 }
 
 // lookupLtsInfo returns the currently active LTS release names (isLts=true, isEol=false) for a product,
-// ordered from latest to oldest, and the name of the latest active LTS release.
+// ordered from latest to oldest, the name of the latest active LTS release, and its release date.
 // Returns an error if the product is not found or the API call fails.
-func lookupLtsInfo(idEol string) ([]string, string, error) {
+// lookupLtsInfo returns:
+//   - activeLts: slice of active LTS release names (isLts=true, isEol=false), newest first
+//   - latestLts: name of the latest active LTS release
+//   - latestLtsReleaseDate: release date of the latest active LTS (YYYY-MM-DD), empty if unknown
+//   - error
+func lookupLtsInfo(idEol string) ([]string, string, string, error) {
 	productsPath, err := utilities.GetProductsPath()
 	if err != nil {
-		return nil, "", fmt.Errorf("error retrieving products path: %w", err)
+		return nil, "", "", fmt.Errorf("error retrieving products path: %w", err)
 	}
 	products, err := utilities.GetProductsWithCacheRefresh(nil, productsPath)
 	if err != nil {
-		return nil, "", fmt.Errorf("error retrieving products from cache: %w", err)
+		return nil, "", "", fmt.Errorf("error retrieving products from cache: %w", err)
 	}
 
 	prod := idEol
@@ -488,42 +511,47 @@ func lookupLtsInfo(idEol string) ([]string, string, error) {
 		}
 	}
 	if !found {
-		return nil, "", fmt.Errorf("product with id_eol %s not found in the API", idEol)
+		return nil, "", "", fmt.Errorf("product with id_eol %s not found in the API", idEol)
 	}
 
 	url := utilities.APIUrl + "products/" + prod
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, "", fmt.Errorf("error requesting %s: %w", prod, err)
+		return nil, "", "", fmt.Errorf("error requesting %s: %w", prod, err)
 	}
 	body, err := io.ReadAll(resp.Body)
 	if cerr := resp.Body.Close(); cerr != nil {
-		return nil, "", fmt.Errorf("error closing HTTP body for %s: %w", prod, cerr)
+		return nil, "", "", fmt.Errorf("error closing HTTP body for %s: %w", prod, cerr)
 	}
 	if err != nil {
-		return nil, "", fmt.Errorf("error reading response for %s: %w", prod, err)
+		return nil, "", "", fmt.Errorf("error reading response for %s: %w", prod, err)
 	}
 	if resp.StatusCode != 200 {
-		return nil, "", fmt.Errorf("product %s not found (status %d)", prod, resp.StatusCode)
+		return nil, "", "", fmt.Errorf("product %s not found (status %d)", prod, resp.StatusCode)
 	}
 
 	var apiRespProd struct {
 		Result struct {
 			Releases []struct {
-				Name  string `json:"name"`
-				IsLts bool   `json:"isLts"`
-				IsEol bool   `json:"isEol"`
+				Name        string `json:"name"`
+				ReleaseDate string `json:"releaseDate"`
+				IsLts       bool   `json:"isLts"`
+				IsEol       bool   `json:"isEol"`
 			} `json:"releases"`
 		} `json:"result"`
 	}
 	if err := json.Unmarshal(body, &apiRespProd); err != nil {
-		return nil, "", fmt.Errorf("error decoding JSON for %s: %w", prod, err)
+		return nil, "", "", fmt.Errorf("error decoding JSON for %s: %w", prod, err)
 	}
 
 	var activeLts []string
+	latestLtsDate := ""
 	for _, r := range apiRespProd.Result.Releases {
 		if r.IsLts && !r.IsEol {
 			activeLts = append(activeLts, r.Name)
+			if latestLtsDate == "" {
+				latestLtsDate = r.ReleaseDate
+			}
 		}
 	}
 
@@ -531,7 +559,7 @@ func lookupLtsInfo(idEol string) ([]string, string, error) {
 	if len(activeLts) > 0 {
 		latestLts = activeLts[0]
 	}
-	return activeLts, latestLts, nil
+	return activeLts, latestLts, latestLtsDate, nil
 }
 
 // renderStackTable renders the stack table using lipgloss/table
@@ -635,6 +663,12 @@ func checkRequiredKeys(config geolConfig) validationResult {
 		}
 		if item.LtsStrategy != "" && item.LtsStrategy != "any" && item.LtsStrategy != "latest" {
 			result.missing = append(result.missing, fmt.Sprintf("stack[%d].lts_strategy must be 'any' or 'latest', got '%s'", i, item.LtsStrategy))
+		}
+		if item.LtsGraceDays != 0 && item.LtsStrategy != "latest" {
+			result.missing = append(result.missing, fmt.Sprintf("stack[%d].lts_grace_days is only applicable when lts_strategy is 'latest'", i))
+		}
+		if item.LtsGraceDays < 0 {
+			result.missing = append(result.missing, fmt.Sprintf("stack[%d].lts_grace_days must be >= 0, got %d", i, item.LtsGraceDays))
 		}
 	}
 	return result

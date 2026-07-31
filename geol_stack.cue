@@ -50,4 +50,11 @@ stack: [...{
     // version is always required; lts_strategy validates it against the LTS policy.
     // If lts_strategy is set but the product has no active LTS versions, the check fails.
     lts_strategy?: "any" | "latest"
+
+    // lts_grace_days: optional grace period (number of days) before failing when a new LTS
+    // version is available. Only meaningful when lts_strategy is "latest".
+    // If the latest LTS was released less than lts_grace_days days ago, a warning is emitted
+    // instead of a check failure, giving teams time to migrate.
+    // Example: lts_grace_days: 30 means you have 30 days to upgrade after a new LTS drops.
+    lts_grace_days?: int & >=0
 }]
