@@ -12,6 +12,7 @@ stack:
     version: "21"
     id_eol: eclipse-temurin
     lts_strategy: any
+    #lts_grace_days: 30 only if the lts_strategy is set to latest, this field is ignored if the lts_strategy is set to any
 
   - name: quarkus
     version: "3.12"
