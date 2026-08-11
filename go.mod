@@ -26,7 +26,7 @@ require (
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/charmbracelet/colorprofile v0.4.3 // indirect
 	github.com/charmbracelet/harmonica v0.2.0 // indirect
-	github.com/charmbracelet/ultraviolet v0.0.0-20260803092147-8b693049ce2a // indirect
+	github.com/charmbracelet/ultraviolet v0.0.0-20260810092200-402eeaa30986 // indirect
 	github.com/charmbracelet/x/ansi v0.11.7 // indirect
 	github.com/charmbracelet/x/exp/charmtone v0.0.0-20260803091719-3755ebad01b1 // indirect
 	github.com/charmbracelet/x/exp/slice v0.0.0-20260803091719-3755ebad01b1 // indirect
@@ -35,7 +35,7 @@ require (
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.3 // indirect
-	github.com/dlclark/regexp2/v2 v2.5.2 // indirect
+	github.com/dlclark/regexp2/v2 v2.6.0 // indirect
 	github.com/duckdb/duckdb-go-bindings v0.10505.0 // indirect
 	github.com/duckdb/duckdb-go-bindings/lib/darwin-amd64 v0.10505.0 // indirect
 	github.com/duckdb/duckdb-go-bindings/lib/darwin-arm64 v0.10505.0 // indirect
@@ -65,15 +65,15 @@ require (
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20260803135053-1fd8a60d1ffc // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
-	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
+	github.com/xo/terminfo v1.0.0 // indirect
 	github.com/yuin/goldmark v1.8.5 // indirect
 	github.com/yuin/goldmark-emoji v1.0.6 // indirect
 	github.com/zeebo/xxh3 v1.1.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/exp v0.0.0-20260727155853-b88d891fe743 // indirect
+	golang.org/x/exp v0.0.0-20260810151157-a8b543ca52da // indirect
 	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.40.0 // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
+	google.golang.org/protobuf v1.36.12 // indirect
 )
