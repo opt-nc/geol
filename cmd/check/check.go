@@ -615,6 +615,7 @@ func renderStackTable(rows []stackTableRow) string {
 type validationResult struct {
 	missing    []string
 	duplicates []string
+	constraint []string
 }
 
 // checkRequiredKeys validates required keys in geolConfig and returns categorized errors
@@ -622,6 +623,7 @@ func checkRequiredKeys(config geolConfig) validationResult {
 	result := validationResult{
 		missing:    []string{},
 		duplicates: []string{},
+		constraint: []string{},
 	}
 
 	if config.AppName == "" {
@@ -658,6 +660,9 @@ func checkRequiredKeys(config geolConfig) validationResult {
 		}
 		if item.LtsGraceDays < 0 {
 			result.missing = append(result.missing, fmt.Sprintf("stack[%d].lts_grace_days must be >= 0, got %d", i, item.LtsGraceDays))
+		}
+		if item.ShouldAlwaysBeLatest && item.LtsStrategy != "" {
+			result.constraint = append(result.constraint, fmt.Sprintf("stack[%d] cannot define both always-latest and lts_strategy for the same product", i))
 		}
 	}
 	return result
@@ -708,6 +713,14 @@ geol check --json`,
 		if len(validation.duplicates) > 0 {
 			for _, duplicate := range validation.duplicates {
 				log.Error().Msg(duplicate)
+			}
+			hasErrors = true
+		}
+
+		// Log constraint errors
+		if len(validation.constraint) > 0 {
+			for _, constraint := range validation.constraint {
+				log.Error().Msgf("Constraint error: %s", constraint)
 			}
 			hasErrors = true
 		}
