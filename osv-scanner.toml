@@ -1,0 +1,4 @@
+[[PackageOverrides]]
+ecosystem = "npm"
+ignore = true
+reason = "Js packages are not being scanned for vulnerabilities. It's just used for semantic-release tooling, not shipped in the product"
