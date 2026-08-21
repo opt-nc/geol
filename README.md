@@ -1,6 +1,7 @@
 # `geol`
 
 ![GitHub Downloads](https://img.shields.io/github/downloads/opt-nc/geol/total?logo=github)
+[![Docker Pulls](https://img.shields.io/docker/pulls/optnc/geol?logo=docker)](https://hub.docker.com/r/optnc/geol)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/opt-nc/geol)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/opt-nc/geol)
 ![GitHub License](https://img.shields.io/github/license/opt-nc/geol)
