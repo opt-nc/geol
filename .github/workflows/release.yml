@@ -25,12 +25,6 @@ jobs:
       - name: 📦 Semantic Release
         id: release
         uses: cycjimmy/semantic-release-action@b12c8f6015dc215fe37bc154d4ad456dd3833c90
-        with:
-          extra_plugins: |
-            @semantic-release/exec
-            @semantic-release/git
-            @semantic-release/release-notes-generator
-            conventional-changelog-conventionalcommits
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
