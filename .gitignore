@@ -54,3 +54,5 @@ geol-build/
 .task/
 
 geol
+
+node_modules/
