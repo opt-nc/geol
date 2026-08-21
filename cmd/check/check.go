@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"os"
 	"sort"
@@ -36,7 +37,7 @@ type stackItem struct {
 	Skip                 bool   `yaml:"skip,omitempty"`
 	ShouldAlwaysBeLatest bool   `yaml:"always-latest,omitempty"`
 	ManualEol            string `yaml:"manual_eol,omitempty"`
-	LtsStrategy          string `yaml:"lts_strategy,omitempty"`  // "any" or "latest"
+	LtsStrategy          string `yaml:"lts_strategy,omitempty"`   // "any" or "latest"
 	LtsGraceDays         int    `yaml:"lts_grace_days,omitempty"` // grace period (days) before failing when a newer LTS exists; only applies to lts_strategy: "latest"
 }
 type geolConfig struct {
@@ -53,6 +54,140 @@ type stackTableRow struct {
 	IsLatest      bool   `json:"is_latest"`
 	LatestVersion string `json:"latest_version"`
 	LtsStrategy   string `json:"lts_strategy,omitempty"`
+	// DebtScore is a 0-100 "technical debt" score computed by an EOL scoring function
+	// (see standardEolScore). Named debt_score (rather than score) so it isn't confused
+	// with the overall stack score exposed at the top level of the JSON output.
+	DebtScore int `json:"debt_score"`
+}
+
+// riskThresholdDays is the number of days before EOL at which a component is considered an
+// "upcoming risk". This mirrors RISK_THRESHOLD_DAYS in the geol-check-report.qmd notebook.
+const riskThresholdDays = 180
+
+// standardEolScore is geol's default, built-in EOL scoring formula, mirroring the
+// compute_health_score() logic from assets/_templates/notebooks/check/geol-check-report.qmd.
+// It returns a score between 0 (fully past EOL) and 100 (up to date), based on:
+//   - 0 when the component is already past its EOL date
+//   - 30/35/45 when the component is nearing EOL (less than riskThresholdDays remaining),
+//     with higher scores awarded to LTS versions (and the highest to the latest LTS version)
+//   - 100 when the component is on the latest available version (no lag)
+//   - 60/75/95 when a newer major version is available ("Major Lag"), with higher scores
+//     awarded to LTS versions (and the highest to the latest LTS version)
+//   - 80 when only a newer minor/patch version is available ("Minor Lag")
+func standardEolScore(eolDate string, referenceDate time.Time, isLatest bool, version, latestVersion string, isLts, isLatestLts bool) int {
+	if eolDate != "" {
+		if eolT, err := time.Parse("2006-01-02", eolDate); err == nil {
+			daysUntilEol := int(eolT.Sub(referenceDate).Hours() / 24)
+			switch {
+			case daysUntilEol < 0:
+				return 0
+			case daysUntilEol < riskThresholdDays:
+				switch {
+				case isLts && isLatestLts:
+					return 45
+				case isLts:
+					return 35
+				default:
+					return 30
+				}
+			}
+		}
+	}
+
+	if isLatest || latestVersion == "" || version == latestVersion {
+		return 100
+	}
+
+	// Component is behind the latest known version: determine whether the lag is a major
+	// version bump ("Major Lag") or just a minor/patch bump ("Minor Lag").
+	isMajorLag := false
+	v, errV := semver.NewVersion(version)
+	lv, errL := semver.NewVersion(latestVersion)
+	if errV == nil && errL == nil {
+		isMajorLag = v.Major() != lv.Major()
+	} else {
+		// Fall back to a naive string comparison, matching the qmd notebook's fallback.
+		isMajorLag = strings.SplitN(version, ".", 2)[0] != strings.SplitN(latestVersion, ".", 2)[0]
+	}
+	if isMajorLag {
+		switch {
+		case isLts && isLatestLts:
+			return 95
+		case isLts:
+			return 75
+		default:
+			return 60
+		}
+	}
+	return 80
+}
+
+// isVersionLts reports whether version matches (or is a sub-version of, e.g. "24.04.1" for
+// cycle "24.04") one of the given active LTS cycles, and whether it matches the latest LTS cycle.
+func isVersionLts(version string, activeLts []string, latestLts string) (isLts, isLatestLts bool) {
+	for _, cycle := range activeLts {
+		if version == cycle || strings.HasPrefix(version, cycle+".") {
+			isLts = true
+			break
+		}
+	}
+	if isLts && latestLts != "" && (version == latestLts || strings.HasPrefix(version, latestLts+".")) {
+		isLatestLts = true
+	}
+	return isLts, isLatestLts
+}
+
+// stackScore holds the overall stack debt score, along with a color and a human-readable
+// message meant for display purposes (e.g. JSON "score" field, dashboards, badges).
+type stackScore struct {
+	Value   int    `json:"value"`
+	Color   string `json:"color"`
+	Message string `json:"message"`
+}
+
+// computeStackScore returns the average debt score across all scored components, along
+// with a color/message pair summarizing the overall stack health.
+func computeStackScore(rows []stackTableRow) stackScore {
+	if len(rows) == 0 {
+		return stackScore{Value: 100, Color: "green", Message: "Healthy — No software components to evaluate"}
+	}
+
+	total := 0
+	for _, r := range rows {
+		total += r.DebtScore
+	}
+	avg := int(math.Round(float64(total) / float64(len(rows))))
+
+	switch {
+	case avg >= 80:
+		return stackScore{Value: avg, Color: "green", Message: "Healthy — All software components are up to date"}
+	case avg >= 50:
+		return stackScore{Value: avg, Color: "orange", Message: "Needs Attention — Some software components are not up to date"}
+	default:
+		return stackScore{Value: avg, Color: "red", Message: "Critical — Several software components are past end-of-life or severely outdated"}
+	}
+}
+
+// renderScoreValue colorizes a per-component debt score for terminal/markdown table display.
+func renderScoreValue(value int) string {
+	switch {
+	case value >= 80:
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render(fmt.Sprintf("%d", value))
+	case value >= 50:
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("208")).Render(fmt.Sprintf("%d", value))
+	default:
+		return lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Render(fmt.Sprintf("%d", value))
+	}
+}
+
+// renderStackScore renders a one-line summary of the overall stack debt score.
+func renderStackScore(score stackScore) string {
+	colorCode := map[string]string{"green": "46", "orange": "208", "red": "196"}[score.Color]
+	if colorCode == "" {
+		colorCode = "252"
+	}
+	valueStr := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(colorCode)).Render(fmt.Sprintf("%d/100", score.Value))
+	return fmt.Sprintf("Stack Debt Score: %s — %s", valueStr, score.Message)
 }
 
 // getStackTableRows returns a slice of StackTableRow for a given stack and today date
@@ -100,6 +235,10 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 
 			log.Info().Msgf("Using manual EOL date for %s %s: %s (product not available in eol.date API)", item.Name, item.Version, item.ManualEol)
 			eolDate := item.ManualEol
+			manualIsLts, manualIsLatestLts := false, false
+			if activeLts, latestLts, _, ltsErr := lookupLtsInfo(item.IdEol); ltsErr == nil {
+				manualIsLts, manualIsLatestLts = isVersionLts(item.Version, activeLts, latestLts)
+			}
 			var status string
 			var daysStr string
 			var daysInt int
@@ -139,24 +278,22 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 				Days:          daysStr,
 				IsLatest:      false,
 				LatestVersion: "-",
+				DebtScore:     standardEolScore(eolDate, today, false, item.Version, "", manualIsLts, manualIsLatestLts),
 			})
 			continue
 		}
 
 		// Handle lts_strategy enforcement
+		var lookedUpActiveLts []string
+		var lookedUpLatestLts string
 		if item.LtsStrategy != "" {
 			activeLts, latestLts, latestLtsDate, ltsErr := lookupLtsInfo(item.IdEol)
 			if ltsErr != nil {
-				log.Error().Msgf("LTS strategy check failed for %s: %v", item.Name, ltsErr)
-				violations = append(violations, fmt.Sprintf("%s: LTS strategy check failed: %v", item.Name, ltsErr))
-				errorOut = true
-				continue
+				log.Fatal().Msgf("LTS strategy check failed for %s: %v", item.Name, ltsErr)
 			}
+			lookedUpActiveLts, lookedUpLatestLts = activeLts, latestLts
 			if len(activeLts) == 0 {
-				log.Error().Msgf("%s (%s): lts_strategy is set to '%s' but no active LTS versions are available for this product", item.Name, item.IdEol, item.LtsStrategy)
-				violations = append(violations, fmt.Sprintf("%s (%s): lts_strategy '%s' cannot be enforced — no active LTS versions found", item.Name, item.IdEol, item.LtsStrategy))
-				errorOut = true
-				continue
+				log.Fatal().Msgf("%s (%s): lts_strategy is set to '%s' but no active LTS versions are available for this product", item.Name, item.IdEol, item.LtsStrategy)
 			}
 
 			switch item.LtsStrategy {
@@ -169,9 +306,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 					}
 				}
 				if !isLts {
-					log.Error().Msgf("%s %s: lts_strategy 'any' requires an active LTS version, but %s is not LTS (active LTS: %s)", item.Name, item.Version, item.Version, strings.Join(activeLts, ", "))
-					violations = append(violations, fmt.Sprintf("%s %s is not an active LTS version (lts_strategy: any, active LTS: %s)", item.Name, item.Version, strings.Join(activeLts, ", ")))
-					errorOut = true
+					log.Fatal().Msgf("%s %s: lts_strategy 'any' requires an active LTS version, but %s is not LTS (active LTS: %s)", item.Name, item.Version, item.Version, strings.Join(activeLts, ", "))
 				}
 			case "latest":
 				if item.Version != latestLts {
@@ -201,11 +336,18 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 
 		eolDate, isLatest, latestVersion, eolLookupErr := lookupEolDate(item.IdEol, item.Version, today)
 		if eolLookupErr != nil {
-			log.Error().Msgf("%s %s: %v", item.Name, item.Version, eolLookupErr)
-			violations = append(violations, fmt.Sprintf("%s %s: %v", item.Name, item.Version, eolLookupErr))
-			errorOut = true
-			continue
+			log.Fatal().Msgf("%s %s: %v", item.Name, item.Version, eolLookupErr)
 		}
+
+		// Determine LTS status for score computation, reusing the lookup already performed
+		// above for lts_strategy enforcement when available, to avoid a duplicate API call.
+		activeLtsForScore, latestLtsForScore := lookedUpActiveLts, lookedUpLatestLts
+		if item.LtsStrategy == "" {
+			if fetchedActiveLts, fetchedLatestLts, _, ltsErr := lookupLtsInfo(item.IdEol); ltsErr == nil {
+				activeLtsForScore, latestLtsForScore = fetchedActiveLts, fetchedLatestLts
+			}
+		}
+		isLts, isLatestLts := isVersionLts(item.Version, activeLtsForScore, latestLtsForScore)
 		var status string
 		var daysStr string
 		var daysInt int
@@ -247,6 +389,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			IsLatest:      isLatest,
 			LatestVersion: latestVersion,
 			LtsStrategy:   item.LtsStrategy,
+			DebtScore:     standardEolScore(eolDate, today, isLatest, item.Version, latestVersion, isLts, isLatestLts),
 		})
 
 		// Check always-latest flag
@@ -570,7 +713,7 @@ func renderStackTable(rows []stackTableRow) string {
 
 	t := table.New()
 	t.Headers(
-		"Software", "Version", "EOL Date", "Status", "Days", "Is Latest", "Latest",
+		"Software", "Version", "EOL Date", "Status", "Days", "Is Latest", "Latest", "Debt Score",
 	)
 	for _, r := range rows {
 		var daysStr string
@@ -603,6 +746,7 @@ func renderStackTable(rows []stackTableRow) string {
 			daysStr,
 			latestStr,
 			r.LatestVersion,
+			renderScoreValue(r.DebtScore),
 		)
 	}
 	if term.IsTerminal(int(os.Stdout.Fd())) {
@@ -626,6 +770,7 @@ func renderStackTable(rows []stackTableRow) string {
 type validationResult struct {
 	missing    []string
 	duplicates []string
+	constraint []string
 }
 
 // checkRequiredKeys validates required keys in geolConfig and returns categorized errors
@@ -633,6 +778,7 @@ func checkRequiredKeys(config geolConfig) validationResult {
 	result := validationResult{
 		missing:    []string{},
 		duplicates: []string{},
+		constraint: []string{},
 	}
 
 	if config.AppName == "" {
@@ -669,6 +815,9 @@ func checkRequiredKeys(config geolConfig) validationResult {
 		}
 		if item.LtsGraceDays < 0 {
 			result.missing = append(result.missing, fmt.Sprintf("stack[%d].lts_grace_days must be >= 0, got %d", i, item.LtsGraceDays))
+		}
+		if item.ShouldAlwaysBeLatest && item.LtsStrategy != "" {
+			result.constraint = append(result.constraint, fmt.Sprintf("stack[%d] cannot define both always-latest and lts_strategy for the same product", i))
 		}
 	}
 	return result
@@ -723,6 +872,14 @@ geol check --json`,
 			hasErrors = true
 		}
 
+		// Log constraint errors
+		if len(validation.constraint) > 0 {
+			for _, constraint := range validation.constraint {
+				log.Error().Msgf("Constraint error: %s", constraint)
+			}
+			hasErrors = true
+		}
+
 		if hasErrors {
 			log.Fatal().Msg("Validation failed: please fix the errors above")
 		}
@@ -738,13 +895,16 @@ geol check --json`,
 			log.Info().Msgf("Using reference date: %s", dateStr)
 		}
 		rows, errorOut, violations := getStackTableRows(config.Stack, today)
+		score := computeStackScore(rows)
 
 		if jsonOutput {
 			output := struct {
 				Title              string          `json:"title"`
+				Score              []stackScore    `json:"score"`
 				SoftwareComponents []stackTableRow `json:"software_components"`
 			}{
 				Title:              config.AppName,
+				Score:              []stackScore{score},
 				SoftwareComponents: rows,
 			}
 			jsonData, err := json.MarshalIndent(output, "", "  ")
@@ -759,6 +919,7 @@ geol check --json`,
 				Background(lipgloss.Color("#5F5FFF")).
 				Render("## " + config.AppName)
 			_, _ = lipgloss.Println(styledTitle)
+			_, _ = lipgloss.Println(renderStackScore(score))
 			_, _ = lipgloss.Println(tableStr)
 		}
 
