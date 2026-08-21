@@ -289,17 +289,11 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 		if item.LtsStrategy != "" {
 			activeLts, latestLts, latestLtsDate, ltsErr := lookupLtsInfo(item.IdEol)
 			if ltsErr != nil {
-				log.Error().Msgf("LTS strategy check failed for %s: %v", item.Name, ltsErr)
-				violations = append(violations, fmt.Sprintf("%s: LTS strategy check failed: %v", item.Name, ltsErr))
-				errorOut = true
-				continue
+				log.Fatal().Msgf("LTS strategy check failed for %s: %v", item.Name, ltsErr)
 			}
 			lookedUpActiveLts, lookedUpLatestLts = activeLts, latestLts
 			if len(activeLts) == 0 {
-				log.Error().Msgf("%s (%s): lts_strategy is set to '%s' but no active LTS versions are available for this product", item.Name, item.IdEol, item.LtsStrategy)
-				violations = append(violations, fmt.Sprintf("%s (%s): lts_strategy '%s' cannot be enforced — no active LTS versions found", item.Name, item.IdEol, item.LtsStrategy))
-				errorOut = true
-				continue
+				log.Fatal().Msgf("%s (%s): lts_strategy is set to '%s' but no active LTS versions are available for this product", item.Name, item.IdEol, item.LtsStrategy)
 			}
 
 			switch item.LtsStrategy {
@@ -312,9 +306,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 					}
 				}
 				if !isLts {
-					log.Error().Msgf("%s %s: lts_strategy 'any' requires an active LTS version, but %s is not LTS (active LTS: %s)", item.Name, item.Version, item.Version, strings.Join(activeLts, ", "))
-					violations = append(violations, fmt.Sprintf("%s %s is not an active LTS version (lts_strategy: any, active LTS: %s)", item.Name, item.Version, strings.Join(activeLts, ", ")))
-					errorOut = true
+					log.Fatal().Msgf("%s %s: lts_strategy 'any' requires an active LTS version, but %s is not LTS (active LTS: %s)", item.Name, item.Version, item.Version, strings.Join(activeLts, ", "))
 				}
 			case "latest":
 				if item.Version != latestLts {
@@ -344,10 +336,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 
 		eolDate, isLatest, latestVersion, eolLookupErr := lookupEolDate(item.IdEol, item.Version, today)
 		if eolLookupErr != nil {
-			log.Error().Msgf("%s %s: %v", item.Name, item.Version, eolLookupErr)
-			violations = append(violations, fmt.Sprintf("%s %s: %v", item.Name, item.Version, eolLookupErr))
-			errorOut = true
-			continue
+			log.Fatal().Msgf("%s %s: %v", item.Name, item.Version, eolLookupErr)
 		}
 
 		// Determine LTS status for score computation, reusing the lookup already performed
@@ -781,6 +770,7 @@ func renderStackTable(rows []stackTableRow) string {
 type validationResult struct {
 	missing    []string
 	duplicates []string
+	constraint []string
 }
 
 // checkRequiredKeys validates required keys in geolConfig and returns categorized errors
@@ -788,6 +778,7 @@ func checkRequiredKeys(config geolConfig) validationResult {
 	result := validationResult{
 		missing:    []string{},
 		duplicates: []string{},
+		constraint: []string{},
 	}
 
 	if config.AppName == "" {
@@ -824,6 +815,9 @@ func checkRequiredKeys(config geolConfig) validationResult {
 		}
 		if item.LtsGraceDays < 0 {
 			result.missing = append(result.missing, fmt.Sprintf("stack[%d].lts_grace_days must be >= 0, got %d", i, item.LtsGraceDays))
+		}
+		if item.ShouldAlwaysBeLatest && item.LtsStrategy != "" {
+			result.constraint = append(result.constraint, fmt.Sprintf("stack[%d] cannot define both always-latest and lts_strategy for the same product", i))
 		}
 	}
 	return result
@@ -874,6 +868,14 @@ geol check --json`,
 		if len(validation.duplicates) > 0 {
 			for _, duplicate := range validation.duplicates {
 				log.Error().Msg(duplicate)
+			}
+			hasErrors = true
+		}
+
+		// Log constraint errors
+		if len(validation.constraint) > 0 {
+			for _, constraint := range validation.constraint {
+				log.Error().Msgf("Constraint error: %s", constraint)
 			}
 			hasErrors = true
 		}
