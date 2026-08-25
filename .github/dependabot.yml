@@ -23,9 +23,10 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    groups:
-      semantic-release:
-        patterns:
-          - "semantic-release"
-          - "@semantic-release/*"
-          - "conventional-changelog-*"
+    target-branch: develop
+    # groups:
+    #   semantic-release:
+    #     patterns:
+    #       - "semantic-release"
+    #       - "@semantic-release/*"
+    #       - "conventional-changelog-*"
