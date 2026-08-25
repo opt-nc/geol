@@ -24,9 +24,9 @@ updates:
     schedule:
       interval: "weekly"
     target-branch: develop
-    groups:
-      semantic-release:
-        patterns:
-          - "semantic-release"
-          - "@semantic-release/*"
-          - "conventional-changelog-*"
+    # groups:
+    #   semantic-release:
+    #     patterns:
+    #       - "semantic-release"
+    #       - "@semantic-release/*"
+    #       - "conventional-changelog-*"
