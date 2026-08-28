@@ -288,7 +288,7 @@ jobs:
           username: ${{ secrets.OPT_DOCKERHUB_LOGIN }}
           password: ${{ secrets.OPT_DOCKERHUB_PASSWORD }}
           repository: optnc/geol
-          short-description: ${{ github.event.repository.description }}
+          short-description: "Monitor end-of-life dates for your products in terminal & CI, powered by endoflife.date"
           readme-filepath: .DOCKERHUB.md
 
   post-release:

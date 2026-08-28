@@ -1,8 +1,9 @@
 name: Test Geol Installation
 
 on:
-  push:
-    branches: [ main ]
+  workflow_run:
+    workflows: ["🎯 Release"]
+    types: [completed]
   schedule:
     - cron: '0 15 * * 0'
 
@@ -11,7 +12,8 @@ permissions:
   contents: read
 
 jobs:
-  install-geol:          
+  install-geol:
+    if: github.event_name == 'schedule' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     
     steps:
