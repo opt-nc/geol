@@ -54,10 +54,10 @@ type stackTableRow struct {
 	IsLatest      bool   `json:"is_latest"`
 	LatestVersion string `json:"latest_version"`
 	LtsStrategy   string `json:"lts_strategy,omitempty"`
-	// DebtScore is a 0-100 "technical debt" score computed by an EOL scoring function
-	// (see standardEolScore). Named debt_score (rather than score) so it isn't confused
+	// EolHealthScore is a 0-100 "technical debt" score computed by an EOL scoring function
+	// (see standardEolScore). Named eol_health_score (rather than score) so it isn't confused
 	// with the overall stack score exposed at the top level of the JSON output.
-	DebtScore int `json:"debt_score"`
+	EolHealthScore int `json:"eol_health_score"`
 }
 
 // riskThresholdDays is the number of days before EOL at which a component is considered an
@@ -154,7 +154,7 @@ func computeStackScore(rows []stackTableRow) stackScore {
 
 	total := 0
 	for _, r := range rows {
-		total += r.DebtScore
+		total += r.EolHealthScore
 	}
 	avg := int(math.Round(float64(total) / float64(len(rows))))
 
@@ -271,14 +271,14 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 				status = "OK"
 			}
 			rows = append(rows, stackTableRow{
-				Software:      item.Name,
-				Version:       item.Version,
-				EolDate:       eolDate,
-				Status:        status,
-				Days:          daysStr,
-				IsLatest:      false,
-				LatestVersion: "-",
-				DebtScore:     standardEolScore(eolDate, today, false, item.Version, "", manualIsLts, manualIsLatestLts),
+				Software:       item.Name,
+				Version:        item.Version,
+				EolDate:        eolDate,
+				Status:         status,
+				Days:           daysStr,
+				IsLatest:       false,
+				LatestVersion:  "-",
+				EolHealthScore: standardEolScore(eolDate, today, false, item.Version, "", manualIsLts, manualIsLatestLts),
 			})
 			continue
 		}
@@ -381,21 +381,22 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 			status = "OK"
 		}
 		rows = append(rows, stackTableRow{
-			Software:      item.Name,
-			Version:       item.Version,
-			EolDate:       eolDate,
-			Status:        status,
-			Days:          daysStr,
-			IsLatest:      isLatest,
-			LatestVersion: latestVersion,
-			LtsStrategy:   item.LtsStrategy,
-			DebtScore:     standardEolScore(eolDate, today, isLatest, item.Version, latestVersion, isLts, isLatestLts),
+			Software:       item.Name,
+			Version:        item.Version,
+			EolDate:        eolDate,
+			Status:         status,
+			Days:           daysStr,
+			IsLatest:       isLatest,
+			LatestVersion:  latestVersion,
+			LtsStrategy:    item.LtsStrategy,
+			EolHealthScore: standardEolScore(eolDate, today, isLatest, item.Version, latestVersion, isLts, isLatestLts),
 		})
 
 		// Check always-latest flag
 		if item.ShouldAlwaysBeLatest && !isLatest {
 			violations = append(violations, fmt.Sprintf("%s %s is not the latest version (latest: %s)", item.Name, item.Version, latestVersion))
 			violations = append(violations, fmt.Sprintf("%s should be in the latest version (current: %s, latest: %s)", item.Name, item.Version, latestVersion))
+			errorOut = true
 		}
 	}
 	// Sort rows by Status: EOL, WARN, OK, INFO, then by Days (from smallest to largest)
@@ -713,7 +714,7 @@ func renderStackTable(rows []stackTableRow) string {
 
 	t := table.New()
 	t.Headers(
-		"Software", "Version", "EOL Date", "Status", "Days", "Is Latest", "Latest", "Debt Score",
+		"Software", "Version", "EOL Date", "Status", "Days", "Is Latest", "Latest", "EOL Health Score",
 	)
 	for _, r := range rows {
 		var daysStr string
@@ -746,7 +747,7 @@ func renderStackTable(rows []stackTableRow) string {
 			daysStr,
 			latestStr,
 			r.LatestVersion,
-			renderScoreValue(r.DebtScore),
+			renderScoreValue(r.EolHealthScore),
 		)
 	}
 	if term.IsTerminal(int(os.Stdout.Fd())) {
