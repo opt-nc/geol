@@ -396,6 +396,7 @@ func getStackTableRows(stack []stackItem, today time.Time) ([]stackTableRow, boo
 		if item.ShouldAlwaysBeLatest && !isLatest {
 			violations = append(violations, fmt.Sprintf("%s %s is not the latest version (latest: %s)", item.Name, item.Version, latestVersion))
 			violations = append(violations, fmt.Sprintf("%s should be in the latest version (current: %s, latest: %s)", item.Name, item.Version, latestVersion))
+			errorOut = true
 		}
 	}
 	// Sort rows by Status: EOL, WARN, OK, INFO, then by Days (from smallest to largest)
