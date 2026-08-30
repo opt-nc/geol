@@ -31,4 +31,4 @@ jobs:
 
       - name: Run Geol Check stack status # will fail if the .geol file is not present, you can use the geol check init command to create one
         run: |
-          geol check ##--strict Waiting for codeql to upgrade to latest go version
+          geol check --strict
