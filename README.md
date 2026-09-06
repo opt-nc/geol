@@ -1,5 +1,3 @@
-# `geol`
-
 ![GitHub Downloads](https://img.shields.io/github/downloads/opt-nc/geol/total?logo=github)
 [![Docker Pulls](https://img.shields.io/docker/pulls/optnc/geol?logo=docker)](https://hub.docker.com/r/optnc/geol)
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/opt-nc/geol)
@@ -12,6 +10,7 @@
 [![lint-workflow](https://github.com/opt-nc/geol/actions/workflows/golangci-lint.yml/badge.svg)](https://github.com/opt-nc/geol/actions/workflows/golangci-lint.yml)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11239/badge)](https://www.bestpractices.dev/projects/11239)
 [![📊 OSS Insights](https://img.shields.io/badge/OSS%20Insights-%F0%9F%93%8A-blue)](https://ossinsight.io/analyze/opt-nc/geol#overview)
+[![Killercoda](https://img.shields.io/badge/Killercoda-Try_it_online-blue)](https://killercoda.com/opt-labs/course/geol)
 
 ## ❔ About
 
