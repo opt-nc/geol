@@ -180,14 +180,27 @@ func renderScoreValue(value int) string {
 	}
 }
 
-// renderStackScore renders a one-line summary of the overall stack debt score.
+// renderStackScore renders a two-line summary of the overall stack debt score: a bold
+// "score + rating" headline, followed by the descriptive message on its own line. Splitting
+// them avoids stacking two em-dashes on a single line (e.g. "21/100 — Critical — Several..."),
+// which is hard to parse both in a terminal and once rendered as plain markdown text.
 func renderStackScore(score stackScore) string {
 	colorCode := map[string]string{"green": "46", "orange": "208", "red": "196"}[score.Color]
 	if colorCode == "" {
 		colorCode = "252"
 	}
-	valueStr := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(colorCode)).Render(fmt.Sprintf("%d/100", score.Value))
-	return fmt.Sprintf("Stack Debt Score: %s — %s", valueStr, score.Message)
+	rating := score.Message
+	description := ""
+	if idx := strings.Index(score.Message, " — "); idx != -1 {
+		rating = score.Message[:idx]
+		description = score.Message[idx+len(" — "):]
+	}
+	headline := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(colorCode)).
+		Render(fmt.Sprintf("Stack Debt Score: %d/100 (%s)", score.Value, rating))
+	if description == "" {
+		return headline
+	}
+	return headline + "\n" + description
 }
 
 // getStackTableRows returns a slice of StackTableRow for a given stack and today date
