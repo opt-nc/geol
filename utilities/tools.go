@@ -56,7 +56,7 @@ func InitLogger(logLevel string) {
 		TimeFormat: "15:04",
 		Level:      level,
 		Writer: &log.ConsoleWriter{
-			ColorOutput:    true,
+			ColorOutput:    log.IsTerminal(os.Stdout.Fd()),
 			QuoteString:    true,
 			EndWithMessage: true,
 		},
