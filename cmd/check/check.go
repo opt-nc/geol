@@ -180,10 +180,12 @@ func renderScoreValue(value int) string {
 	}
 }
 
-// renderStackScore renders a two-line summary of the overall stack debt score: a bold
-// "score + rating" headline, followed by the descriptive message on its own line. Splitting
+// renderStackScore renders a two-paragraph summary of the overall stack debt score: a bold
+// "score + rating" headline, followed by the descriptive message as its own paragraph. Splitting
 // them avoids stacking two em-dashes on a single line (e.g. "21/100 — Critical — Several..."),
-// which is hard to parse both in a terminal and once rendered as plain markdown text.
+// which is hard to parse both in a terminal and once rendered as plain markdown text. A blank
+// line separates them so markdown renderers treat them as two distinct paragraphs instead of
+// joining them into a single reflowed line.
 func renderStackScore(score stackScore) string {
 	colorCode := map[string]string{"green": "46", "orange": "208", "red": "196"}[score.Color]
 	if colorCode == "" {
@@ -196,11 +198,18 @@ func renderStackScore(score stackScore) string {
 		description = score.Message[idx+len(" — "):]
 	}
 	headline := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(colorCode)).
-		Render(fmt.Sprintf("Stack Debt Score: %d/100 (%s)", score.Value, rating))
+		Render(fmt.Sprintf("%d/100 (%s)", score.Value, rating))
 	if description == "" {
 		return headline
 	}
-	return headline + "\n" + description
+	return headline + "\n\n" + description
+}
+
+// renderSectionHeader renders a markdown-style "### " subsection header. Using real markdown
+// heading syntax means it stays meaningful once redirected to a .md file (rendered as an actual
+// heading, e.g. in a ToC), while still standing out visually in a terminal thanks to the styling.
+func renderSectionHeader(title string) string {
+	return lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("63")).Render("### " + title)
 }
 
 // getStackTableRows returns a slice of StackTableRow for a given stack and today date
@@ -933,7 +942,13 @@ geol check --json`,
 				Background(lipgloss.Color("#5F5FFF")).
 				Render("## " + config.AppName)
 			_, _ = lipgloss.Println(styledTitle)
+			_, _ = lipgloss.Println()
+			_, _ = lipgloss.Println(renderSectionHeader("Stack Debt Score"))
+			_, _ = lipgloss.Println()
 			_, _ = lipgloss.Println(renderStackScore(score))
+			_, _ = lipgloss.Println()
+			_, _ = lipgloss.Println(renderSectionHeader("Software Components"))
+			_, _ = lipgloss.Println()
 			_, _ = lipgloss.Println(tableStr)
 		}
 
