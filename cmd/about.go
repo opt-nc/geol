@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"os"
 	"runtime"
 	"strings"
 
@@ -141,7 +142,7 @@ var aboutCmd = &cobra.Command{
 func init() {
 	// Set up pretty console writer for phuslu/log
 	log.DefaultLogger.Writer = &log.ConsoleWriter{
-		ColorOutput:    true,
+		ColorOutput:    log.IsTerminal(os.Stdout.Fd()),
 		QuoteString:    true,
 		EndWithMessage: true,
 	}
