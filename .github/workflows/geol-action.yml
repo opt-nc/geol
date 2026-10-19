@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       
       - name: Install Geol
-        uses: opt-nc/geol-action@8b85537a2997854f79cd5d66820b972035120992
+        uses: opt-nc/geol-action@0592736f115436ee26d8c9069e4136573b069bc8
         #with:
           #version: 'v2.12.1' # Optional: Specify a specific version of Geol to install. If not provided, the latest version will be installed.
       
