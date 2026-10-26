@@ -12,7 +12,7 @@ require (
 	github.com/charmbracelet/fang v1.0.0
 	github.com/charmbracelet/x/term v0.2.2
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
-	github.com/duckdb/duckdb-go/v2 v2.10506.0
+	github.com/duckdb/duckdb-go/v2 v2.20000.0
 	github.com/mattn/go-sqlite3 v1.14.52
 	github.com/phuslu/log v1.0.138
 	github.com/spf13/cobra v1.10.2
@@ -36,12 +36,7 @@ require (
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.3 // indirect
 	github.com/dlclark/regexp2/v2 v2.9.1 // indirect
-	github.com/duckdb/duckdb-go-bindings v0.10506.0 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/darwin-amd64 v0.10506.0 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/darwin-arm64 v0.10506.0 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/linux-amd64 v0.10506.0 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/linux-arm64 v0.10506.0 // indirect
-	github.com/duckdb/duckdb-go-bindings/lib/windows-amd64 v0.10506.0 // indirect
+	github.com/duckdb/duckdb-go-bindings v0.20000.0 // indirect
 	github.com/emicklei/proto v1.14.3 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/goccy/go-json v0.11.2 // indirect
@@ -69,6 +64,11 @@ require (
 	github.com/yuin/goldmark v1.8.6 // indirect
 	github.com/yuin/goldmark-emoji v1.0.6 // indirect
 	github.com/zeebo/xxh3 v1.1.0 // indirect
+	go.duckdb.org/libduckdb/darwin-amd64 v0.20000.0 // indirect
+	go.duckdb.org/libduckdb/darwin-arm64 v0.20000.0 // indirect
+	go.duckdb.org/libduckdb/linux-amd64 v0.20000.0 // indirect
+	go.duckdb.org/libduckdb/linux-arm64 v0.20000.0 // indirect
+	go.duckdb.org/libduckdb/windows-amd64 v0.20000.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/exp v0.0.0-20261014143641-f0251eb4aa3e // indirect
 	golang.org/x/net v0.61.0 // indirect
