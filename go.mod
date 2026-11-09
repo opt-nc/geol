@@ -13,7 +13,7 @@ require (
 	github.com/charmbracelet/x/term v0.2.2
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
 	github.com/duckdb/duckdb-go/v2 v2.20000.0
-	github.com/mattn/go-sqlite3 v1.14.52
+	github.com/mattn/go-sqlite3 v1.14.53
 	github.com/phuslu/log v1.0.138
 	github.com/spf13/cobra v1.10.2
 	golang.org/x/term v0.47.0
