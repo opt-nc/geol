@@ -789,6 +789,8 @@ func renderStackTable(rows []stackTableRow) string {
 	return t.Render()
 }
 
+const defaultAppName = "Application"
+
 // validationResult holds validation errors categorized by type
 type validationResult struct {
 	missing    []string
@@ -804,9 +806,6 @@ func checkRequiredKeys(config geolConfig) validationResult {
 		constraint: []string{},
 	}
 
-	if config.AppName == "" {
-		result.missing = append(result.missing, "app_name")
-	}
 	if len(config.Stack) == 0 {
 		result.missing = append(result.missing, "stack")
 	}
@@ -874,6 +873,11 @@ geol check --json`,
 		var config geolConfig
 		if err := yaml.Unmarshal(data, &config); err != nil {
 			log.Fatal().Msg("YAML format error: " + err.Error())
+		}
+
+		if strings.TrimSpace(config.AppName) == "" {
+			config.AppName = defaultAppName
+			log.Warn().Msgf("app_name is not set in %s, using default name %q. Set the app_name key in your YAML file to define it", file, defaultAppName)
 		}
 
 		validation := checkRequiredKeys(config)
