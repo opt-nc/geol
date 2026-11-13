@@ -33,6 +33,8 @@ Edit the generated `.geol.yaml` file to define the products you want to monitor.
 ### Example Configuration
 
 ```yaml
+app_name: MySuperApp
+
 stack:
   - name: ubuntu
     version: "25.10"
