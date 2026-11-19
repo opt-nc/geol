@@ -26,7 +26,11 @@ func init() {
 	CheckCmd.AddCommand(InitCmd)
 	CheckCmd.Flags().StringP("file", "f", ".geol.yaml", "File to check (default .geol.yaml)")
 	CheckCmd.Flags().BoolP("strict", "s", false, "Exit with error if any product is EOL")
+	CheckCmd.Flags().Bool("markdown", false, "Output in Markdown format (default)")
 	CheckCmd.Flags().Bool("json", false, "Output in JSON format")
+	CheckCmd.Flags().Bool("parquet", false, "Output in Parquet format (binary, redirect to a file)")
+	CheckCmd.Flags().Bool("csv", false, "Output in CSV format")
+	CheckCmd.MarkFlagsMutuallyExclusive("markdown", "json", "parquet", "csv")
 	CheckCmd.Flags().StringP("date", "d", "", "Reference date for EOL calculations (format YYYY-MM-DD, default: today)")
 }
 
@@ -854,11 +858,15 @@ var CheckCmd = &cobra.Command{
 Try using 'geol check init' to generate a sample stack YAML file. See https://opt-nc.github.io/geol/docs/tutorial-basics/check-command for more`,
 	Example: `geol check
 geol check --file stack.yaml
-geol check --json`,
+geol check --json
+geol check --csv > check.csv
+geol check --parquet > check.parquet`,
 	Run: func(cmd *cobra.Command, args []string) {
 		file, _ := cmd.Flags().GetString("file")
 		strict, _ := cmd.Flags().GetBool("strict")
 		jsonOutput, _ := cmd.Flags().GetBool("json")
+		parquetOutput, _ := cmd.Flags().GetBool("parquet")
+		csvOutput, _ := cmd.Flags().GetBool("csv")
 		_, err := os.Stat(file)
 		if err != nil {
 			log.Fatal().Msg("Error: the file does not exist: " + file)
@@ -924,7 +932,7 @@ geol check --json`,
 		rows, errorOut, violations := getStackTableRows(config.Stack, today)
 		score := computeStackScore(rows)
 
-		if jsonOutput {
+		if jsonOutput || parquetOutput || csvOutput {
 			output := struct {
 				Title              string          `json:"title"`
 				Score              []stackScore    `json:"score"`
@@ -938,7 +946,18 @@ geol check --json`,
 			if err != nil {
 				log.Fatal().Msg("Error generating JSON output: " + err.Error())
 			}
-			fmt.Println(string(jsonData))
+			switch {
+			case parquetOutput:
+				if err := exportCheck(jsonData, "parquet", "(FORMAT parquet)"); err != nil {
+					log.Fatal().Msg("Error generating Parquet output: " + err.Error())
+				}
+			case csvOutput:
+				if err := exportCheck(jsonData, "csv", "(FORMAT csv, DELIMITER ',', HEADER)"); err != nil {
+					log.Fatal().Msg("Error generating CSV output: " + err.Error())
+				}
+			default:
+				fmt.Println(string(jsonData))
+			}
 		} else {
 			tableStr := renderStackTable(rows)
 			styledTitle := lipgloss.NewStyle().
