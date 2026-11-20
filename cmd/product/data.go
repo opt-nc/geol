@@ -42,11 +42,15 @@ type ApiRespExtended struct {
 
 type ApiRestDescribe struct {
 	Result struct {
-		Name           string `json:"name"`
-		VersionCommand string `json:"versionCommand"`
-		Identifiers    []struct {
-			Type string `json:"type"`
-			Id   string `json:"id"`
-		} `json:"identifiers"`
+		Name           string               `json:"name"`
+		Aliases        []string             `json:"aliases"`
+		VersionCommand string               `json:"versionCommand"`
+		Identifiers    []DescribeIdentifier `json:"identifiers"`
 	}
+}
+
+// DescribeIdentifier is a product identifier as returned by the API
+type DescribeIdentifier struct {
+	Type string `json:"type"`
+	Id   string `json:"id"`
 }

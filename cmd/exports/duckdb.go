@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -67,14 +68,15 @@ type identifiers struct {
 }
 
 type productData struct {
-	Name        string                `json:"name"`
-	Aliases     []string              `json:"aliases"`
-	Label       string                `json:"label"`
-	Category    string                `json:"category"`
-	Tags        []utilities.Tag       `json:"tags"`
-	Identifiers []identifiers         `json:"identifiers"`
-	URI         string                `json:"links.html"`
-	Releases    []product.ReleaseInfo `json:"releases"`
+	Name          string                `json:"name"`
+	Aliases       []string              `json:"aliases"`
+	Label         string                `json:"label"`
+	Category      string                `json:"category"`
+	Tags          []utilities.Tag       `json:"tags"`
+	Identifiers   []identifiers         `json:"identifiers"`
+	URI           string                `json:"links.html"`
+	DescriptionMD string                `json:"-"`
+	Releases      []product.ReleaseInfo `json:"releases"`
 }
 
 type productDataMap struct {
@@ -162,6 +164,8 @@ func fetchAllProductData(cmd *cobra.Command) (*productDataMap, error) {
 		}
 	}
 
+	var missingDescriptions []string
+
 	isTTY := term.IsTerminal(int(os.Stdout.Fd()))
 
 	// processProduct fetches and stores all data for a single product, returning false on fatal error.
@@ -191,13 +195,14 @@ func fetchAllProductData(cmd *cobra.Command) (*productDataMap, error) {
 
 		var apiResp struct {
 			Result struct {
-				Name        string        `json:"name"`
-				Aliases     []string      `json:"aliases"`
-				Label       string        `json:"label"`
-				Category    string        `json:"category"`
-				Tags        []string      `json:"tags"`
-				Identifiers []identifiers `json:"identifiers"`
-				Links       struct {
+				Name           string        `json:"name"`
+				Aliases        []string      `json:"aliases"`
+				Label          string        `json:"label"`
+				Category       string        `json:"category"`
+				Tags           []string      `json:"tags"`
+				Identifiers    []identifiers `json:"identifiers"`
+				VersionCommand string        `json:"versionCommand"`
+				Links          struct {
 					Html string `json:"html"`
 				} `json:"links"`
 			} `json:"result"`
@@ -214,15 +219,25 @@ func fetchAllProductData(cmd *cobra.Command) (*productDataMap, error) {
 			return true
 		}
 
+		describeIDs := make([]product.DescribeIdentifier, 0, len(apiResp.Result.Identifiers))
+		for _, id := range apiResp.Result.Identifiers {
+			describeIDs = append(describeIDs, product.DescribeIdentifier{Type: id.Type, Id: id.ID})
+		}
+		descriptionMD, err := product.BuildDescriptionMarkdown(productName, apiResp.Result.Aliases, apiResp.Result.VersionCommand, describeIDs)
+		if err != nil {
+			missingDescriptions = append(missingDescriptions, productName)
+		}
+
 		allData.Products[productName] = &productData{
-			Name:        apiResp.Result.Name,
-			Aliases:     apiResp.Result.Aliases,
-			Label:       apiResp.Result.Label,
-			Category:    apiResp.Result.Category,
-			Tags:        utilities.ConvertTagStringsToTags(apiResp.Result.Tags),
-			Identifiers: apiResp.Result.Identifiers,
-			URI:         apiResp.Result.Links.Html,
-			Releases:    prodData.Releases,
+			DescriptionMD: descriptionMD,
+			Name:          apiResp.Result.Name,
+			Aliases:       apiResp.Result.Aliases,
+			Label:         apiResp.Result.Label,
+			Category:      apiResp.Result.Category,
+			Tags:          utilities.ConvertTagStringsToTags(apiResp.Result.Tags),
+			Identifiers:   apiResp.Result.Identifiers,
+			URI:           apiResp.Result.Links.Html,
+			Releases:      prodData.Releases,
 		}
 		return true
 	}
@@ -269,6 +284,10 @@ func fetchAllProductData(cmd *cobra.Command) (*productDataMap, error) {
 	}
 
 	log.Info().Msgf("Fetched data for %d products", len(allData.Products))
+	if len(missingDescriptions) > 0 {
+		sort.Strings(missingDescriptions)
+		log.Warn().Msgf("%d products without description (missing from products_descriptions): %s", len(missingDescriptions), strings.Join(missingDescriptions, ", "))
+	}
 	return allData, nil
 }
 
@@ -642,6 +661,49 @@ func createProductsTable(db *sql.DB, allData *productDataMap, skipIntegrity bool
 
 	log.Info().Msg("Created and populated \"products\" table")
 
+	return nil
+}
+
+// createProductsDescriptionsTable creates the 'products_descriptions' table holding the markdown description of each product
+func createProductsDescriptionsTable(db *sql.DB, allData *productDataMap, skipIntegrity bool) error {
+	tmpl := template.Must(template.New("products_descriptions").Parse(`CREATE TABLE IF NOT EXISTS products_descriptions (
+		product_id TEXT{{if not .SkipIntegrity}} NOT NULL UNIQUE REFERENCES products(id){{end}},
+		description_md TEXT{{if not .SkipIntegrity}} NOT NULL{{end}}
+	)`))
+
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, struct{ SkipIntegrity bool }{skipIntegrity}); err != nil {
+		return fmt.Errorf("error executing template for 'products_descriptions' table: %w", err)
+	}
+	if _, err := db.Exec(buf.String()); err != nil {
+		return fmt.Errorf("error creating 'products_descriptions' table: %w", err)
+	}
+
+	_, err := db.Exec(`
+		COMMENT ON TABLE products_descriptions IS '` + CommentTableProductsDescriptions + `';
+		COMMENT ON COLUMN products_descriptions.product_id IS '` + CommentColProductsDescriptionsProductID + `';
+		COMMENT ON COLUMN products_descriptions.description_md IS '` + CommentColProductsDescriptionsMD + `';
+	`)
+	if err != nil {
+		return fmt.Errorf("error adding comments to 'products_descriptions': %w", err)
+	}
+
+	ids := make([]string, 0, len(allData.Products))
+	for id, prodData := range allData.Products {
+		if prodData.DescriptionMD != "" {
+			ids = append(ids, id)
+		}
+	}
+	sort.Strings(ids)
+
+	for _, id := range ids {
+		if _, err := db.Exec(`INSERT INTO products_descriptions (product_id, description_md) VALUES (?, ?)`,
+			id, allData.Products[id].DescriptionMD); err != nil {
+			log.Error().Err(err).Msgf("Error inserting description of product %s", id)
+		}
+	}
+
+	log.Info().Msg("Created and populated \"products_descriptions\" table")
 	return nil
 }
 
@@ -1285,6 +1347,9 @@ func populateDuckDB(cmd *cobra.Command, db *sql.DB, skipIntegrity bool) error {
 	}
 	if err := createProductsTable(db, allProductsData, skipIntegrity); err != nil {
 		return fmt.Errorf("error creating 'products' table: %w", err)
+	}
+	if err := createProductsDescriptionsTable(db, allProductsData, skipIntegrity); err != nil {
+		return err
 	}
 	if err := createTempDetailsTable(db, allProductsData); err != nil {
 		return fmt.Errorf("error creating 'details_temp' table: %w", err)

@@ -2,6 +2,7 @@ package product
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -72,61 +73,8 @@ var describeCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// Build the markdown URL
-		mdUrl := "https://raw.githubusercontent.com/endoflife-date/endoflife.date/refs/heads/master/products/" + mainName + ".md"
-
-		// Retrieve the Markdown content
-		resp, err := http.Get(mdUrl)
-		if err != nil {
-			log.Error().Err(err).Msg("Error fetching markdown of the product " + mainName)
-			os.Exit(1)
-		}
-		defer func() {
-			if err := resp.Body.Close(); err != nil {
-				log.Error().Err(err).Msg("Error closing response body")
-			}
-		}()
-
-		if resp.StatusCode != http.StatusOK {
-			log.Error().Msgf("Failed to fetch markdown. Status: %s", resp.Status)
-			os.Exit(1)
-		}
-
-		mdBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			log.Error().Err(err).Msg("Error reading markdown")
-			os.Exit(1)
-		}
-
-		// Extract the description between the second '---' and the first empty line after
-		mdLines := strings.Split(string(mdBytes), "\n")
-		sepCount := 0
-		descLines := []string{}
-		collecting := false
-		for _, line := range mdLines {
-			if strings.TrimSpace(line) == "---" {
-				sepCount++
-				if sepCount == 2 {
-					collecting = true
-					continue
-				}
-			}
-			if collecting {
-				// Stop if a new markdown section (title) is encountered
-				if strings.HasPrefix(strings.TrimSpace(line), "#") && len(descLines) > 0 {
-					break
-				}
-				descLines = append(descLines, line)
-			}
-		}
-		desc := strings.TrimRight(strings.Join(descLines, "\n"), "\n")
-		if desc == "" {
-			log.Error().Msg("No description found in markdown.")
-			os.Exit(1)
-		}
-
 		url := utilities.APIUrl + "products/" + mainName
-		resp, err = http.Get(url)
+		resp, err := http.Get(url)
 		if err != nil {
 			log.Error().Err(err).Msgf("Error requesting %s", mainName)
 			os.Exit(1)
@@ -151,32 +99,11 @@ var describeCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		// Get version
-		versionCommand := apiResp.Result.VersionCommand
-		desc += "\n\n### Version command\n\nYou can get the version information by running the following command:\n\n```bash\n" + versionCommand + "\n```"
-
-		// Identifiers
-		identifiers := apiResp.Result.Identifiers
-
-		if len(identifiers) > 0 {
-			desc += "\n\n### Identifiers\n\nThe identifiers are used to uniquely identify the product in various systems. They include:"
-			for _, id := range identifiers {
-				if id.Type == "repology" {
-					desc += "\n- repology: `https://repology.org/project/" + id.Id + "`"
-				} else {
-					desc += "\n- " + id.Type + ": `" + id.Id + "`"
-				}
-			}
-		} else {
-			desc += "\n\n**Identifiers:** None"
+		desc, err := BuildDescriptionMarkdown(mainName, apiResp.Result.Aliases, apiResp.Result.VersionCommand, apiResp.Result.Identifiers)
+		if err != nil {
+			log.Error().Err(err).Msg("Error building product description")
+			os.Exit(1)
 		}
-
-		// Add iCalendar feed information
-		desc += "\n\n### iCalendar Feed\n\nThe iCalendar feed allows you to stay updated with the latest end-of-life dates for this product."
-		desc += "\n\nYou can subscribe to the iCalendar feed at `webcal://endoflife.date/calendar/" + mainName + ".ics`"
-
-		// Add A JSON version of this page is available at /api/v1/products/neo4j/
-		desc += "\n\n### JSON Version\n\nA JSON version of this page is available at `https://endoflife.date/api/v1/products/" + mainName + "`"
 
 		// Print a product title as in extended: # ProductName, with color and background
 		styledTitle := lipgloss.NewStyle().
@@ -200,4 +127,92 @@ var describeCmd = &cobra.Command{
 			os.Exit(1)
 		}
 	},
+}
+
+// fetchProductMarkdown downloads the product source file. The file is named after the
+// product name or, when the product was renamed, after one of its aliases (e.g. the
+// product "claude" lives in anthropic-claude.md), so aliases are tried on 404.
+func fetchProductMarkdown(mainName string, aliases []string) ([]byte, error) {
+	const baseURL = "https://raw.githubusercontent.com/endoflife-date/endoflife.date/refs/heads/master/products/"
+	var lastErr error
+	for _, name := range append([]string{mainName}, aliases...) {
+		resp, err := http.Get(baseURL + name + ".md")
+		if err != nil {
+			return nil, fmt.Errorf("error fetching markdown of the product %s: %w", mainName, err)
+		}
+		body, readErr := io.ReadAll(resp.Body)
+		if cerr := resp.Body.Close(); cerr != nil {
+			log.Error().Err(cerr).Msg("Error closing response body")
+		}
+		switch {
+		case resp.StatusCode == http.StatusNotFound:
+			lastErr = fmt.Errorf("failed to fetch markdown of %s (tried %s.md), status: %s", mainName, name, resp.Status)
+		case resp.StatusCode != http.StatusOK:
+			return nil, fmt.Errorf("failed to fetch markdown of %s, status: %s", mainName, resp.Status)
+		case readErr != nil:
+			return nil, fmt.Errorf("error reading markdown of %s: %w", mainName, readErr)
+		default:
+			return body, nil
+		}
+	}
+	return nil, lastErr
+}
+
+// BuildDescriptionMarkdown returns the markdown description of a product, as displayed
+// by 'geol product describe', enriched with version command, identifiers and links.
+func BuildDescriptionMarkdown(mainName string, aliases []string, versionCommand string, identifiers []DescribeIdentifier) (string, error) {
+	mdBytes, err := fetchProductMarkdown(mainName, aliases)
+	if err != nil {
+		return "", err
+	}
+
+	// Extract the description between the second '---' and the first empty line after
+	mdLines := strings.Split(string(mdBytes), "\n")
+	sepCount := 0
+	descLines := []string{}
+	collecting := false
+	for _, line := range mdLines {
+		if strings.TrimSpace(line) == "---" {
+			sepCount++
+			if sepCount == 2 {
+				collecting = true
+				continue
+			}
+		}
+		if collecting {
+			// Stop if a new markdown section (title) is encountered
+			if strings.HasPrefix(strings.TrimSpace(line), "#") && len(descLines) > 0 {
+				break
+			}
+			descLines = append(descLines, line)
+		}
+	}
+	desc := strings.TrimRight(strings.Join(descLines, "\n"), "\n")
+	if desc == "" {
+		return "", fmt.Errorf("no description found in markdown of %s", mainName)
+	}
+
+	// Get version
+	desc += "\n\n### Version command\n\nYou can get the version information by running the following command:\n\n```bash\n" + versionCommand + "\n```"
+
+	if len(identifiers) > 0 {
+		desc += "\n\n### Identifiers\n\nThe identifiers are used to uniquely identify the product in various systems. They include:"
+		for _, id := range identifiers {
+			if id.Type == "repology" {
+				desc += "\n- repology: `https://repology.org/project/" + id.Id + "`"
+			} else {
+				desc += "\n- " + id.Type + ": `" + id.Id + "`"
+			}
+		}
+	} else {
+		desc += "\n\n**Identifiers:** None"
+	}
+
+	// Add iCalendar feed information
+	desc += "\n\n### iCalendar Feed\n\nThe iCalendar feed allows you to stay updated with the latest end-of-life dates for this product."
+	desc += "\n\nYou can subscribe to the iCalendar feed at `webcal://endoflife.date/calendar/" + mainName + ".ics`"
+
+	// Add A JSON version of this page is available at /api/v1/products/neo4j/
+	desc += "\n\n### JSON Version\n\nA JSON version of this page is available at `https://endoflife.date/api/v1/products/" + mainName + "`"
+	return desc, nil
 }

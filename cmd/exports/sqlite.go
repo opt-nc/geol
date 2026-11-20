@@ -151,6 +151,10 @@ func exportDuckDBToSQLite(db *sql.DB, sqlitePath string, skipIntegrity bool) err
 			category_id TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
 			uri TEXT{{if not .SkipIntegrity}} NOT NULL{{end}}
 		)`,
+		`CREATE TABLE sqlite_db.products_descriptions(
+			product_id TEXT{{if not .SkipIntegrity}} NOT NULL UNIQUE{{end}},
+			description_md TEXT{{if not .SkipIntegrity}} NOT NULL{{end}}
+		)`,
 		`CREATE TABLE sqlite_db.aliases(
 			id TEXT{{if not .SkipIntegrity}} NOT NULL{{end}},
 			product_id TEXT{{if not .SkipIntegrity}} NOT NULL{{end}}{{if not .SkipIntegrity}},
@@ -213,6 +217,9 @@ func exportDuckDBToSQLite(db *sql.DB, sqlitePath string, skipIntegrity bool) err
 
 		`INSERT INTO sqlite_db.products
 		SELECT id, label, category_id, uri FROM main.products`,
+
+		`INSERT INTO sqlite_db.products_descriptions
+		SELECT product_id, description_md FROM main.products_descriptions`,
 
 		`INSERT INTO sqlite_db.aliases
 		SELECT id, product_id FROM main.aliases`,
@@ -283,6 +290,20 @@ func addSQLiteForeignKeys(sqlitePath string) error {
 				)`,
 				"INSERT INTO products SELECT * FROM products_old",
 				"DROP TABLE products_old",
+			},
+		},
+		{
+			name: "products_descriptions",
+			statements: []string{
+				"ALTER TABLE products_descriptions RENAME TO products_descriptions_old",
+				`CREATE TABLE products_descriptions(
+					-- Rich markdown description of each product, as displayed by 'geol product describe'
+					product_id TEXT NOT NULL UNIQUE, -- Product id referencing the products table
+					description_md TEXT NOT NULL, -- Markdown description of the product
+					FOREIGN KEY (product_id) REFERENCES products(id)
+				)`,
+				"INSERT INTO products_descriptions SELECT * FROM products_descriptions_old",
+				"DROP TABLE products_descriptions_old",
 			},
 		},
 		{
