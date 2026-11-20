@@ -2,15 +2,16 @@ package exports
 
 // Table comments
 const (
-	CommentTableAbout              = "Metadata about the geol version and platform that generated this database"
-	CommentTableDetailsTemp        = "Temporary table for storing raw product release details before type conversion"
-	CommentTableDetails            = "Product release lifecycle details including release dates, latest versions, and end-of-life (EOL) dates"
-	CommentTableProducts           = "Catalog of all products tracked by geol with their labels, categories, and documentation URIs"
-	CommentTableAliases            = "Alternative names or aliases for products to facilitate searching and identification"
-	CommentTableProductIdentifiers = "Various identifiers for products such as SKUs, model numbers, or codes used by manufacturers"
-	CommentTableTags               = "Tags used to categorize and group products by common characteristics or use cases"
-	CommentTableCategories         = "Categories used to group products by their primary function or domain"
-	CommentTableProductTags        = "Junction table linking products to their associated tags for many-to-many relationships"
+	CommentTableAbout                = "Metadata about the geol version and platform that generated this database"
+	CommentTableDetailsTemp          = "Temporary table for storing raw product release details before type conversion"
+	CommentTableDetails              = "Product release lifecycle details including release dates, latest versions, and end-of-life (EOL) dates"
+	CommentTableProducts             = "Catalog of all products tracked by geol with their labels, categories, and documentation URIs"
+	CommentTableProductsDescriptions = "Rich markdown description of each product, as displayed by ''geol product describe'', kept apart from products to keep everyday data compact"
+	CommentTableAliases              = "Alternative names or aliases for products to facilitate searching and identification"
+	CommentTableProductIdentifiers   = "Various identifiers for products such as SKUs, model numbers, or codes used by manufacturers"
+	CommentTableTags                 = "Tags used to categorize and group products by common characteristics or use cases"
+	CommentTableCategories           = "Categories used to group products by their primary function or domain"
+	CommentTableProductTags          = "Junction table linking products to their associated tags for many-to-many relationships"
 )
 
 // Column comments: about table
@@ -73,4 +74,10 @@ const (
 const (
 	CommentColProductTagsProductID = "Product id referencing the products table"
 	CommentColProductTagsTagID     = "Tag id referencing the tags table"
+)
+
+// Column comments: products_descriptions table
+const (
+	CommentColProductsDescriptionsProductID = "Product id referencing the products table (unique, one description per product)"
+	CommentColProductsDescriptionsMD        = "Markdown description of the product: summary, version command, identifiers, iCalendar feed and JSON API links"
 )
