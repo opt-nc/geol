@@ -12,23 +12,9 @@ builds:
       - CGO_ENABLED=1
     goos:
       - linux
-    goarch:
-      - amd64
-      - arm64
-    overrides:
-      - goos: linux
-        goarch: amd64
-        env:
-          - CC=gcc
-      - goos: linux
-        goarch: arm64
-        env:
-          - CC=aarch64-linux-gnu-gcc
-    ignore:
-      - goos: linux
-        goarch: "386"
     binary: geol
     ldflags:
+      - "-extldflags '-static-libstdc++ -static-libgcc'"
       - "-X 'main.version={{.Version}}'"
       - "-X 'main.commit={{.Commit}}'"
       - "-X 'main.date={{.Date}}'"

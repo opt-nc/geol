@@ -6,11 +6,27 @@
     {
       "name": "develop",
       "prerelease": true
+    },
+    {
+      "name": "!(main|develop)",
+      "prerelease": "${name.replace(/[^a-zA-Z0-9-]/g, '-')}"
+    },
+    {
+      "name": "!(main|develop)/**",
+      "prerelease": "${name.replace(/[^a-zA-Z0-9-]/g, '-')}"
     }
   ],
   "plugins": [
     "@semantic-release/commit-analyzer",
-    "@semantic-release/github",
+    [
+      "@semantic-release/github",
+      {
+        "successComment": false,
+        "failComment": false,
+        "failTitle": false,
+        "releasedLabels": false
+      }
+    ],
     [
       "@semantic-release/release-notes-generator",
       {

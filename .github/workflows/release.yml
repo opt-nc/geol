@@ -2,7 +2,8 @@ name: 🎯 Release
 
 on:
   push:
-    branches: [main, develop]
+    # Avant : branches: [main, develop]
+    branches: ['**']
 
 permissions:
   id-token: write
@@ -41,23 +42,33 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install cross-compiler for linux/arm64
-        run: sudo apt update && sudo apt install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
-      
-      - uses: anchore/sbom-action/download-syft@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # installs syft
-      - name: Run GoReleaser for Linux
-        uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de
-        with:
-          distribution: goreleaser
-          version: '~> v2'
-          args: release --clean --skip=publish --config .goreleaser_linux.yaml
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1
+
+      # Built in AlmaLinux 8 (glibc 2.28) so binaries run on older distributions
+      - name: Build Linux binaries in AlmaLinux 8
+        run: |
+          for arch in amd64 arm64; do
+            docker run --rm --platform "linux/$arch" \
+              -e GITHUB_TOKEN -e HOME=/tmp \
+              -v "$PWD":/src -w /src \
+              docker.io/library/almalinux:8 ./scripts/build-linux.sh
+            sudo chown -R "$(id -u):$(id -g)" dist
+            mkdir -p "$RUNNER_TEMP/dist-$arch"
+            cp dist/*.tar.gz dist/*.sbom.json dist/checksums.txt "$RUNNER_TEMP/dist-$arch"/
+          done
+          mkdir -p linux-artifacts
+          cat "$RUNNER_TEMP"/dist-*/checksums.txt > linux-artifacts/checksums.txt
+          for arch in amd64 arm64; do
+            find "$RUNNER_TEMP/dist-$arch" -type f ! -name checksums.txt -exec cp {} linux-artifacts/ \;
+          done
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: geol-linux-artifacts
-          path: dist
+          path: linux-artifacts
 
   build-darwin:
     name: 🔨 Build macOS
@@ -326,7 +337,8 @@ jobs:
       - name: Delete pre-releases
         uses: dev-drprasad/delete-older-releases@dfbe6be2a006e9475dfcbe5b8d201f1824c2a9fe
         with:
-          delete_tag_pattern: develop
+          # Avant : delete_tag_pattern: develop
+          delete_tag_pattern: '-'
           keep_latest: 0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
